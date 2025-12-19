@@ -1,0 +1,50 @@
+services:
+  # =============================================
+  # API Backend (AdonisJS)
+  # =============================================
+  api:
+    image: ${REGISTRY:-ghcr.io}/${GITHUB_REPOSITORY:-hexagone6/app}-api:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: hexagone6-api
+    ports:
+      - "${API_PORT:-3333}:80"
+    env_file:
+      - apps/api/.env.prod
+    networks:
+      - hexagone6-network
+    volumes:
+      - api-storage:/app/storage
+
+  # =============================================
+  # Web Frontend (Nuxt.js)
+  # =============================================
+  web:
+    image: ${REGISTRY:-ghcr.io}/${GITHUB_REPOSITORY:-hexagone6/app}-web:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: hexagone6-web
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    env_file:
+      - apps/web/.env.prod
+    depends_on:
+      - api
+    networks:
+      - hexagone6-network
+
+# =============================================
+# Networks
+# =============================================
+networks:
+  hexagone6-network:
+    driver: bridge
+
+# =============================================
+# Volumes (optionnel - pour logs ou uploads)
+# =============================================
+volumes:
+  api-storage:
+    driver: local

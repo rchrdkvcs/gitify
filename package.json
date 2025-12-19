@@ -1,0 +1,29 @@
+{
+  "name": "aduxt",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:api": "bun --filter @aduxt/api dev",
+    "dev:web": "bun --filter @aduxt/web dev",
+    "dev": "run-p dev:api dev:web"
+  },
+  "dependencies": {
+    "@aduxt/web": "workspace:*",
+    "@aduxt/api": "workspace:*"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "npm-run-all2": "^8.0.4",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3"
+  },
+  "trustedDependencies": [
+    "@aduxt/web",
+    "@parcel/watcher",
+    "@swc/core",
+    "@tailwindcss/oxide"
+  ],
+  "workspaces": [
+    "apps/*"
+  ]
+}

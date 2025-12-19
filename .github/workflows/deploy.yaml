@@ -1,0 +1,48 @@
+name: Deploy to Coolify
+
+on:
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.prerelease && 'beta' || 'latest' }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+
+      - name: Deploy to Coolify
+        run: |
+          # Utilise le webhook beta ou production selon le type de release
+          if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+            WEBHOOK="${{ secrets.COOLIFY_WEBHOOK_BETA }}"
+          else
+            WEBHOOK="${{ secrets.COOLIFY_WEBHOOK }}"
+          fi
+
+          curl --fail --location "$WEBHOOK" \
+            --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'
