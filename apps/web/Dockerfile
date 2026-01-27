@@ -1,21 +1,29 @@
-FROM oven/bun:1 AS build
+FROM node:24-alpine AS base
+RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
-COPY package.json bun.lock ./
-COPY apps/web/package.json ./apps/web/
+FROM base AS build
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+RUN pnpm install --frozen-lockfile --filter=@gitify/web...
 
-RUN bun install --frozen-lockfile
-
+COPY apps/api/app/models ./apps/api/app/models
+COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY apps/web ./apps/web
 
 WORKDIR /app/apps/web
-RUN bun --bun run build
 
-FROM oven/bun:1 AS production
+ENV NODE_ENV=production
+ENV NITRO_PRESET=node-server
+
+RUN pnpm run build
+
+FROM base AS production
 WORKDIR /app
 
 COPY --from=build /app/apps/web/.output /app
 
-EXPOSE 80/tcp
-ENTRYPOINT [ "bun", "--bun", "run", "/app/server/index.mjs" ]
+EXPOSE 80
+
+ENTRYPOINT ["node", "/app/server/index.mjs"]

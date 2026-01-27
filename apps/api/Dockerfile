@@ -1,22 +1,24 @@
-FROM oven/bun:1-alpine AS base
+FROM node:24-alpine AS base
 WORKDIR /app
 
-COPY package.json bun.lock ./
+FROM base AS deps
+RUN npm install -g pnpm@latest
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
+RUN pnpm install --frozen-lockfile --filter=@gitify/api...
 
-RUN bun install --frozen-lockfile
-
+FROM base AS build
+COPY --from=deps /app/node_modules /app/node_modules
+COPY --from=deps /app/apps/api/node_modules /app/apps/api/node_modules
+COPY pnpm-workspace.yaml package.json ./
 COPY apps/api ./apps/api
-
 WORKDIR /app/apps/api
 RUN node ace build --ignore-ts-errors
 
-FROM oven/bun:1-alpine AS production
-WORKDIR /app
-
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/apps/api/build ./
-
+FROM base AS production
+RUN npm install -g pnpm@latest
+COPY --from=build /app/apps/api/build ./
+RUN pnpm install --prod
 EXPOSE 80
-CMD ["bun", "run", "./bin/server.js"]
+CMD ["node", "./bin/server.js"]
