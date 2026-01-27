@@ -5,7 +5,15 @@
   "scripts": {
     "dev:api": "pnpm --filter @gitify/api dev",
     "dev:web": "pnpm --filter @gitify/web dev",
-    "dev": "run-p dev:api dev:web"
+    "dev": "run-p dev:api dev:web",
+    "docker:up": "docker compose -f compose.dev.yaml up --build -d",
+    "docker:down": "docker compose -f compose.dev.yaml down",
+    "docker:logs": "docker compose -f compose.dev.yaml logs -f",
+    "docker:logs:api": "docker compose -f compose.dev.yaml logs -f api",
+    "docker:logs:web": "docker compose -f compose.dev.yaml logs -f web",
+    "docker:logs:db": "docker compose -f compose.dev.yaml logs -f database",
+    "docker:restart": "docker compose -f compose.dev.yaml restart",
+    "docker:clean": "docker compose -f compose.dev.yaml down -v"
   },
   "devDependencies": {
     "eslint": "^9.39.2",

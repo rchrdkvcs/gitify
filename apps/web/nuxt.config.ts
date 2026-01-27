@@ -1,4 +1,3 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
@@ -12,4 +11,9 @@ export default defineNuxtConfig({
   ],
   css: ["~/assets/styles/main.css"],
   vite: { plugins: [tailwindcss()] },
+  runtimeConfig: {
+    public:{
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || "http://localhost:3333"
+    }
+  }
 });

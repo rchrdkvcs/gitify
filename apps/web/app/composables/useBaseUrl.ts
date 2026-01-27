@@ -1,4 +1,5 @@
 export const useBaseUrl = (endpoint: string) => {
-  const baseUrl = import.meta.env.VITE_API_URL;
+  const baseUrl = useRuntimeConfig().public.apiBaseUrl;
+
   return `${baseUrl}${endpoint}`;
 };
