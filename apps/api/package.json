@@ -1,5 +1,5 @@
 {
-  "name": "@aduxt/api",
+  "name": "@gitify/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -31,7 +31,7 @@
     "@adonisjs/cors": "^2.2.1",
     "@adonisjs/lucid": "^21.8.1",
     "@adonisjs/session": "^7.5.1",
-    "@vinejs/vine": "^3.0.1",
+    "@vinejs/vine": "^4.2.0",
     "luxon": "^3.7.2",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
@@ -45,16 +45,16 @@
     "@japa/api-client": "^3.1.0",
     "@japa/assert": "^4.1.1",
     "@japa/plugin-adonisjs": "^4.0.0",
-    "@japa/runner": "^4.4.0",
-    "@swc/core": "1.11.24",
+    "@japa/runner": "^5.3.0",
+    "@swc/core": "1.15.10",
     "@types/luxon": "^3.7.1",
-    "@types/node": "^22.19.1",
+    "@types/node": "^24.10.9",
     "eslint": "^9.39.1",
     "hot-hook": "^0.4.0",
     "pino-pretty": "^13.1.2",
     "prettier": "^3.6.2",
     "ts-node-maintained": "^10.9.6",
-    "typescript": "~5.8.3"
+    "typescript": "~5.9.3"
   },
   "prettier": "@adonisjs/prettier-config",
   "hotHook": {

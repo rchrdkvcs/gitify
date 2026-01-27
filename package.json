@@ -1,15 +1,11 @@
 {
-  "name": "aduxt",
+  "name": "gitify",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev:api": "bun --filter @aduxt/api dev",
-    "dev:web": "bun --filter @aduxt/web dev",
+    "dev:api": "pnpm --filter @gitify/api dev",
+    "dev:web": "pnpm --filter @gitify/web dev",
     "dev": "run-p dev:api dev:web"
-  },
-  "dependencies": {
-    "@aduxt/web": "workspace:*",
-    "@aduxt/api": "workspace:*"
   },
   "devDependencies": {
     "eslint": "^9.39.2",
@@ -18,7 +14,7 @@
     "typescript": "^5.9.3"
   },
   "trustedDependencies": [
-    "@aduxt/web",
+    "@gitify/web",
     "@parcel/watcher",
     "@swc/core",
     "@tailwindcss/oxide"
