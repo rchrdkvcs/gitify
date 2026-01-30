@@ -13,7 +13,7 @@ export default class User extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
-  @column({ columnName: 'github_id' })
+  @column()
   declare githubId: number
 
   @column()
@@ -22,7 +22,7 @@ export default class User extends BaseModel {
   @column()
   declare email: string
 
-  @column({ columnName: 'avatar_url' })
+  @column()
   declare avatarUrl: string | null
 
   @column()
