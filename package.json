@@ -2,6 +2,7 @@
   "name": "gitify",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "pnpm@10.28.1",
   "scripts": {
     "dev:api": "pnpm --filter @gitify/api dev",
     "dev:web": "pnpm --filter @gitify/web dev",
