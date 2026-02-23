@@ -6,15 +6,17 @@ export default class extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id')
+      table.bigInteger('github_repo_id').unsigned().notNullable().unique()
+      table.string('owner_name').notNullable()
       table.string('name').notNullable()
       table.text('description').nullable()
       table.string('repository_url').notNullable()
+      table.integer('stars').notNullable().defaultTo(0)
+      table.string('language').nullable()
+      table.jsonb('topics').nullable()
 
-      // Clé étrangère vers la table users
-      table.integer('owner_id').unsigned().references('id').inTable('users').onDelete('CASCADE')
-
-      table.timestamp('created_at')
-      table.timestamp('updated_at')
+      table.timestamp('created_at', { useTz: true })
+      table.timestamp('updated_at', { useTz: true })
     })
   }
 

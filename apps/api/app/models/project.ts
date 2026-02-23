@@ -1,29 +1,31 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
-import User from '#models/user'
+import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
+import type { HasMany } from '@adonisjs/lucid/types/relations'
 import Favorite from '#models/favorite'
 
-export default class Project extends BaseModel {
+export type UserPreferences = {
+  difficulty: 'beginner' | 'expert'
+  languages: string[]
+}
+
+export default class User extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
   @column()
-  declare name: string
+  declare githubId: string
 
   @column()
-  declare description: string | null
+  declare username: string
 
   @column()
-  declare repositoryUrl: string
+  declare email: string
 
   @column()
-  declare ownerId: number
+  declare avatarUrl: string | null
 
-  @belongsTo(() => User, {
-    foreignKey: 'ownerId',
-  })
-  declare owner: BelongsTo<typeof User>
+  @column()
+  declare preferences: UserPreferences | null
 
   @hasMany(() => Favorite)
   declare favorites: HasMany<typeof Favorite>
