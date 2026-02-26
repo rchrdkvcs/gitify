@@ -5,10 +5,11 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments('id').primary()
-      table.bigInteger('github_id').unsigned().notNullable().unique()
-      table.string('username').notNullable()
+      table.increments('id')
+      table.string('name').nullable()
       table.string('email').notNullable().unique()
+      table.string('access_token').nullable()
+      table.boolean('is_verified').defaultTo(false)
       table.string('avatar_url').nullable()
       table.jsonb('preferences').nullable()
 

@@ -17,6 +17,7 @@
     "docker:clean": "docker compose -f compose.dev.yaml down -v"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "eslint": "^9.39.2",
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.7.4",
@@ -30,5 +31,8 @@
   ],
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "dependencies": {
+    "jsonwebtoken": "^9.0.3"
+  }
 }

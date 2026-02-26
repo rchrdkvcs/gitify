@@ -14,13 +14,16 @@ export default class User extends BaseModel {
   declare id: number
 
   @column()
-  declare githubId: number
+  declare accessToken: number
 
   @column()
-  declare username: string
+  declare name: string
 
   @column()
   declare email: string
+
+  @column()
+  declare isVerified: boolean
 
   @column()
   declare avatarUrl: string | null
