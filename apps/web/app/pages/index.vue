@@ -2,6 +2,11 @@
 import { ref, onMounted } from "vue";
 import { api } from "~/utilis/FetchWrapper";
 
+interface UserPreferences {
+  difficulty: "beginner" | "expert";
+  languages: string[];
+}
+
 /**
  * User interface reflecting the backend model JSON serialization.
  * AdonisJS Lucid serializes properties to snake_case by default.
@@ -12,10 +17,42 @@ interface User {
   name: string | null;
   avatar_url?: string | null;
   avatarUrl?: string | null;
+  preferences: UserPreferences | null;
 }
 
 const user = ref<User | null>(null);
 const loading = ref<boolean>(true);
+
+// Onboarding Form State
+const submitting = ref(false);
+const formDifficulty = ref<"beginner" | "expert">("beginner");
+const formLanguages = ref<string[]>([]);
+const isEditingPreferences = ref(false);
+
+const availableLanguages = [
+  "javascript",
+  "typescript",
+  "python",
+  "java",
+  "c++",
+  "c#",
+  "ruby",
+  "go",
+  "rust",
+  "php",
+  "swift",
+];
+
+/**
+ * Toggle language selection in the onboarding form
+ */
+const toggleLanguage = (lang: string) => {
+  if (formLanguages.value.includes(lang)) {
+    formLanguages.value = formLanguages.value.filter((l) => l !== lang);
+  } else {
+    formLanguages.value.push(lang);
+  }
+};
 
 /**
  * Attempt to fetch the current user profile on component mount.
@@ -34,6 +71,42 @@ onMounted(async () => {
 });
 
 /**
+ * Enter edit mode and pre-fill the form with current preferences
+ */
+const editPreferences = () => {
+  if (user.value?.preferences) {
+    formDifficulty.value = user.value.preferences.difficulty;
+    formLanguages.value = [...user.value.preferences.languages];
+  }
+  isEditingPreferences.value = true;
+};
+
+/**
+ * Submit onboarding preferences to the backend
+ */
+const savePreferences = async () => {
+  if (formLanguages.value.length === 0) {
+    alert("Veuillez sélectionner au moins un langage.");
+    return;
+  }
+
+  submitting.value = true;
+  try {
+    const response = await api.put<{ user: User }>("/auth/preferences", {
+      difficulty: formDifficulty.value,
+      languages: formLanguages.value,
+    });
+    // Instantly update local state to trigger UI change
+    user.value = response.user;
+    isEditingPreferences.value = false; // Close the form
+  } catch (error) {
+    console.error("Failed to save preferences:", error);
+  } finally {
+    submitting.value = false;
+  }
+};
+
+/**
  * Handle user logout by calling the backend and clearing local state.
  */
 const logout = async () => {
@@ -44,8 +117,6 @@ const logout = async () => {
     console.error("Logout failed:", error);
   }
 };
-
-console.log(user);
 </script>
 
 <template>
@@ -57,8 +128,95 @@ console.log(user);
     <!-- Loading State -->
     <div v-if="loading" class="text-xl animate-pulse">Loading session...</div>
 
-    <!-- Authenticated State -->
-    <div v-else-if="user" class="text-center">
+    <!-- 1. Onboarding / Edit State (Logged in, but no preferences OR editing) -->
+    <div
+      v-else-if="user && (!user.preferences || isEditingPreferences)"
+      class="w-full max-w-2xl bg-gray-800 p-8 rounded-xl shadow-xl border border-gray-700"
+    >
+      <h2 class="text-3xl font-bold mb-2 text-center">
+        {{ isEditingPreferences ? 'Modifier tes préférences ⚙️' : `Bienvenue, ${user.name || "Développeur"} ! 🚀` }}
+      </h2>
+      <p class="text-gray-400 text-center mb-8">
+        Configurons ton profil pour te trouver les meilleurs projets
+        open-source.
+      </p>
+
+      <div class="space-y-8">
+        <!-- Difficulty Selection -->
+        <div>
+          <h3 class="text-xl font-semibold mb-4">
+            Quel est ton niveau actuel ?
+          </h3>
+          <div class="flex gap-4">
+            <button
+              @click="formDifficulty = 'beginner'"
+              :class="
+                formDifficulty === 'beginner'
+                  ? 'bg-blue-600 border-blue-500'
+                  : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+              "
+              class="flex-1 py-4 border rounded-lg font-medium transition"
+            >
+              🌱 Débutant (Good First Issues)
+            </button>
+            <button
+              @click="formDifficulty = 'expert'"
+              :class="
+                formDifficulty === 'expert'
+                  ? 'bg-blue-600 border-blue-500'
+                  : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+              "
+              class="flex-1 py-4 border rounded-lg font-medium transition"
+            >
+              🔥 Expert (Défis complexes)
+            </button>
+          </div>
+        </div>
+
+        <!-- Languages Selection -->
+        <div>
+          <h3 class="text-xl font-semibold mb-4">
+            Quels langages pratiques-tu ?
+          </h3>
+          <div class="flex flex-wrap gap-3">
+            <button
+              v-for="lang in availableLanguages"
+              :key="lang"
+              @click="toggleLanguage(lang)"
+              :class="
+                formLanguages.includes(lang)
+                  ? 'bg-green-600 border-green-500'
+                  : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+              "
+              class="px-4 py-2 border rounded-full text-sm font-medium transition capitalize"
+            >
+              {{ lang }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4 mt-4">
+          <button
+            v-if="isEditingPreferences"
+            @click="isEditingPreferences = false"
+            class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded-lg transition shadow-lg"
+          >
+            Annuler
+          </button>
+          <button
+            @click="savePreferences"
+            :disabled="submitting"
+            class="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-bold py-4 rounded-lg transition shadow-lg"
+          >
+            {{ submitting ? "Enregistrement..." : (isEditingPreferences ? "Mettre à jour 🚀" : "Commencer à swiper 🚀") }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Dashboard / Ready to Swipe State (Logged in AND has preferences AND NOT editing) -->
+    <div v-else-if="user && user.preferences && !isEditingPreferences" class="text-center">
       <!-- Support both snake_case and camelCase to prevent missing images -->
       <img
         :src="user.avatar_url || user.avatarUrl || ''"
@@ -73,19 +231,36 @@ console.log(user);
         class="bg-gray-800 p-6 rounded-lg mb-8 border border-green-500/30 shadow-lg shadow-green-500/10"
       >
         <h2 class="text-xl font-semibold text-green-400 mb-2">
-          Secure Content 🔒
+          Profil Complet ✅
         </h2>
         <p class="text-gray-300">
-          Authentication successful via AdonisJS Opaque Token.
+          Niveau :
+          <span class="font-bold capitalize text-white">{{
+            user.preferences.difficulty
+          }}</span>
+        </p>
+        <p class="text-gray-300">
+          Langages :
+          <span class="font-bold capitalize text-white">{{
+            user.preferences.languages.join(", ")
+          }}</span>
         </p>
       </div>
 
-      <button
-        @click="logout"
-        class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition"
-      >
-        Sign Out
-      </button>
+      <div class="flex gap-4 justify-center">
+        <button
+          @click="editPreferences"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+        >
+          Modifier mes préférences
+        </button>
+        <button
+          @click="logout"
+          class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+        >
+          Sign Out
+        </button>
+      </div>
     </div>
 
     <!-- Unauthenticated State -->

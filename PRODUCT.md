@@ -21,7 +21,7 @@ GitMatch is a web platform designed to help student and junior developers find O
 We do not rely on a nightly Cron job. We use a **Reactive/Lazy Ingestion** strategy.
 
 1.  **User Trigger:** The user looks for projects (e.g., "JavaScript" + "Beginner").
-2.  **Cache First:** The Backend queries the **Local PostgreSQL Database**.
+2.  **Cache First:** The Backend queries the **Local PostgresSQL Database**.
 3.  **Lazy Load (The Switch):**
   * If local results are sufficient: Return them immediately.
   * If local results are insufficient (Cache Miss): **Call the GitHub API in real-time**.
