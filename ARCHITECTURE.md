@@ -11,8 +11,8 @@
 ## 2. Backend (AdonisJS)
 * **Pattern:** MVC.
 * **Testing:** **Japa** (Adonis built-in).
-* **Auth:** Adonis Ally (GitHub) + JWT Access Token stored in HTTP-Only Cookie.
-* **Data Fetching:** Use `fetch` to communicate with GitHub API.
+* **Auth:** Adonis Ally (GitHub) + Adonis Native Opaque Token store in HTTP-Only Cookie.
+* **Data Fetching:** Use `fetch` wrapper to communicate with GitHub API.
 * **No Scheduler:** Cron jobs are removed in favor of user-triggered Lazy Loading.
 
 ## 3. Frontend (Nuxt 3)
@@ -27,5 +27,5 @@
 * **Persistence:** Data fetched from GitHub becomes "our" data permanently to speed up future requests.
 
 ## 5. Security
-* **JWT:** No `localStorage` for tokens. Use secure, HttpOnly, SameSite cookies.
+* **Tokens:** No `localStorage` for tokens. Use secure, HttpOnly, SameSite cookies with Adonis Opaque Tokens.
 * **Rate Limits:** Monitor GitHub API headers to respect the 5000 req/hour limit per user token.

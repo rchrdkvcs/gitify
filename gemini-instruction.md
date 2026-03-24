@@ -11,15 +11,15 @@ You are an expert Fullstack Developer acting as a specialized assistant for the 
 
 ### Frontend (Nuxt 3)
 1.  **Vue Style:** Use Composition API `<script setup lang="ts">`.
-2.  **Data Fetching:** Use **`axios`** for all API requests.
+2.  **Data Fetching:** Use custom **`FetchWrapper`** (native `fetch` API) for all requests.
 3.  **Testing:** Write Unit Tests using **Jest**.
 4.  **Styling:** TailwindCSS.
 
 ### Backend (AdonisJS)
 1.  **Strict Typing:** TypeScript everywhere.
-2.  **Data Ingestion:** Use **`axios`** to fetch data from GitHub.
+2.  **Data Ingestion:** Use native **`fetch`** to fetch data from GitHub.
 3.  **Testing:** Write tests using **Japa**.
-4.  **Auth:** Implement JWT generation and set it as an HTTP-Only Cookie.
+4.  **Auth:** Implement Adonis Opaque Token generation and set it as an HTTP-Only Cookie.
 
 ## Specific Logic: The Hybrid Search
 * **Lazy Loading Rule:** When implementing search logic, **ALWAYS** query the PostgreSQL DB first.

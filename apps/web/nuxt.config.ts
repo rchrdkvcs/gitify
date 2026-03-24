@@ -10,10 +10,10 @@ export default defineNuxtConfig({
     "@pinia/colada-nuxt",
   ],
   css: ["~/assets/styles/main.css"],
-  vite: { plugins: [tailwindcss()] },
+  vite: { plugins: [tailwindcss() as any] },
   runtimeConfig: {
-    public:{
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || "http://api:3333"
-    }
-  }
+    public: {
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || "http://localhost:3333",
+    },
+  },
 });

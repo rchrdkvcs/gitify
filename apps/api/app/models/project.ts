@@ -3,29 +3,33 @@ import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import Favorite from '#models/favorite'
 
-export type UserPreferences = {
-  difficulty: 'beginner' | 'expert'
-  languages: string[]
-}
-
-export default class User extends BaseModel {
+export default class Project extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
   @column()
-  declare githubId: string
+  declare githubRepoId: number
 
   @column()
-  declare username: string
+  declare ownerName: string
 
   @column()
-  declare email: string
+  declare name: string
 
   @column()
-  declare avatarUrl: string | null
+  declare description: string | null
 
   @column()
-  declare preferences: UserPreferences | null
+  declare repositoryUrl: string
+
+  @column()
+  declare stars: number
+
+  @column()
+  declare language: string | null
+
+  @column()
+  declare topics: string[] | null
 
   @hasMany(() => Favorite)
   declare favorites: HasMany<typeof Favorite>

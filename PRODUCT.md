@@ -11,7 +11,7 @@ GitMatch is a web platform designed to help student and junior developers find O
 
 ### A. Authentication
 * **GitHub OAuth:** Users login via GitHub.
-* **Session:** Secure JWT stored in HTTP-Only Cookies.
+* **Session:** Secure Opaque Access Token stored in HTTP-Only Cookies.
 
 ### B. User Onboarding
 * **Profiling:** Auto-detection of languages based on the user's GitHub profile.
@@ -35,6 +35,6 @@ We do not rely on a nightly Cron job. We use a **Reactive/Lazy Ingestion** strat
 * **Dark Mode:** Default.
 
 ## 4. Data Entities
-* **User:** GitHub ID, Preferences, JWT Session.
+* **User:** GitHub ID, Preferences, Opaque Token Session.
 * **Project:** GitHub Repo ID, Name, Description, Stars, Language, Topics.
 * **Match/Favorite:** Relation between User and Project (Swiped Right).
