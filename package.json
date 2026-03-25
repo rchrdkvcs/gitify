@@ -35,5 +35,6 @@
   ],
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "packageManager": "pnpm@10.30.2"
 }
