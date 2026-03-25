@@ -2,6 +2,7 @@
   "name": "gitify",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev:api": "pnpm --filter @gitify/api dev",
     "dev:web": "pnpm --filter @gitify/web dev",
@@ -13,12 +14,14 @@
     "docker:logs:web": "docker compose -f compose.dev.yaml logs -f web",
     "docker:logs:db": "docker compose -f compose.dev.yaml logs -f database",
     "docker:restart": "docker compose -f compose.dev.yaml restart",
-    "docker:clean": "docker compose -f compose.dev.yaml down -v"
+    "docker:clean": "docker compose -f compose.dev.yaml down -v",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix"
   },
   "devDependencies": {
     "@poppinss/ts-exec": "^1.4.4",
-    "eslint": "^10.1.0",
     "npm-run-all2": "^8.0.4",
+    "oxlint": "^1.57.0",
     "prettier": "^3.7.4",
     "typescript": "^6.0.2"
   },
