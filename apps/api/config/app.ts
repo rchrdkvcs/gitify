@@ -1,5 +1,5 @@
-import app from '@adonisjs/core/services/app'
-import { defineConfig } from '@adonisjs/core/http'
+import { defineConfig } from "@adonisjs/core/http";
+import app from "@adonisjs/core/services/app";
 
 /**
  * The configuration settings used by the HTTP server
@@ -19,11 +19,11 @@ export const http = defineConfig({
    * defined inside the "config/session.ts" file.
    */
   cookie: {
-    domain: '',
-    path: '/',
-    maxAge: '2h',
+    domain: "",
+    path: "/",
+    maxAge: "2h",
     httpOnly: true,
     secure: app.inProduction,
-    sameSite: 'lax',
+    sameSite: "lax",
   },
-})
+});

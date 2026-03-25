@@ -2,15 +2,8 @@
   "name": "@gitify/api",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "license": "UNLICENSED",
-  "scripts": {
-    "start": "node bin/server.js",
-    "build": "node ace build",
-    "dev": "node ace serve --hmr",
-    "test": "node ace test",
-    "typecheck": "tsc --noEmit"
-  },
+  "type": "module",
   "imports": {
     "#controllers/*": "./app/controllers/*.js",
     "#services/*": "./app/services/*.js",
@@ -24,6 +17,13 @@
     "#config/*": "./config/*.js",
     "#generated/*": "./.adonisjs/server/*.js",
     "#transformers/*": "./app/transformers/*.js"
+  },
+  "scripts": {
+    "build": "node ace build",
+    "dev": "node ace serve --hmr",
+    "start": "node bin/server.js",
+    "test": "node ace test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@adonisjs/auth": "^10.0.0",

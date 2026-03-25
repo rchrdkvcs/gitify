@@ -13,10 +13,8 @@ watch(healthState, (newState) => {
 </script>
 
 <template>
-  <UContainer class="flex justify-center items-center py-4">
-    <div v-if="healthState.status === 'pending'" class="text-2xl">
-      Loading...
-    </div>
+  <UContainer class="flex items-center justify-center py-4">
+    <div v-if="healthState.status === 'pending'" class="text-2xl">Loading...</div>
 
     <div v-else class="text-2xl">
       {{ health }}

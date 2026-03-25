@@ -1,36 +1,37 @@
-import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
-import User from '#models/user'
-import Favorite from '#models/favorite'
+import type { BelongsTo, HasMany } from "@adonisjs/lucid/types/relations";
+
+import Favorite from "#models/favorite";
+import User from "#models/user";
+import { BaseModel, column, belongsTo, hasMany } from "@adonisjs/lucid/orm";
+import { type DateTime } from "luxon";
 
 export default class Project extends BaseModel {
   @column({ isPrimary: true })
-  declare id: number
+  declare id: number;
 
   @column()
-  declare name: string
+  declare name: string;
 
   @column()
-  declare description: string | null
+  declare description: string | null;
 
   @column()
-  declare repositoryUrl: string
+  declare repositoryUrl: string;
 
   @column()
-  declare ownerId: number
+  declare ownerId: number;
 
   @belongsTo(() => User, {
-    foreignKey: 'ownerId',
+    foreignKey: "ownerId",
   })
-  declare owner: BelongsTo<typeof User>
+  declare owner: BelongsTo<typeof User>;
 
   @hasMany(() => Favorite)
-  declare favorites: HasMany<typeof Favorite>
+  declare favorites: HasMany<typeof Favorite>;
 
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
+  declare createdAt: DateTime;
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime
+  declare updatedAt: DateTime;
 }
