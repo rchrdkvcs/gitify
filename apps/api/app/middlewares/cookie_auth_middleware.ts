@@ -1,5 +1,5 @@
-import type { HttpContext } from '@adonisjs/core/http'
-import type { NextFn } from '@adonisjs/core/types/http'
+import type { HttpContext } from "@adonisjs/core/http";
+import type { NextFn } from "@adonisjs/core/types/http";
 
 /**
  * Cookie Auth Middleware
@@ -9,13 +9,13 @@ import type { NextFn } from '@adonisjs/core/types/http'
  */
 export default class CookieAuthMiddleware {
   async handle({ request }: HttpContext, next: NextFn) {
-    const token = request.cookie('gitmatch_session')
+    const token = request.cookie("gitmatch_session");
 
     if (token) {
-      request.request.headers['authorization'] = `Bearer ${token}`
-      request.headers().authorization = `Bearer ${token}`
+      request.request.headers["authorization"] = `Bearer ${token}`;
+      request.headers().authorization = `Bearer ${token}`;
     }
 
-    return next()
+    return next();
   }
 }
