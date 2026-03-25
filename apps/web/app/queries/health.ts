@@ -4,5 +4,5 @@ export const HEALTH_QUERY_KEYS = {
 
 export const healthQuery = defineQueryOptions(() => ({
   key: HEALTH_QUERY_KEYS.root,
-  query: () => $fetch(useBaseUrl("/")),
+  query: () => useApi("/"),
 }));

@@ -2,37 +2,39 @@
   "name": "gitify",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@10.28.1",
+  "workspaces": [
+    "apps/*"
+  ],
+  "type": "module",
   "scripts": {
+    "dev": "run-p dev:api dev:web",
     "dev:api": "pnpm --filter @gitify/api dev",
     "dev:web": "pnpm --filter @gitify/web dev",
-    "dev": "run-p dev:api dev:web",
-    "docker:up": "docker compose -f compose.dev.yaml up --build -d",
+    "docker:clean": "docker compose -f compose.dev.yaml down -v",
     "docker:down": "docker compose -f compose.dev.yaml down",
     "docker:logs": "docker compose -f compose.dev.yaml logs -f",
     "docker:logs:api": "docker compose -f compose.dev.yaml logs -f api",
-    "docker:logs:web": "docker compose -f compose.dev.yaml logs -f web",
     "docker:logs:db": "docker compose -f compose.dev.yaml logs -f database",
+    "docker:logs:web": "docker compose -f compose.dev.yaml logs -f web",
     "docker:restart": "docker compose -f compose.dev.yaml restart",
-    "docker:clean": "docker compose -f compose.dev.yaml down -v"
+    "docker:up": "docker compose -f compose.dev.yaml up --build -d",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.10",
-    "eslint": "^9.39.2",
+    "@poppinss/ts-exec": "^1.4.4",
     "npm-run-all2": "^8.0.4",
-    "prettier": "^3.7.4",
-    "typescript": "^5.9.3"
+    "oxfmt": "^0.42.0",
+    "oxlint": "^1.57.0",
+    "typescript": "^6.0.2"
   },
+  "packageManager": "pnpm@10.30.2",
   "trustedDependencies": [
     "@gitify/web",
     "@parcel/watcher",
     "@swc/core",
     "@tailwindcss/oxide"
-  ],
-  "workspaces": [
-    "apps/*"
-  ],
-  "dependencies": {
-    "jsonwebtoken": "^9.0.3"
-  }
+  ]
 }

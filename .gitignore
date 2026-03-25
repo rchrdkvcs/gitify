@@ -60,6 +60,8 @@ coverage/
 apps/api/storage/
 apps/api/tmp/
 apps/api/uploads/
+apps/api/.adonisjs
+apps/api/database/schema.ts
 
 # Web specific
 apps/web/.data/
