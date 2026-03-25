@@ -1,11 +1,6 @@
-import { indexEntities } from "@adonisjs/core";
 import { defineConfig } from "@adonisjs/core/app";
 
 export default defineConfig({
-  hooks: {
-    init: [indexEntities()],
-  },
-
   /*
   |--------------------------------------------------------------------------
   | Experimental flags
@@ -53,6 +48,7 @@ export default defineConfig({
     () => import("@adonisjs/lucid/database_provider"),
     () => import("@adonisjs/session/session_provider"),
     () => import("@adonisjs/auth/auth_provider"),
+    () => import("@adonisjs/ally/ally_provider"),
   ],
 
   /*
@@ -77,12 +73,12 @@ export default defineConfig({
   tests: {
     suites: [
       {
-        files: ["tests/unit/**/*.spec.{ts,js}"],
+        files: ["tests/unit/**/*.spec(.ts|.js)"],
         name: "unit",
         timeout: 2000,
       },
       {
-        files: ["tests/functional/**/*.spec.{ts,js}"],
+        files: ["tests/functional/**/*.spec(.ts|.js)"],
         name: "functional",
         timeout: 30000,
       },

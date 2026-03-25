@@ -7,7 +7,6 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.uuid("id").primary();
 
-      // Clés étrangères
       table.integer("user_id").unsigned().references("id").inTable("users").onDelete("CASCADE");
       table
         .integer("project_id")
@@ -16,7 +15,6 @@ export default class extends BaseSchema {
         .inTable("projects")
         .onDelete("CASCADE");
 
-      // Unicité : Un user ne peut liker un projet qu'une seule fois
       table.unique(["user_id", "project_id"]);
 
       table.timestamp("created_at");
