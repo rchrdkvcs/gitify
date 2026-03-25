@@ -62,7 +62,7 @@ export default class AuthController {
     })
 
     // Redirect the user back to the Nuxt frontend
-    return response.redirect('http://localhost:3000/')
+    return response.redirect(env.get('FRONTEND_URL'))
   }
 
   /**
