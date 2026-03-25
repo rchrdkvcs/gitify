@@ -12,15 +12,12 @@ export class FetchWrapper {
 
   /**
    * Core request method handling the actual fetch call and error management.
-   * 
+   *
    * @param endpoint - The API endpoint to call.
    * @param options - Fetch options (method, headers, body, etc.).
    * @returns A promise resolving to the parsed generic type T.
    */
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers = {
       "Content-Type": "application/json",

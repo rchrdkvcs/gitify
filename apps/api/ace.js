@@ -19,9 +19,9 @@
 /**
  * Register hook to process TypeScript files using ts-node
  */
-import 'ts-node-maintained/register/esm'
+import "@poppinss/ts-exec";
 
 /**
  * Import ace console entrypoint
  */
-await import('./bin/console.ts')
+await import("./bin/console.ts");

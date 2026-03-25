@@ -32,7 +32,7 @@ cp apps/web/.env.example apps/web/.env
 ### Variables d'environnement de l'API (`apps/api/.env`)
 
 | Variable         | Description                 | Valeur par defaut   |
-|------------------|-----------------------------|---------------------|
+| ---------------- | --------------------------- | ------------------- |
 | `PORT`           | Port du serveur             | `3333`              |
 | `HOST`           | Host du serveur             | `0.0.0.0`           |
 | `NODE_ENV`       | Environnement Node          | `development`       |
@@ -46,9 +46,9 @@ cp apps/web/.env.example apps/web/.env
 
 ### Variables d'environnement du Frontend (`apps/web/.env`)
 
-| Variable       | Description      | Valeur par defaut       |
-| -------------- | ---------------- |-------------------------|
-| `VITE_API_URL` | URL de l'API     | `http://localhost:3333` |
+| Variable       | Description  | Valeur par defaut       |
+| -------------- | ------------ | ----------------------- |
+| `VITE_API_URL` | URL de l'API | `http://localhost:3333` |
 
 ---
 
@@ -139,7 +139,7 @@ pnpm dev:web
 ## Commandes utiles
 
 | Commande               | Description                         |
-|------------------------|-------------------------------------|
+| ---------------------- | ----------------------------------- |
 | `pnpm dev`             | Lance l'API et le frontend en local |
 | `pnpm dev:api`         | Lance l'API uniquement              |
 | `pnpm dev:web`         | Lance le frontend uniquement        |
