@@ -1,4 +1,4 @@
-import vine from '@vinejs/vine'
+import vine from "@vinejs/vine";
 
 /**
  * Validator for updating user preferences.
@@ -6,7 +6,7 @@ import vine from '@vinejs/vine'
  */
 export const updatePreferencesValidator = vine.create(
   vine.object({
-    difficulty: vine.enum(['beginner', 'expert']),
+    difficulty: vine.enum(["beginner", "expert"]),
     languages: vine.array(vine.string().trim().escape()).minLength(1),
-  })
-)
+  }),
+);
