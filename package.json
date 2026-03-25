@@ -16,10 +16,11 @@
     "docker:clean": "docker compose -f compose.dev.yaml down -v"
   },
   "devDependencies": {
-    "eslint": "^9.39.2",
+    "@poppinss/ts-exec": "^1.4.4",
+    "eslint": "^10.1.0",
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.7.4",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "trustedDependencies": [
     "@gitify/web",
