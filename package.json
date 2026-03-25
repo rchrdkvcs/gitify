@@ -16,13 +16,15 @@
     "docker:restart": "docker compose -f compose.dev.yaml restart",
     "docker:clean": "docker compose -f compose.dev.yaml down -v",
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix"
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
   },
   "devDependencies": {
     "@poppinss/ts-exec": "^1.4.4",
     "npm-run-all2": "^8.0.4",
+    "oxfmt": "^0.42.0",
     "oxlint": "^1.57.0",
-    "prettier": "^3.7.4",
     "typescript": "^6.0.2"
   },
   "trustedDependencies": [
