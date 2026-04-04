@@ -49,10 +49,8 @@ export default class AuthController {
       },
     );
 
-    // Generate an AdonisJS native Opaque Access Token
-    const token = await User.accessTokens.create(user, ["*"], {
-      expiresIn: "7 days",
-    });
+    const token = await User.accessTokens.create(user, ["*"], { expiresIn: "7 days" })
+    const plainToken = token.value!.release()
 
     // Store the token in a secure HTTP-Only cookie to prevent XSS attacks
     response.cookie("gitmatch_session", token.value!.release(), {
@@ -62,8 +60,27 @@ export default class AuthController {
       maxAge: "7d",
     });
 
+    if (env.get("NODE_ENV") !== "production") {
+      response.cookie("gitmatch_dev_token", plainToken, {
+        httpOnly: false,
+        secure: false,
+        sameSite: "lax",
+        maxAge: "7d",
+      })
+    }
+
     // Redirect the user back to the Nuxt frontend
     return response.redirect(env.get("FRONTEND_URL"));
+  }
+
+  async dev({ request, response }: HttpContext) {
+    const token = request.cookie("gitmatch_dev_token")
+
+    if (!token) {
+      return response.unauthorized({ error: "No dev token found, login first via /auth/github/redirect" })
+    }
+
+    return response.json({ token })
   }
 
   /**
