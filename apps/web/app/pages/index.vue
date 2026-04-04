@@ -1,123 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+const {user, loading, fetchMe, logout} = useAuth()
+const {
+  submitting,
+  isEditingPreferences,
+  formDifficulty,
+  formLanguages,
+  availableLanguages,
+  toggleLanguage,
+  editPreferences,
+  savePreferences,
+} = usePreferences(user)
 
-import { api } from "~/utilis/FetchWrapper";
-
-interface UserPreferences {
-  difficulty: "beginner" | "expert";
-  languages: string[];
-}
-
-/**
- * User interface reflecting the backend model JSON serialization.
- * AdonisJS Lucid serializes properties to snake_case by default.
- */
-interface User {
-  id: number;
-  email: string;
-  name: string | null;
-  avatar_url?: string | null;
-  avatarUrl?: string | null;
-  preferences: UserPreferences | null;
-}
-
-const user = ref<User | null>(null);
-const loading = ref<boolean>(true);
-
-// Onboarding Form State
-const submitting = ref(false);
-const formDifficulty = ref<"beginner" | "expert">("beginner");
-const formLanguages = ref<string[]>([]);
-const isEditingPreferences = ref(false);
-
-const availableLanguages = [
-  "javascript",
-  "typescript",
-  "python",
-  "java",
-  "c++",
-  "c#",
-  "ruby",
-  "go",
-  "rust",
-  "php",
-  "swift",
-];
-
-/**
- * Toggle language selection in the onboarding form
- */
-const toggleLanguage = (lang: string) => {
-  if (formLanguages.value.includes(lang)) {
-    formLanguages.value = formLanguages.value.filter((l) => l !== lang);
-  } else {
-    formLanguages.value.push(lang);
-  }
-};
-
-/**
- * Attempt to fetch the current user profile on component mount.
- * The HttpOnly cookie is automatically sent by the FetchWrapper.
- */
-onMounted(async () => {
-  try {
-    const response = await api.get<{ user: User }>("/auth/me");
-    user.value = response.user;
-  } catch (error) {
-    // Silently handle 401 errors (User is simply not logged in)
-    user.value = null;
-  } finally {
-    loading.value = false;
-  }
-});
-
-/**
- * Enter edit mode and pre-fill the form with current preferences
- */
-const editPreferences = () => {
-  if (user.value?.preferences) {
-    formDifficulty.value = user.value.preferences.difficulty;
-    formLanguages.value = [...user.value.preferences.languages];
-  }
-  isEditingPreferences.value = true;
-};
-
-/**
- * Submit onboarding preferences to the backend
- */
-const savePreferences = async () => {
-  if (formLanguages.value.length === 0) {
-    alert("Veuillez sélectionner au moins un langage.");
-    return;
-  }
-
-  submitting.value = true;
-  try {
-    const response = await api.put<{ user: User }>("/auth/preferences", {
-      difficulty: formDifficulty.value,
-      languages: formLanguages.value,
-    });
-    // Instantly update local state to trigger UI change
-    user.value = response.user;
-    isEditingPreferences.value = false; // Close the form
-  } catch (error) {
-    console.error("Failed to save preferences:", error);
-  } finally {
-    submitting.value = false;
-  }
-};
-
-/**
- * Handle user logout by calling the backend and clearing local state.
- */
-const logout = async () => {
-  try {
-    await api.post("/auth/logout");
-    user.value = null;
-  } catch (error) {
-    console.error("Logout failed:", error);
-  }
-};
+onMounted(fetchMe)
 </script>
 
 <template>
@@ -242,11 +136,20 @@ const logout = async () => {
         <p class="text-gray-300">
           Langages :
           <span class="font-bold text-white capitalize">{{
-            user.preferences.languages.join(", ")
-          }}</span>
+              user.preferences.languages.join(", ")
+            }}</span>
         </p>
       </div>
-
+      <div class="flex justify-center gap-4 m-5">
+        <NuxtLink to="/swipe"
+                  class="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700">
+          Start to swipe
+        </NuxtLink>
+        <NuxtLink to="/liked"
+                  class="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700">
+          Liked
+        </NuxtLink>
+      </div>
       <div class="flex justify-center gap-4">
         <button
           @click="editPreferences"
