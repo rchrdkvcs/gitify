@@ -32,13 +32,14 @@ export default class ProjectController {
     const available = Number(countResult[0].$extras.total);
 
     if (available < this.FEED_FETCH_THRESHOLD) {
-      for (const language of languages) {
-        const needsFetch = await GitHubService.needsFetch(language, difficulty);
-        if (needsFetch) {
-          // TODO : make an async call to fetch x language in same time
-          await GitHubService.fetchAndStore(language, difficulty, user.accessToken);
-        }
-      }
+      await Promise.all(
+        languages.map(async (language) => {
+          const needsFetch = await GitHubService.needsFetch(language, difficulty);
+          if (needsFetch) {
+            await GitHubService.fetchAndStore(language, difficulty, user.accessToken);
+          }
+        }),
+      );
     }
 
     const projectsPerLanguage = await Promise.all(
