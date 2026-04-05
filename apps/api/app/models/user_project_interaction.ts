@@ -1,8 +1,9 @@
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
-import { BaseModel, belongsTo, column } from "@adonisjs/lucid/orm";
+import type { DateTime } from "luxon";
+
 import Project from "#models/project";
 import User from "#models/user";
-import type { DateTime } from "luxon";
+import { BaseModel, belongsTo, column } from "@adonisjs/lucid/orm";
 
 export default class UserProjectInteraction extends BaseModel {
   static table = "user_project_interactions";

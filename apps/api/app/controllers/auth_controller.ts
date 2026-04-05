@@ -53,14 +53,14 @@ export default class AuthController {
     const plainToken = token.value!.release();
 
     // Store the token in a secure HTTP-Only cookie to prevent XSS attacks
-    response.cookie("gitmatch_session", token.value!.release(), {
+    response.cookie("gitmatch_session", plainToken, {
       httpOnly: true,
       secure: env.get("NODE_ENV") === "production",
       sameSite: "lax",
       maxAge: "7d",
     });
 
-    if (env.get("NODE_ENV") !== "production") {
+    if (env.get("ENABLE_DEV_TOKEN")) {
       response.cookie("gitmatch_dev_token", plainToken, {
         httpOnly: false,
         secure: false,
@@ -89,6 +89,7 @@ export default class AuthController {
    * Returns the currently authenticated user's profile.
    */
   async me({ auth, response }: HttpContext) {
+    // TODO : serialize sensitive data
     return response.ok({ user: auth.user });
   }
 

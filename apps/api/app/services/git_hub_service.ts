@@ -47,7 +47,7 @@ export default class GitHubService {
     language: string,
     difficulty: "beginner" | "expert",
     userGithubToken: string,
-  ): Promise<any> {
+  ): Promise<number> {
     const query = this.buildQuery(language, difficulty);
     const url = `${this.BASE_URL}?q=${encodeURIComponent(query)}&sort=updated&order=desc&per_page=100`;
 

@@ -43,9 +43,7 @@ export default class User extends BaseModel {
   @column()
   declare avatarUrl: string | null;
 
-  @column({
-    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
-  })
+  @column()
   declare preferences: UserPreferences | null;
 
   @column.dateTime({ autoCreate: true })

@@ -1,7 +1,9 @@
+import type { HttpContext } from "@adonisjs/core/http";
+
 import Project from "#models/project";
 import UserProjectInteraction from "#models/user_project_interaction";
 import GitHubService from "#services/git_hub_service";
-import type { HttpContext } from "@adonisjs/core/http";
+import { interactionValidator } from "#validators/interaction_validator";
 
 export default class ProjectController {
   async feed({ auth, response }: HttpContext) {
@@ -87,22 +89,24 @@ export default class ProjectController {
     return response.ok({ projects });
   }
 
-  async like({ auth, params, response }: HttpContext) {
+  async like({ auth, response, request }: HttpContext) {
+    const payload = await request.validateUsing(interactionValidator);
     const user = auth.user!;
 
     await UserProjectInteraction.updateOrCreate(
-      { userId: user.id, projectId: Number(params.id) },
+      { userId: user.id, projectId: payload.params.id },
       { type: "liked" },
     );
 
     return response.ok({ message: "Liked" });
   }
 
-  async pass({ auth, params, response }: HttpContext) {
+  async pass({ auth, response, request }: HttpContext) {
+    const payload = await request.validateUsing(interactionValidator);
     const user = auth.user!;
 
     await UserProjectInteraction.updateOrCreate(
-      { userId: user.id, projectId: Number(params.id) },
+      { userId: user.id, projectId: payload.params.id },
       { type: "passed" },
     );
 
