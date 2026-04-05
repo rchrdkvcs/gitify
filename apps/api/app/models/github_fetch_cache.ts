@@ -1,27 +1,27 @@
-import { BaseModel, column } from '@adonisjs/lucid/orm'
-import { DateTime } from 'luxon'
+import { BaseModel, column } from "@adonisjs/lucid/orm";
+import type { DateTime } from "luxon";
 
 export default class GithubFetchCache extends BaseModel {
-  static table = 'github_fetch_caches'
+  static table = "github_fetch_caches";
 
   @column({ isPrimary: true })
-  declare id: number
+  declare id: number;
 
   @column()
-  declare language: string
+  declare language: string;
 
   @column()
-  declare difficulty: 'beginner' | 'expert'
+  declare difficulty: "beginner" | "expert";
 
   @column()
-  declare totalStored: number
+  declare totalStored: number;
 
   @column()
-  declare fetchedAt: DateTime
+  declare fetchedAt: DateTime;
 
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
+  declare createdAt: DateTime;
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime
+  declare updatedAt: DateTime;
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const {user, loading, fetchMe, logout} = useAuth()
+const { user, loading, fetchMe, logout } = useAuth();
 const {
   submitting,
   isEditingPreferences,
@@ -9,9 +9,9 @@ const {
   toggleLanguage,
   editPreferences,
   savePreferences,
-} = usePreferences(user)
+} = usePreferences(user);
 
-onMounted(fetchMe)
+onMounted(fetchMe);
 </script>
 
 <template>
@@ -136,17 +136,21 @@ onMounted(fetchMe)
         <p class="text-gray-300">
           Langages :
           <span class="font-bold text-white capitalize">{{
-              user.preferences.languages.join(", ")
-            }}</span>
+            user.preferences.languages.join(", ")
+          }}</span>
         </p>
       </div>
-      <div class="flex justify-center gap-4 m-5">
-        <NuxtLink to="/swipe"
-                  class="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700">
+      <div class="m-5 flex justify-center gap-4">
+        <NuxtLink
+          to="/swipe"
+          class="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700"
+        >
           Start to swipe
         </NuxtLink>
-        <NuxtLink to="/liked"
-                  class="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700">
+        <NuxtLink
+          to="/liked"
+          class="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700"
+        >
           Liked
         </NuxtLink>
       </div>

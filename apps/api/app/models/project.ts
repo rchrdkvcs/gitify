@@ -30,10 +30,10 @@ export default class Project extends BaseModel {
   declare openIssuesCount: number;
 
   @column()
-  declare difficulty: 'beginner' | 'expert';
+  declare difficulty: "beginner" | "expert";
 
   @column({
-    prepare: (value: string[] | null) => value ? JSON.stringify(value) : null,
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
   })
   declare topics: string[] | null;
 

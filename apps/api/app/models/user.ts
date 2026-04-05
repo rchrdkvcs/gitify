@@ -44,7 +44,7 @@ export default class User extends BaseModel {
   declare avatarUrl: string | null;
 
   @column({
-    prepare: (value: string[] | null) => value ? JSON.stringify(value) : null,
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
   })
   declare preferences: UserPreferences | null;
 
