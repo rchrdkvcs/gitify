@@ -5,7 +5,7 @@
 - **Monorepo:**
   - `/backend`: AdonisJS 7 (Node.js) + TypeScript.
   - `/frontend`: Nuxt 4 (Vue.js) + TypeScript + TailwindCSS.
-- **Database:** PostgresSQL 15.
+- **Database:** PostgreSQL 15.
 - **Infrastructure:** Docker Compose.
 - **Package Manager:** `pnpm`.
 
