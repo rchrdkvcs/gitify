@@ -3,8 +3,8 @@
 ## 1. Tech Stack
 
 - **Monorepo:**
-  - `/backend`: AdonisJS 7 (Node.js) + TypeScript.
-  - `/frontend`: Nuxt 4 (Vue.js) + TypeScript + TailwindCSS.
+  - `apps/api`: AdonisJS 7 (Node.js) + TypeScript.
+  - `apps/web`: Nuxt 4 (Vue.js) + TypeScript + TailwindCSS.
 - **Database:** PostgreSQL 15.
 - **Infrastructure:** Docker Compose.
 - **Package Manager:** `pnpm`.
