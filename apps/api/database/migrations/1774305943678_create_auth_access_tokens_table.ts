@@ -13,7 +13,6 @@ export default class extends BaseSchema {
         .references("id")
         .inTable("users")
         .onDelete("CASCADE");
-
       table.string("type").notNullable();
       table.string("name").nullable();
       table.string("hash").notNullable();

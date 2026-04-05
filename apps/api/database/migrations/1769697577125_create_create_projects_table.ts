@@ -13,8 +13,9 @@ export default class extends BaseSchema {
       table.string("repository_url").notNullable();
       table.integer("stars").notNullable().defaultTo(0);
       table.string("language").nullable();
+      table.integer("open_issues_count").notNullable().defaultTo(0);
+      table.string("difficulty").notNullable().defaultTo("beginner");
       table.jsonb("topics").nullable();
-
       table.timestamp("created_at", { useTz: true });
       table.timestamp("updated_at", { useTz: true });
     });

@@ -1,19 +1,24 @@
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
+import type { DateTime } from "luxon";
 
 import Project from "#models/project";
 import User from "#models/user";
-import { BaseModel, column, belongsTo } from "@adonisjs/lucid/orm";
-import { type DateTime } from "luxon";
+import { BaseModel, belongsTo, column } from "@adonisjs/lucid/orm";
 
-export default class Favorite extends BaseModel {
+export default class UserProjectInteraction extends BaseModel {
+  static table = "user_project_interactions";
+
   @column({ isPrimary: true })
-  declare id: string;
+  declare id: number;
 
   @column()
-  declare userId: string;
+  declare userId: number;
 
   @column()
-  declare projectId: string;
+  declare projectId: number;
+
+  @column()
+  declare type: "liked" | "passed";
 
   @belongsTo(() => User)
   declare user: BelongsTo<typeof User>;

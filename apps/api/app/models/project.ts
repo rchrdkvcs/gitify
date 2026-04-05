@@ -1,7 +1,4 @@
-import type { HasMany } from "@adonisjs/lucid/types/relations";
-
-import Favorite from "#models/favorite";
-import { BaseModel, column, hasMany } from "@adonisjs/lucid/orm";
+import { BaseModel, column } from "@adonisjs/lucid/orm";
 import { type DateTime } from "luxon";
 
 export default class Project extends BaseModel {
@@ -30,10 +27,15 @@ export default class Project extends BaseModel {
   declare language: string | null;
 
   @column()
-  declare topics: string[] | null;
+  declare openIssuesCount: number;
 
-  @hasMany(() => Favorite)
-  declare favorites: HasMany<typeof Favorite>;
+  @column()
+  declare difficulty: "beginner" | "expert";
+
+  @column({
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
+  })
+  declare topics: string[] | null;
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime;
