@@ -60,7 +60,7 @@ export default class AuthController {
       maxAge: "7d",
     });
 
-    if (env.get("ENABLE_DEV_TOKEN")) {
+    if (env.get("ENABLE_DEV_TOKEN") && env.get("NODE_ENV") !== "production") {
       response.cookie("gitmatch_dev_token", plainToken, {
         httpOnly: false,
         secure: false,
@@ -74,6 +74,10 @@ export default class AuthController {
   }
 
   async dev({ request, response }: HttpContext) {
+    if (!env.get("ENABLE_DEV_TOKEN") || env.get("NODE_ENV") === "production") {
+      return response.notFound({ error: "Not found" });
+    }
+
     const token = request.cookie("gitmatch_dev_token");
 
     if (!token) {
@@ -89,8 +93,12 @@ export default class AuthController {
    * Returns the currently authenticated user's profile.
    */
   async me({ auth, response }: HttpContext) {
-    // TODO : serialize sensitive data
-    return response.ok({ user: auth.user });
+    const user = auth.user!.serialize({
+      fields: {
+        omit: ["id", "accessToken", "email", "createdAt", "updatedAt"],
+      },
+    });
+    return response.ok({ user: user });
   }
 
   /**

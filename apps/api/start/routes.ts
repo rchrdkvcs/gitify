@@ -1,4 +1,5 @@
 import { controllers } from "#generated/controllers";
+import env from "#start/env";
 import { middleware } from "#start/kernel";
 import router from "@adonisjs/core/services/router";
 
@@ -11,9 +12,13 @@ router
   .group(() => {
     router.get("/github/redirect", [controllers.Auth, "redirect"]);
     router.get("/github/callback", [controllers.Auth, "callback"]);
-    router.get("/dev", [controllers.Auth, "dev"]);
   })
   .prefix("/auth");
+
+// Dev-only token endpoint — never registered in production
+if (env.get("ENABLE_DEV_TOKEN") && env.get("NODE_ENV") !== "production") {
+  router.get("/auth/dev", [controllers.Auth, "dev"]);
+}
 
 // Protected API Routes (Requires valid cookie session)
 router
