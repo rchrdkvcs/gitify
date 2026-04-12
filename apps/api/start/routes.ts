@@ -1,4 +1,5 @@
 import { controllers } from "#generated/controllers";
+import env from "#start/env";
 import { middleware } from "#start/kernel";
 import router from "@adonisjs/core/services/router";
 
@@ -14,6 +15,11 @@ router
   })
   .prefix("/auth");
 
+// Dev-only token endpoint — never registered in production
+if (env.get("ENABLE_DEV_TOKEN") && env.get("NODE_ENV") !== "production") {
+  router.get("/auth/dev", [controllers.Auth, "dev"]);
+}
+
 // Protected API Routes (Requires valid cookie session)
 router
   .group(() => {
@@ -22,4 +28,14 @@ router
     router.put("/preferences", [controllers.Preferences, "update"]);
   })
   .prefix("/auth")
+  .use(middleware.auth({ guards: ["api"] }));
+
+router
+  .group(() => {
+    router.get("/feed", [controllers.Project, "feed"]);
+    router.get("/liked", [controllers.Project, "liked"]);
+    router.post("/:id/like", [controllers.Project, "like"]);
+    router.post("/:id/pass", [controllers.Project, "pass"]);
+  })
+  .prefix("/projects")
   .use(middleware.auth({ guards: ["api"] }));

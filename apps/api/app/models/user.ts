@@ -1,10 +1,7 @@
 import type { AccessToken } from "@adonisjs/auth/access_tokens";
-import type { HasMany } from "@adonisjs/lucid/types/relations";
 
-import Favorite from "#models/favorite";
-import Project from "#models/project";
 import { DbAccessTokensProvider } from "@adonisjs/auth/access_tokens";
-import { BaseModel, column, hasMany } from "@adonisjs/lucid/orm";
+import { BaseModel, column } from "@adonisjs/lucid/orm";
 import { type DateTime } from "luxon";
 
 /**
@@ -48,14 +45,6 @@ export default class User extends BaseModel {
 
   @column()
   declare preferences: UserPreferences | null;
-
-  // A user can own multiple projects
-  @hasMany(() => Project, { foreignKey: "ownerId" })
-  declare projects: HasMany<typeof Project>;
-
-  // A user can swipe right (favorite) multiple projects
-  @hasMany(() => Favorite)
-  declare favorites: HasMany<typeof Favorite>;
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime;
