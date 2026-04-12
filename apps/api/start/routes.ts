@@ -30,6 +30,9 @@ router
   .prefix("/auth")
   .use(middleware.auth({ guards: ["api"] }));
 
+// Public project routes (no auth required)
+router.get("/projects/showcase", [controllers.Project, "showcase"]);
+
 router
   .group(() => {
     router.get("/feed", [controllers.Project, "feed"]);
