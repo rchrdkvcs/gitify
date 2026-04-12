@@ -89,8 +89,8 @@ onMounted(fetchFeed);
           </span>
         </div>
 
-        <!-- Boutons Like / Pass -->
-        <div class="flex gap-4">
+        <!-- Boutons Like / Pass / Détails -->
+        <div class="flex gap-3">
           <button
             @click="swipe('pass')"
             :disabled="actionLoading"
@@ -98,6 +98,12 @@ onMounted(fetchFeed);
           >
             ✕ Pass
           </button>
+          <NuxtLink
+            :to="`/projects/${currentProject.id}`"
+            class="flex items-center justify-center rounded-xl border-2 border-gray-600 bg-gray-700/50 px-4 py-4 text-sm font-semibold text-gray-300 transition hover:border-blue-500 hover:bg-blue-900/20 hover:text-blue-400"
+          >
+            Détails
+          </NuxtLink>
           <button
             @click="swipe('like')"
             :disabled="actionLoading"

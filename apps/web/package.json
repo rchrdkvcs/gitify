@@ -17,11 +17,16 @@
     "@pinia/colada-nuxt": "0.3.2",
     "@pinia/nuxt": "0.11.3",
     "@tailwindcss/vite": "^4.2.2",
+    "dompurify": "^3.3.3",
+    "marked": "^18.0.0",
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
     "vue": "^3.5.31",
     "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19"
   }
 }

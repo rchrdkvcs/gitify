@@ -34,6 +34,7 @@ router
   .group(() => {
     router.get("/feed", [controllers.Project, "feed"]);
     router.get("/liked", [controllers.Project, "liked"]);
+    router.get("/:id", [controllers.Project, "show"]);
     router.post("/:id/like", [controllers.Project, "like"]);
     router.post("/:id/pass", [controllers.Project, "pass"]);
   })

@@ -6,6 +6,24 @@ import GitHubService from "#services/git_hub_service";
 import { interactionValidator } from "#validators/interaction_validator";
 
 export default class ProjectController {
+  async show({ auth, response, request }: HttpContext) {
+    const payload = await request.validateUsing(interactionValidator);
+    const user = auth.user!;
+
+    const project = await Project.find(payload.params.id);
+    if (!project) {
+      return response.notFound({ error: "Project not found" });
+    }
+
+    if (GitHubService.needsDetailsFetch(project)) {
+      await GitHubService.fetchProjectDetails(project, user.accessToken);
+    }
+
+    await project.load("contributors");
+
+    return response.ok({ project });
+  }
+
   async feed({ auth, response }: HttpContext) {
     const user = auth.user!;
     const preferences = user.preferences;

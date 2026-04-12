@@ -1,4 +1,7 @@
-import { BaseModel, column } from "@adonisjs/lucid/orm";
+import type { HasMany } from "@adonisjs/lucid/types/relations";
+
+import Contributor from "#models/contributor";
+import { BaseModel, column, hasMany } from "@adonisjs/lucid/orm";
 import { type DateTime } from "luxon";
 
 export default class Project extends BaseModel {
@@ -36,6 +39,20 @@ export default class Project extends BaseModel {
     prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
   })
   declare topics: string[] | null;
+
+  @column()
+  declare readme: string | null;
+
+  @column({
+    prepare: (value: Record<string, number> | null) => (value ? JSON.stringify(value) : null),
+  })
+  declare languages: Record<string, number> | null;
+
+  @column.dateTime()
+  declare detailsFetchedAt: DateTime | null;
+
+  @hasMany(() => Contributor)
+  declare contributors: HasMany<typeof Contributor>;
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime;

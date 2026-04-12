@@ -1,6 +1,21 @@
+import Contributor from "#models/contributor";
 import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
 import { DateTime } from "luxon";
+
+interface GitHubContributor {
+  id: number;
+  login: string;
+  avatar_url: string;
+  html_url: string;
+  contributions: number;
+  type: string;
+}
+
+interface GitHubReadme {
+  content: string;
+  encoding: string;
+}
 
 interface GitHubRepo {
   id: number;
@@ -17,7 +32,9 @@ interface GitHubRepo {
 
 export default class GitHubService {
   private static CACHE_TTL_HOURS = 24;
+  private static DETAILS_CACHE_DAYS = 7;
   private static BASE_URL = "https://api.github.com/search/repositories";
+  private static REPO_BASE_URL = "https://api.github.com/repos";
 
   private static buildQuery(language: string, difficulty: "beginner" | "expert"): string {
     const base = `language:${language} archived:false is:public`;
@@ -97,5 +114,65 @@ export default class GitHubService {
     );
 
     return storedCount;
+  }
+
+  static needsDetailsFetch(project: Project): boolean {
+    if (!project.detailsFetchedAt) {
+      return true;
+    }
+    const daysSinceLastFetch = DateTime.now().diff(project.detailsFetchedAt, "days").days;
+    return daysSinceLastFetch >= this.DETAILS_CACHE_DAYS;
+  }
+
+  static async fetchProjectDetails(project: Project, userGithubToken: string): Promise<void> {
+    const headers = {
+      Authorization: `Bearer ${userGithubToken}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2026-03-10",
+    };
+
+    const baseUrl = `${this.REPO_BASE_URL}/${project.ownerName}/${project.name}`;
+
+    const [readmeResponse, languagesResponse, contributorsResponse] = await Promise.all([
+      fetch(`${baseUrl}/readme`, { headers }),
+      fetch(`${baseUrl}/languages`, { headers }),
+      fetch(`${baseUrl}/contributors?per_page=10`, { headers }),
+    ]);
+
+    let readme: string | null = null;
+    if (readmeResponse.ok) {
+      const readmeData = (await readmeResponse.json()) as GitHubReadme;
+      readme = Buffer.from(readmeData.content, "base64").toString("utf-8");
+    }
+
+    let languages: Record<string, number> | null = null;
+    if (languagesResponse.ok) {
+      languages = (await languagesResponse.json()) as Record<string, number>;
+    }
+
+    let contributors: GitHubContributor[] = [];
+    if (contributorsResponse.ok) {
+      const all = (await contributorsResponse.json()) as GitHubContributor[];
+      contributors = all.filter((c) => c.type === "User");
+    }
+
+    project.readme = readme;
+    project.languages = languages;
+    project.detailsFetchedAt = DateTime.now();
+    await project.save();
+
+    await Promise.all(
+      contributors.map((contributor) =>
+        Contributor.updateOrCreate(
+          { projectId: project.id, githubUserId: contributor.id },
+          {
+            login: contributor.login,
+            avatarUrl: contributor.avatar_url,
+            profileUrl: contributor.html_url,
+            contributions: contributor.contributions,
+          },
+        ),
+      ),
+    );
   }
 }
