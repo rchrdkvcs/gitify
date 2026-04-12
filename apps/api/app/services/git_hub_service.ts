@@ -24,10 +24,15 @@ interface GitHubRepo {
   html_url: string;
   description: string | null;
   stargazers_count: number;
+  forks_count: number;
   language: string | null;
   topics: string[];
   open_issues_count: number;
   has_issues: boolean;
+}
+
+interface GitHubRelease {
+  tag_name: string;
 }
 
 export default class GitHubService {
@@ -96,6 +101,7 @@ export default class GitHubService {
           description: repo.description,
           repositoryUrl: repo.html_url,
           stars: repo.stargazers_count,
+          forksCount: repo.forks_count,
           language: repo.language?.toLowerCase() ?? language,
           topics: repo.topics ?? [],
           openIssuesCount: repo.open_issues_count,
@@ -133,10 +139,18 @@ export default class GitHubService {
 
     const baseUrl = `${this.REPO_BASE_URL}/${project.ownerName}/${project.name}`;
 
-    const [readmeResponse, languagesResponse, contributorsResponse] = await Promise.all([
+    const [
+      readmeResponse,
+      languagesResponse,
+      contributorsResponse,
+      releaseResponse,
+      totalContributorsResponse,
+    ] = await Promise.all([
       fetch(`${baseUrl}/readme`, { headers }),
       fetch(`${baseUrl}/languages`, { headers }),
       fetch(`${baseUrl}/contributors?per_page=10`, { headers }),
+      fetch(`${baseUrl}/releases/latest`, { headers }),
+      fetch(`${baseUrl}/contributors?per_page=1&anon=false`, { headers }),
     ]);
 
     let readme: string | null = null;
@@ -156,8 +170,28 @@ export default class GitHubService {
       contributors = all.filter((c) => c.type === "User");
     }
 
+    let latestRelease: string | null = null;
+    if (releaseResponse.ok) {
+      const releaseData = (await releaseResponse.json()) as GitHubRelease;
+      latestRelease = releaseData.tag_name;
+    }
+
+    let totalContributorsCount: number | null = null;
+    if (totalContributorsResponse.ok) {
+      const linkHeader = totalContributorsResponse.headers.get("link");
+      if (linkHeader) {
+        const lastMatch = linkHeader.match(/[?&]page=(\d+)>; rel="last"/);
+        totalContributorsCount = lastMatch ? Number.parseInt(lastMatch[1], 10) : 1;
+      } else {
+        const items = (await totalContributorsResponse.json()) as unknown[];
+        totalContributorsCount = items.length;
+      }
+    }
+
     project.readme = readme;
     project.languages = languages;
+    project.latestRelease = latestRelease;
+    project.totalContributorsCount = totalContributorsCount;
     project.detailsFetchedAt = DateTime.now();
     await project.save();
 

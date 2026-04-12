@@ -41,6 +41,15 @@ export default class Project extends BaseModel {
   declare topics: string[] | null;
 
   @column()
+  declare forksCount: number;
+
+  @column()
+  declare totalContributorsCount: number | null;
+
+  @column()
+  declare latestRelease: string | null;
+
+  @column()
   declare readme: string | null;
 
   @column({

@@ -15,6 +15,9 @@ interface Contributor {
 interface ProjectDetail extends Project {
   readme: string | null;
   languages: Record<string, number> | null;
+  forksCount: number;
+  totalContributorsCount: number | null;
+  latestRelease: string | null;
   createdAt: string;
   updatedAt: string;
   contributors: Contributor[];
@@ -160,8 +163,27 @@ const renderedReadme = computed(() => {
                   }}</span>
                 </div>
                 <div class="flex items-center justify-between">
+                  <span class="text-gray-400">🍴 Forks</span>
+                  <span class="font-semibold text-blue-300">{{
+                    project.forksCount.toLocaleString()
+                  }}</span>
+                </div>
+                <div class="flex items-center justify-between">
                   <span class="text-gray-400">🐛 Issues ouvertes</span>
                   <span class="font-semibold text-green-300">{{ project.openIssuesCount }}</span>
+                </div>
+                <div
+                  v-if="project.totalContributorsCount !== null"
+                  class="flex items-center justify-between"
+                >
+                  <span class="text-gray-400">👥 Contributeurs</span>
+                  <span class="font-semibold text-purple-300">{{
+                    project.totalContributorsCount.toLocaleString()
+                  }}</span>
+                </div>
+                <div v-if="project.latestRelease" class="flex items-center justify-between">
+                  <span class="text-gray-400">🏷️ Version</span>
+                  <span class="font-semibold text-orange-300">{{ project.latestRelease }}</span>
                 </div>
               </div>
             </div>
