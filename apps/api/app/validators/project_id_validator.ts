@@ -1,6 +1,6 @@
 import vine from "@vinejs/vine";
 
-export const interactionValidator = vine.create({
+export const projectIdValidator = vine.create({
   params: vine.object({
     id: vine.number().positive(),
   }),
