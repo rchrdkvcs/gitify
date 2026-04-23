@@ -29,7 +29,7 @@ export default class User extends BaseModel {
   declare id: number;
 
   @column()
-  declare accessToken: string;
+  declare githubAccessToken: string;
 
   @column()
   declare name: string;

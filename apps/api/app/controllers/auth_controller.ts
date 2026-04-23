@@ -35,16 +35,15 @@ export default class AuthController {
     }
 
     const githubUser = await github.user();
+    const email = githubUser.email ?? `${githubUser.original.login}@users.noreply.github.com`;
 
     // Persist or update user information in the database
     const user = await User.updateOrCreate(
+      { email },
       {
-        email: githubUser.email,
-      },
-      {
-        name: githubUser.name,
+        name: githubUser.name ?? githubUser.original.login,
         avatarUrl: githubUser.avatarUrl,
-        accessToken: githubUser.token.token,
+        githubAccessToken: githubUser.token.token,
         isVerified: githubUser.emailVerificationState === "verified",
       },
     );
@@ -95,10 +94,10 @@ export default class AuthController {
   async me({ auth, response }: HttpContext) {
     const user = auth.user!.serialize({
       fields: {
-        omit: ["id", "accessToken", "email", "createdAt", "updatedAt"],
+        omit: ["id", "githubAccessToken", "email", "createdAt", "updatedAt"],
       },
     });
-    return response.ok({ user: user });
+    return response.ok({ user });
   }
 
   /**
