@@ -13,7 +13,6 @@ export default class CookieAuthMiddleware {
 
     if (token) {
       request.request.headers["authorization"] = `Bearer ${token}`;
-      request.headers().authorization = `Bearer ${token}`;
     }
 
     return next();
