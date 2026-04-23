@@ -18,7 +18,9 @@ const page = ref(1);
 async function fetchLiked() {
   loading.value = true;
   try {
-    const data = await http<{ projects: Project[]; meta: PaginationMeta }>(`/projects/liked?page=${page.value}`);
+    const data = await http<{ projects: Project[]; meta: PaginationMeta }>(
+      `/projects/liked?page=${page.value}`,
+    );
     projects.value = data.projects;
     meta.value = data.meta;
   } catch {
@@ -106,7 +108,9 @@ onMounted(fetchLiked);
               >
                 ⭐ {{ project.stars.toLocaleString() }}
               </span>
-              <span class="rounded-full bg-green-900/50 px-3 py-1 text-xs font-medium text-green-300">
+              <span
+                class="rounded-full bg-green-900/50 px-3 py-1 text-xs font-medium text-green-300"
+              >
                 🐛 {{ project.openIssuesCount }} issues
               </span>
             </div>
@@ -135,9 +139,7 @@ onMounted(fetchLiked);
           >
             ← Précédent
           </button>
-          <span class="text-sm text-gray-400">
-            {{ meta.currentPage }} / {{ meta.lastPage }}
-          </span>
+          <span class="text-sm text-gray-400"> {{ meta.currentPage }} / {{ meta.lastPage }} </span>
           <button
             :disabled="meta.currentPage === meta.lastPage"
             class="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-400 transition hover:border-blue-500 hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-40"

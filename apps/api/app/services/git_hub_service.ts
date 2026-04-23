@@ -154,10 +154,9 @@ export default class GitHubService {
     ]);
 
     const readme = readmeResponse.ok
-      ? Buffer.from(
-          ((await readmeResponse.json()) as GitHubReadme).content,
-          "base64",
-        ).toString("utf-8")
+      ? Buffer.from(((await readmeResponse.json()) as GitHubReadme).content, "base64").toString(
+          "utf-8",
+        )
       : null;
 
     const languages = languagesResponse.ok
