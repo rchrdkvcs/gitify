@@ -9,3 +9,6 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 
 RUN pnpm install
+
+RUN mkdir -p /app/apps/web/.nuxt /app/apps/web/node_modules/.cache \
+    && chown -R node:node /app/apps/web/.nuxt /app/apps/web/node_modules/.cache
