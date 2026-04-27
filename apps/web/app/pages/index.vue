@@ -25,7 +25,13 @@ interface ShowcaseLanguage {
   projects: ShowcaseProject[];
 }
 
-const { user, loading, fetchMe, logout } = useAuth();
+const authStore = useAuthStore();
+const { user, isInitialized } = storeToRefs(authStore);
+const { login, logout } = authStore;
+
+// loading = true while the auth init plugin hasn't finished yet
+const loading = computed(() => !isInitialized.value);
+
 const {
   submitting,
   isEditingPreferences,
@@ -35,7 +41,7 @@ const {
   toggleLanguage,
   editPreferences,
   savePreferences,
-} = usePreferences(user);
+} = usePreferences();
 
 const config = useRuntimeConfig();
 const { data: showcaseData, pending: showcaseLoading } = useAsyncData<{
@@ -59,8 +65,6 @@ function formatDate(dateStr: string): string {
   if (days < 365) return `${Math.floor(days / 30)}mo ago`;
   return `${Math.floor(days / 365)}y ago`;
 }
-
-onMounted(fetchMe);
 </script>
 
 <template>
@@ -167,7 +171,7 @@ onMounted(fetchMe);
       class="flex min-h-screen flex-col items-center justify-center p-8 text-center"
     >
       <img
-        :src="user.avatar_url || user.avatarUrl || ''"
+        :src="user.avatarUrl || ''"
         alt="Avatar"
         class="mx-auto mb-4 h-24 w-24 rounded-full border-4 border-blue-500 object-cover"
       />

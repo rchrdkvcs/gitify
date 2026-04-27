@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import User from "#models/user";
 import env from "#start/env";
+import UserTransformer from "#transformers/user_transformer";
 
 export default class AuthController {
   async redirect({ ally }: HttpContext) {
@@ -42,9 +43,7 @@ export default class AuthController {
     return response.ok({ message: "Successfully logged out" });
   }
 
-  async me({ auth, response }: HttpContext) {
-    const user = auth.use("web").getUserOrFail();
-
-    return response.ok({ user });
+  async me({ auth, serialize }: HttpContext) {
+    return serialize(UserTransformer.transform(auth.getUserOrFail()));
   }
 }

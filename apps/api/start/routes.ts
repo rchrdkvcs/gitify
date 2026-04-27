@@ -14,7 +14,7 @@ router
 router
   .group(() => {
     router.get("/me", [controllers.Auth, "me"]);
-    router.post("/logout", [controllers.Auth, "logout"]);
+    router.delete("/logout", [controllers.Auth, "logout"]);
     router.put("/preferences", [controllers.Preferences, "update"]);
   })
   .prefix("/auth")
