@@ -1,5 +1,4 @@
 import type { AccessToken } from "@adonisjs/auth/access_tokens";
-
 import { DbAccessTokensProvider } from "@adonisjs/auth/access_tokens";
 import { BaseModel, column } from "@adonisjs/lucid/orm";
 import { type DateTime } from "luxon";

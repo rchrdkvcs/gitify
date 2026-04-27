@@ -13,8 +13,8 @@ GitMatch is a web platform designed to help student and junior developers find O
 
 ### A. Authentication
 
-- **GitHub OAuth:** Users login via GitHub.
-- **Session:** Secure JWT stored in HTTP-Only Cookies.
+- **GitHub OAuth:** Users login via GitHub (Adonis Ally).
+- **Session:** AdonisJS native session stored in a secure HTTP-Only cookie — pas de JWT, pas de localStorage.
 
 ### B. User Onboarding
 
@@ -43,6 +43,6 @@ We use a **Reactive/Lazy Ingestion** strategy.
 
 ## 4. Data Entities
 
-- **User:** GitHub ID, Preferences, JWT Session.
+- **User:** GitHub ID, Preferences, Session (HTTP-Only cookie).
 - **Project:** GitHub Repo ID, Name, Description, Stars, Language, Topics.
 - **Match/Favorite:** Relation between User and Project (Swiped Right).

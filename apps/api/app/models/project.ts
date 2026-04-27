@@ -1,5 +1,4 @@
 import type { HasMany } from "@adonisjs/lucid/types/relations";
-
 import Contributor from "#models/contributor";
 import { BaseModel, column, hasMany } from "@adonisjs/lucid/orm";
 import { type DateTime } from "luxon";

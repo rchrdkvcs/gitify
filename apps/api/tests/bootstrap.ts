@@ -1,5 +1,4 @@
 import type { Config } from "@japa/runner/types";
-
 import app from "@adonisjs/core/services/app";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { apiClient } from "@japa/api-client";
