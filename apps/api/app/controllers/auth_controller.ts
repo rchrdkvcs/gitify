@@ -1,114 +1,50 @@
 import type { HttpContext } from "@adonisjs/core/http";
-
 import User from "#models/user";
 import env from "#start/env";
 
-/**
- * AuthController
- * Handles the GitHub OAuth flow, user persistence, and session management
- * using AdonisJS native Opaque Tokens and HTTP-Only cookies.
- */
 export default class AuthController {
-  /**
-   * Redirects the user to the GitHub OAuth authorization page.
-   */
   async redirect({ ally }: HttpContext) {
     return ally.use("github").redirect();
   }
 
-  /**
-   * Handles the callback from GitHub, retrieves user data,
-   * upserts the user in the DB, and establishes a secure session.
-   */
-  async callback({ ally, response }: HttpContext) {
-    const github = ally.use("github");
+  async callback({ ally, response, auth }: HttpContext) {
+    const githubDrive = ally.use("github");
 
-    // Handle OAuth error states
-    if (github.accessDenied()) {
+    if (githubDrive.accessDenied()) {
       return response.badRequest("Access Denied: You cancelled the login request.");
     }
-    if (github.stateMisMatch()) {
+    if (githubDrive.stateMisMatch()) {
       return response.badRequest("State Mismatch: Session expired or invalid.");
     }
-    if (github.hasError()) {
-      return response.badRequest(`GitHub Error: ${github.getError()}`);
+    if (githubDrive.hasError()) {
+      return response.badRequest(`GitHub Error: ${githubDrive.getError()}`);
     }
 
-    const githubUser = await github.user();
-    const email = githubUser.email ?? `${githubUser.original.login}@users.noreply.github.com`;
+    const driverUser = await githubDrive.user();
 
-    // Persist or update user information in the database
     const user = await User.updateOrCreate(
-      { email },
+      { email: driverUser.email },
       {
-        name: githubUser.name ?? githubUser.original.login,
-        avatarUrl: githubUser.avatarUrl,
-        githubAccessToken: githubUser.token.token,
-        isVerified: githubUser.emailVerificationState === "verified",
+        name: driverUser.name ?? driverUser.original.login,
+        avatarUrl: driverUser.avatarUrl,
+        githubAccessToken: driverUser.token.token,
+        isVerified: driverUser.emailVerificationState === "verified",
       },
     );
 
-    const token = await User.accessTokens.create(user, ["*"], { expiresIn: "7 days" });
-    const plainToken = token.value!.release();
+    await auth.use("web").login(user);
 
-    // Store the token in a secure HTTP-Only cookie to prevent XSS attacks
-    response.cookie("gitmatch_session", plainToken, {
-      httpOnly: true,
-      secure: env.get("NODE_ENV") === "production",
-      sameSite: "lax",
-      maxAge: "7d",
-    });
-
-    if (env.get("ENABLE_DEV_TOKEN") && env.get("NODE_ENV") !== "production") {
-      response.cookie("gitmatch_dev_token", plainToken, {
-        httpOnly: false,
-        secure: false,
-        sameSite: "lax",
-        maxAge: "7d",
-      });
-    }
-
-    // Redirect the user back to the Nuxt frontend
     return response.redirect(env.get("FRONTEND_URL"));
   }
 
-  async dev({ request, response }: HttpContext) {
-    if (!env.get("ENABLE_DEV_TOKEN") || env.get("NODE_ENV") === "production") {
-      return response.notFound({ error: "Not found" });
-    }
-
-    const token = request.cookie("gitmatch_dev_token");
-
-    if (!token) {
-      return response.unauthorized({
-        error: "No dev token found, login first via /auth/github/redirect",
-      });
-    }
-
-    return response.json({ token });
-  }
-
-  /**
-   * Returns the currently authenticated user's profile.
-   */
-  async me({ auth, response }: HttpContext) {
-    const user = auth.user!.serialize({
-      fields: {
-        omit: ["id", "githubAccessToken", "email", "createdAt", "updatedAt"],
-      },
-    });
-    return response.ok({ user });
-  }
-
-  /**
-   * Revokes the access token and clears the authentication cookie.
-   */
   async logout({ auth, response }: HttpContext) {
-    const user = auth.user!;
-    // Revoke the token in the database
-    await User.accessTokens.delete(user, user.currentAccessToken.identifier);
-    // Clear the cookie in the user's browser
-    response.clearCookie("gitmatch_session");
+    await auth.use("web").logout();
     return response.ok({ message: "Successfully logged out" });
+  }
+
+  async me({ auth, response }: HttpContext) {
+    const user = auth.use("web").getUserOrFail();
+
+    return response.ok({ user });
   }
 }

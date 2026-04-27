@@ -1,3 +1,5 @@
+import { useApi } from "~/composables/useApi";
+
 export interface UserPreferences {
   difficulty: "beginner" | "expert";
   languages: string[];
@@ -13,30 +15,28 @@ export interface User {
 }
 
 export function useAuth() {
-  const { http } = useHttp();
   const user = ref<User | null>(null);
-  const loading = ref(false);
 
-  async function fetchMe() {
-    loading.value = true;
-    try {
-      const response = await http<{ user: User }>("/auth/me");
-      user.value = response.user;
-    } catch {
-      user.value = null;
-    } finally {
-      loading.value = false;
-    }
+  async function login(provider: string) {
+    const { data } = await useApi<User>(`/auth/${provider}`);
+    user.value = data.value ?? null;
+
+    return user.value;
   }
 
   async function logout() {
-    try {
-      await http("/auth/logout", { method: "POST" });
-      user.value = null;
-    } catch (e) {
-      console.error("Logout failed:", e);
-    }
+    await useApi("/auth/logout", { method: "POST" });
+    user.value = null;
   }
 
-  return { user, loading, fetchMe, logout };
+  async function fetchUser() {
+    if (user.value) return user.value;
+
+    const { data } = await useApi<User>("/auth/me");
+    user.value = data.value ?? null;
+
+    return data.value ?? null;
+  }
+
+  return { user, login, logout, fetchMe: fetchUser };
 }

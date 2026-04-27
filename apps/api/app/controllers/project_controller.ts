@@ -1,5 +1,4 @@
 import type { HttpContext } from "@adonisjs/core/http";
-
 import Project from "#models/project";
 import UserProjectInteraction from "#models/user_project_interaction";
 import GitHubService from "#services/git_hub_service";
