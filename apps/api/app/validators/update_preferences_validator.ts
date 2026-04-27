@@ -7,6 +7,6 @@ import vine from "@vinejs/vine";
 export const updatePreferencesValidator = vine.create(
   vine.object({
     difficulty: vine.enum(["beginner", "expert"]),
-    languages: vine.array(vine.string().trim().escape()).minLength(1),
+    languages: vine.array(vine.string().trim()).minLength(1),
   }),
 );

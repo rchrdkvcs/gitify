@@ -69,9 +69,10 @@ export default class GitHubService {
     language: string,
     difficulty: "beginner" | "expert",
     userGithubToken: string,
+    perPage: number = 100,
   ): Promise<number> {
     const query = this.buildQuery(language, difficulty);
-    const url = `${this.BASE_URL}?q=${encodeURIComponent(query)}&sort=updated&order=desc&per_page=100`;
+    const url = `${this.BASE_URL}?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=${perPage}`;
 
     const githubResponse = await fetch(url, {
       headers: {
@@ -87,39 +88,38 @@ export default class GitHubService {
 
     const data = (await githubResponse.json()) as { items: GitHubRepo[] };
 
-    // Filters out pull requests with no actual issues (GitHub counts PRs in `open_issues_count`)
-    let validRepos = data.items.filter((repo) => repo.has_issues && repo.open_issues_count > 0);
+    // Filters out repos with no actual issues (GitHub counts PRs in `open_issues_count`)
+    const validRepos = data.items.filter((repo) => repo.has_issues && repo.open_issues_count > 0);
 
-    let storedCount = 0;
-
-    for (const repo of validRepos) {
-      await Project.updateOrCreate(
-        { githubRepoId: repo.id },
-        {
-          ownerName: repo.owner.login,
-          name: repo.name,
-          description: repo.description,
-          repositoryUrl: repo.html_url,
-          stars: repo.stargazers_count,
-          forksCount: repo.forks_count,
-          language: repo.language?.toLowerCase() ?? language,
-          topics: repo.topics ?? [],
-          openIssuesCount: repo.open_issues_count,
-          difficulty,
-        },
-      );
-      storedCount++;
-    }
+    await Promise.all(
+      validRepos.map((repo) =>
+        Project.updateOrCreate(
+          { githubRepoId: repo.id },
+          {
+            ownerName: repo.owner.login,
+            name: repo.name,
+            description: repo.description,
+            repositoryUrl: repo.html_url,
+            stars: repo.stargazers_count,
+            forksCount: repo.forks_count,
+            language: repo.language?.toLowerCase() ?? language,
+            topics: repo.topics ?? [],
+            openIssuesCount: repo.open_issues_count,
+            difficulty,
+          },
+        ),
+      ),
+    );
 
     await GithubFetchCache.updateOrCreate(
       { language: language.toLowerCase(), difficulty },
       {
-        totalStored: storedCount,
+        totalStored: validRepos.length,
         fetchedAt: DateTime.now(),
       },
     );
 
-    return storedCount;
+    return validRepos.length;
   }
 
   static needsDetailsFetch(project: Project): boolean {
@@ -153,40 +153,29 @@ export default class GitHubService {
       fetch(`${baseUrl}/contributors?per_page=1&anon=false`, { headers }),
     ]);
 
-    let readme: string | null = null;
-    if (readmeResponse.ok) {
-      const readmeData = (await readmeResponse.json()) as GitHubReadme;
-      readme = Buffer.from(readmeData.content, "base64").toString("utf-8");
-    }
+    const readme = readmeResponse.ok
+      ? Buffer.from(((await readmeResponse.json()) as GitHubReadme).content, "base64").toString(
+          "utf-8",
+        )
+      : null;
 
-    let languages: Record<string, number> | null = null;
-    if (languagesResponse.ok) {
-      languages = (await languagesResponse.json()) as Record<string, number>;
-    }
+    const languages = languagesResponse.ok
+      ? ((await languagesResponse.json()) as Record<string, number>)
+      : null;
 
-    let contributors: GitHubContributor[] = [];
-    if (contributorsResponse.ok) {
-      const all = (await contributorsResponse.json()) as GitHubContributor[];
-      contributors = all.filter((c) => c.type === "User");
-    }
+    const contributors = contributorsResponse.ok
+      ? ((await contributorsResponse.json()) as GitHubContributor[]).filter(
+          (c) => c.type === "User",
+        )
+      : [];
 
-    let latestRelease: string | null = null;
-    if (releaseResponse.ok) {
-      const releaseData = (await releaseResponse.json()) as GitHubRelease;
-      latestRelease = releaseData.tag_name;
-    }
+    const latestRelease = releaseResponse.ok
+      ? ((await releaseResponse.json()) as GitHubRelease).tag_name
+      : null;
 
-    let totalContributorsCount: number | null = null;
-    if (totalContributorsResponse.ok) {
-      const linkHeader = totalContributorsResponse.headers.get("link");
-      if (linkHeader) {
-        const lastMatch = linkHeader.match(/[?&]page=(\d+)>; rel="last"/);
-        totalContributorsCount = lastMatch ? Number.parseInt(lastMatch[1], 10) : 1;
-      } else {
-        const items = (await totalContributorsResponse.json()) as unknown[];
-        totalContributorsCount = items.length;
-      }
-    }
+    const totalContributorsCount = totalContributorsResponse.ok
+      ? await this.parseTotalContributors(totalContributorsResponse)
+      : null;
 
     project.readme = readme;
     project.languages = languages;
@@ -208,5 +197,15 @@ export default class GitHubService {
         ),
       ),
     );
+  }
+
+  private static async parseTotalContributors(response: Response): Promise<number> {
+    const linkHeader = response.headers.get("link");
+    if (linkHeader) {
+      const lastMatch = linkHeader.match(/[?&]page=(\d+)>; rel="last"/);
+      return lastMatch ? Number.parseInt(lastMatch[1], 10) : 1;
+    }
+    const items = (await response.json()) as unknown[];
+    return items.length;
   }
 }

@@ -44,6 +44,5 @@ router.use([
  * the routes or the routes group.
  */
 export const middleware = router.named({
-  guest: () => import("#middlewares/guest_middleware"),
   auth: () => import("#middlewares/auth_middleware"),
 });

@@ -52,6 +52,8 @@ services:
       - /app/node_modules
       - /app/apps/api/node_modules
       - /app/apps/web/node_modules
+      - /app/apps/web/.nuxt
+      - /app/apps/web/node_modules/.cache
     depends_on:
       - api
 

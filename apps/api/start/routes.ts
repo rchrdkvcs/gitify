@@ -3,10 +3,6 @@ import env from "#start/env";
 import { middleware } from "#start/kernel";
 import router from "@adonisjs/core/services/router";
 
-router.get("/", () => {
-  return { message: "API is running" };
-});
-
 // Authentication Routes (Public)
 router
   .group(() => {
@@ -29,6 +25,9 @@ router
   })
   .prefix("/auth")
   .use(middleware.auth({ guards: ["api"] }));
+
+// Public project routes (no auth required)
+router.get("/projects/showcase", [controllers.Project, "showcase"]);
 
 router
   .group(() => {
