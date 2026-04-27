@@ -1,7 +1,10 @@
-import type { User } from "./useAuth";
+import type { Data } from "@gitify/api/data";
 
-export function usePreferences(user: Ref<User | null>) {
-  const { http } = useHttp();
+export function usePreferences() {
+  const authStore = useAuthStore();
+  const user = computed(() => authStore.user);
+  const config = useRuntimeConfig();
+
   const submitting = ref(false);
   const isEditingPreferences = ref(false);
   const formDifficulty = ref<"beginner" | "expert">("beginner");
@@ -45,14 +48,16 @@ export function usePreferences(user: Ref<User | null>) {
 
     submitting.value = true;
     try {
-      const response = await http<{ user: User }>("/auth/preferences", {
+      const response = await $fetch<{ user: Data.User }>("/auth/preferences", {
+        baseURL: config.public.apiBaseUrl,
         method: "PUT",
+        credentials: "include",
         body: {
           difficulty: formDifficulty.value,
           languages: formLanguages.value,
         },
       });
-      user.value = response.user;
+      authStore.user = response.user;
       isEditingPreferences.value = false;
     } catch (e) {
       console.error("Failed to save preferences:", e);
@@ -62,6 +67,7 @@ export function usePreferences(user: Ref<User | null>) {
   }
 
   return {
+    user,
     submitting,
     isEditingPreferences,
     formDifficulty,

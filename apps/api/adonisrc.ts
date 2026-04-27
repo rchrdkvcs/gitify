@@ -1,9 +1,10 @@
 import { indexEntities } from "@adonisjs/core";
 import { defineConfig } from "@adonisjs/core/app";
+import { generateRegistry } from "@tuyau/core/hooks";
 
 export default defineConfig({
   hooks: {
-    init: [indexEntities()],
+    init: [indexEntities({ transformers: { enabled: true } }), generateRegistry()],
   },
 
   /*
@@ -54,6 +55,7 @@ export default defineConfig({
     () => import("@adonisjs/session/session_provider"),
     () => import("@adonisjs/auth/auth_provider"),
     () => import("@adonisjs/ally/ally_provider"),
+    () => import("#providers/api_provider"),
   ],
 
   /*

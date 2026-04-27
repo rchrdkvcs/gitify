@@ -1,5 +1,4 @@
 import type { HttpContext } from "@adonisjs/core/http";
-
 import { updatePreferencesValidator } from "#validators/update_preferences_validator";
 
 export default class PreferencesController {
