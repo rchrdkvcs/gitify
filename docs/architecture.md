@@ -40,13 +40,13 @@ Routes protégées par `middleware.auth()` d'AdonisJS — toutes les routes `/pr
 
 #### Composants clés
 
-| Fichier | Rôle |
-|---|---|
-| `plugins/auth.ts` | Initialise l'état auth au démarrage de l'app |
-| `stores/auth.ts` | Pinia store — source de vérité de l'utilisateur |
-| `middlewares/auth.ts` | Redirige vers `/` si non authentifié |
-| `middlewares/guest.ts` | Redirige vers `/` si déjà authentifié |
-| `composables/usePreferences.ts` | Gère le formulaire de préférences |
+| Fichier                         | Rôle                                            |
+| ------------------------------- | ----------------------------------------------- |
+| `plugins/auth.ts`               | Initialise l'état auth au démarrage de l'app    |
+| `stores/auth.ts`                | Pinia store — source de vérité de l'utilisateur |
+| `middlewares/auth.ts`           | Redirige vers `/` si non authentifié            |
+| `middlewares/guest.ts`          | Redirige vers `/` si déjà authentifié           |
+| `composables/usePreferences.ts` | Gère le formulaire de préférences               |
 
 #### Plugin d'initialisation (`plugins/auth.ts`)
 

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-
 import type { Project } from "~/composables/useSwipe";
 
 interface Contributor {
