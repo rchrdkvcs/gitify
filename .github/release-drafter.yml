@@ -1,0 +1,39 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+template: |
+  ## 📝 Notes de version
+  $CHANGES
+
+categories:
+  - title: "🚀 Nouveautés"
+    labels:
+      - "feat"
+      - "feature"
+      - "enhancement"
+  - title: "🐛 Corrections de bugs"
+    labels:
+      - "fix"
+      - "bug"
+  - title: "🛠 Maintenance & Refacto"
+    labels:
+      - "chore"
+      - "refactor"
+
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+
+version-resolver:
+  major:
+    labels:
+      - "breaking"
+      - "major"
+  minor:
+    labels:
+      - "feat"
+      - "feature"
+  patch:
+    labels:
+      - "fix"
+      - "bug"
+      - "chore"
+  default: patch
