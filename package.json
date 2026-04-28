@@ -20,7 +20,9 @@
     "docker:restart": "docker compose -f compose.dev.yaml restart",
     "docker:up": "docker compose -f compose.dev.yaml up --build -d",
     "fmt": "oxfmt",
-    "lint": "oxlint --fix"
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix"
   },
   "devDependencies": {
     "oxfmt": "^0.42.0",

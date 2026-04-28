@@ -16,4 +16,4 @@ jobs:
           node-version: lts/*
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run oxfmt --check
+      - run: pnpm run fmt:check
