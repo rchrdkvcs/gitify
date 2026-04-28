@@ -141,7 +141,7 @@ const renderedReadme = computed(() => {
               <div
                 v-if="renderedReadme"
                 v-html="renderedReadme"
-                class="prose max-w-none prose-invert [&_img]:m-0 [&_img]:inline [&_img]:align-middle"
+                class="prose prose-invert max-w-none [&_img]:m-0 [&_img]:inline [&_img]:align-middle"
               />
               <p v-else class="text-gray-500 italic">Aucun README disponible.</p>
             </div>
