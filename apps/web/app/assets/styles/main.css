@@ -1,3 +1,16 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
-@plugin "@tailwindcss/typography";
+
+:root {
+  --ui-radius: 0.5rem;
+  --ui-container: 90rem;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
