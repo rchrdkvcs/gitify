@@ -1,24 +1,34 @@
-FROM node:24-alpine AS base
+FROM node:25-alpine AS base
+RUN npm install -g pnpm turbo
+
+FROM base AS builder
+WORKDIR /app
+COPY . .
+RUN turbo prune @gitify/api --docker
+
+FROM base AS installer
+WORKDIR /app
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
+RUN pnpm install --frozen-lockfile
+
+COPY --from=builder /app/out/full/ .
+RUN pnpm turbo run build --filter=@gitify/api...
+
+FROM base AS prod-deps
+WORKDIR /app
+COPY --from=installer /app/apps/api/build ./
+RUN pnpm install --prod
+
+FROM base AS runner
 WORKDIR /app
 
-FROM base AS deps
-RUN npm install -g pnpm@latest
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY apps/web/package.json ./apps/web/
-RUN pnpm install --frozen-lockfile --filter=@gitify/api...
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 adonisjs
+USER adonisjs
 
-FROM base AS build
-COPY --from=deps /app/node_modules /app/node_modules
-COPY --from=deps /app/apps/api/node_modules /app/apps/api/node_modules
-COPY pnpm-workspace.yaml package.json ./
-COPY apps/api ./apps/api
-WORKDIR /app/apps/api
-RUN node ace build --ignore-ts-errors
+COPY --from=prod-deps --chown=adonisjs:nodejs /app ./
 
-FROM base AS production
-RUN npm install -g pnpm@latest
-COPY --from=build /app/apps/api/build ./
-RUN pnpm install --prod
 EXPOSE 80
 CMD ["node", "./bin/server.js"]
