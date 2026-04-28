@@ -5,21 +5,9 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments("id");
-      table
-        .integer("user_id")
-        .unsigned()
-        .notNullable()
-        .references("id")
-        .inTable("users")
-        .onDelete("CASCADE");
-      table
-        .integer("project_id")
-        .unsigned()
-        .notNullable()
-        .references("id")
-        .inTable("projects")
-        .onDelete("CASCADE");
+      table.string("id").primary();
+      table.string("user_id").references("id").inTable("users").onDelete("CASCADE");
+      table.string("project_id").references("id").inTable("projects").onDelete("CASCADE");
       table.enum("type", ["liked", "passed"]).notNullable();
       table.unique(["user_id", "project_id"]);
       table.timestamp("created_at");
