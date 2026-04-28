@@ -5,7 +5,7 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments("id");
+      table.string("id").primary();
       table.bigInteger("github_repo_id").unsigned().notNullable().unique();
       table.string("owner_name").notNullable();
       table.string("name").notNullable();

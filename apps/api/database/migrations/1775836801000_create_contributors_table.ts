@@ -5,8 +5,8 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments("id");
-      table.integer("project_id").unsigned().references("projects.id").onDelete("CASCADE");
+      table.string("id").primary();
+      table.string("project_id").references("id").inTable("projects").onDelete("CASCADE");
       table.bigInteger("github_user_id").unsigned();
       table.string("login").notNullable();
       table.string("avatar_url").notNullable();

@@ -1,5 +1,6 @@
 import { UserSchema } from "#database/schema";
-import { column } from "@adonisjs/lucid/orm";
+import { beforeCreate, column } from "@adonisjs/lucid/orm";
+import { ulid } from "ulid";
 
 export type UserPreferences = {
   difficulty: "beginner" | "expert";
@@ -7,6 +8,11 @@ export type UserPreferences = {
 };
 
 export default class User extends UserSchema {
+  @beforeCreate()
+  static generateId(user: User) {
+    user.id = ulid();
+  }
+
   @column()
   declare preferences: UserPreferences | null;
 }
