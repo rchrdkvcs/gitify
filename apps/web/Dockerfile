@@ -1,29 +1,30 @@
-FROM node:24-alpine AS base
-RUN corepack enable && corepack prepare pnpm@latest --activate
+FROM node:25-alpine AS base
+RUN npm install -g pnpm turbo
+
+FROM base AS builder
 WORKDIR /app
+COPY . .
+RUN turbo prune @gitify/web --docker
 
-FROM base AS build
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY apps/web/package.json ./apps/web/
-RUN pnpm install --frozen-lockfile --filter=@gitify/web...
+FROM base AS installer
+WORKDIR /app
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
+RUN pnpm install --frozen-lockfile
 
-COPY apps/api/app/models ./apps/api/app/models
-COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
-COPY apps/web ./apps/web
-
-WORKDIR /app/apps/web
-
+COPY --from=builder /app/out/full/ .
 ENV NODE_ENV=production
 ENV NITRO_PRESET=node-server
+RUN pnpm turbo run build --filter=@gitify/web...
 
-RUN pnpm run build
-
-FROM base AS production
+FROM base AS runner
 WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nuxtjs
+USER nuxtjs
 
-COPY --from=build /app/apps/web/.output /app
+COPY --from=installer --chown=nuxtjs:nodejs /app/apps/web/.output /app
 
 EXPOSE 80
-
 ENTRYPOINT ["node", "/app/server/index.mjs"]

@@ -18,6 +18,7 @@ export default await Env.create(new URL("../", import.meta.url), {
   HOST: Env.schema.string({ format: "host" }),
   LOG_LEVEL: Env.schema.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]),
   FRONTEND_URL: Env.schema.string(),
+  ENABLE_DEV_TOKEN: Env.schema.boolean.optional(),
 
   /*
   |----------------------------------------------------------
@@ -45,4 +46,11 @@ export default await Env.create(new URL("../", import.meta.url), {
   GITHUB_CLIENT_ID: Env.schema.string(),
   GITHUB_CLIENT_SECRET: Env.schema.string(),
   GITHUB_CALLBACK_URL: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Server-side GitHub PAT for public showcase fetching
+  |----------------------------------------------------------
+  */
+  GITHUB_SERVER_TOKEN: Env.schema.string.optional(),
 });

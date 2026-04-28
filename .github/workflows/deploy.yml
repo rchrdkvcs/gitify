@@ -1,0 +1,50 @@
+name: Deploy to Coolify
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.changes.outputs.api }}
+      web: ${{ steps.changes.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        id: changes
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -n "$PREVIOUS_TAG" ]; then
+            CHANGED_FILES=$(git diff --name-only $PREVIOUS_TAG HEAD)
+          else
+            CHANGED_FILES=$(git ls-files)
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "^apps/api/"; then echo "api=true" >> $GITHUB_OUTPUT; else echo "api=false" >> $GITHUB_OUTPUT; fi
+          if echo "$CHANGED_FILES" | grep -q "^apps/web/"; then echo "web=true" >> $GITHUB_OUTPUT; else echo "web=false" >> $GITHUB_OUTPUT; fi
+
+  deploy-api:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API
+        run: |
+          curl --fail --location "${{ secrets.COOLIFY_WEBHOOK_API }}" \
+            --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'
+
+  deploy-web:
+    needs: detect
+    if: needs.detect.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Web
+        run: |
+          curl --fail --location "${{ secrets.COOLIFY_WEBHOOK_WEB }}" \
+            --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'

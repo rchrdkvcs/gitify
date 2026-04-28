@@ -1,15 +1,16 @@
 {
   "name": "gitify",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "private": true,
   "workspaces": [
     "apps/*"
   ],
   "type": "module",
   "scripts": {
-    "dev": "run-p dev:api dev:web",
-    "dev:api": "pnpm --filter @gitify/api dev",
-    "dev:web": "pnpm --filter @gitify/web dev",
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "dev:api": "turbo run dev --filter=@gitify/api",
+    "dev:web": "turbo run dev --filter=@gitify/web",
     "docker:clean": "docker compose -f compose.dev.yaml down -v",
     "docker:down": "docker compose -f compose.dev.yaml down",
     "docker:logs": "docker compose -f compose.dev.yaml logs -f",
@@ -24,17 +25,9 @@
     "lint:fix": "oxlint --fix"
   },
   "devDependencies": {
-    "@poppinss/ts-exec": "^1.4.4",
-    "npm-run-all2": "^8.0.4",
     "oxfmt": "^0.42.0",
-    "oxlint": "^1.57.0",
-    "typescript": "^6.0.2"
+    "oxlint": "^1.62.0",
+    "turbo": "^2.9.6"
   },
-  "packageManager": "pnpm@10.30.2",
-  "trustedDependencies": [
-    "@gitify/web",
-    "@parcel/watcher",
-    "@swc/core",
-    "@tailwindcss/oxide"
-  ]
+  "packageManager": "pnpm@10.33.2"
 }

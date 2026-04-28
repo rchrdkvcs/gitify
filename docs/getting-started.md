@@ -46,9 +46,10 @@ cp apps/web/.env.example apps/web/.env
 
 ### Variables d'environnement du Frontend (`apps/web/.env`)
 
-| Variable       | Description  | Valeur par defaut       |
-| -------------- | ------------ | ----------------------- |
-| `VITE_API_URL` | URL de l'API | `http://localhost:3333` |
+| Variable                   | Description     | Valeur par defaut       |
+| -------------------------- | --------------- | ----------------------- |
+| `NUXT_PUBLIC_API_BASE_URL` | URL de l'API    | `http://localhost:3333` |
+| `NUXT_PUBLIC_FRONTEND_URL` | URL du frontend | `http://localhost:3000` |
 
 ---
 

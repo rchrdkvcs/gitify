@@ -1,8 +1,9 @@
-export const useApi = createUseFetch((currentOptions) => {
+export const useApi = createUseFetch((callerOptions) => {
   const runtimeConfig = useRuntimeConfig();
 
   return {
-    ...currentOptions,
+    ...callerOptions,
     baseURL: runtimeConfig.public.apiBaseUrl,
+    credentials: "include",
   };
 });

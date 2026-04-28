@@ -1,43 +1,19 @@
 import type { HasMany } from "@adonisjs/lucid/types/relations";
+import { ProjectSchema } from "#database/schema";
+import Contributor from "#models/contributor";
+import { column, hasMany } from "@adonisjs/lucid/orm";
 
-import Favorite from "#models/favorite";
-import { BaseModel, column, hasMany } from "@adonisjs/lucid/orm";
-import { type DateTime } from "luxon";
-
-export default class Project extends BaseModel {
-  @column({ isPrimary: true })
-  declare id: number;
-
-  @column()
-  declare githubRepoId: number;
-
-  @column()
-  declare ownerName: string;
-
-  @column()
-  declare name: string;
-
-  @column()
-  declare description: string | null;
-
-  @column()
-  declare repositoryUrl: string;
-
-  @column()
-  declare stars: number;
-
-  @column()
-  declare language: string | null;
-
-  @column()
+export default class Project extends ProjectSchema {
+  @column({
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
+  })
   declare topics: string[] | null;
 
-  @hasMany(() => Favorite)
-  declare favorites: HasMany<typeof Favorite>;
+  @column({
+    prepare: (value: Record<string, number> | null) => (value ? JSON.stringify(value) : null),
+  })
+  declare languages: Record<string, number> | null;
 
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime;
-
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime;
+  @hasMany(() => Contributor)
+  declare contributors: HasMany<typeof Contributor>;
 }

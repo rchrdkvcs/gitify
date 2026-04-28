@@ -2,6 +2,7 @@ import { defineConfig } from "oxfmt";
 
 export default defineConfig({
   sortImports: {
+    newlinesBetween: false,
     groups: [
       "type-import",
       ["value-builtin", "value-external"],

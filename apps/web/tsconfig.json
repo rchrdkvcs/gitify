@@ -1,6 +1,7 @@
 {
-  // https://nuxt.com/docs/guide/concepts/typescript
-  "files": [],
+  "experimentalDecorators": true,
+  "include": ["../api/**/*.ts", "../api/.adonisjs/**/*.ts"],
+  "exclude": ["node_modules", "../api/build", "../api/node_modules"],
   "references": [
     {
       "path": "./.nuxt/tsconfig.app.json"
