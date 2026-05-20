@@ -1,6 +1,6 @@
-import { indexEntities } from "@adonisjs/core"
-import { defineConfig } from "@adonisjs/core/app"
-import { generateRegistry } from "@tuyau/core/hooks"
+import { indexEntities } from "@adonisjs/core";
+import { defineConfig } from "@adonisjs/core/app";
+import { generateRegistry } from "@tuyau/core/hooks";
 
 export default defineConfig({
   hooks: {
@@ -56,7 +56,7 @@ export default defineConfig({
     () => import("@adonisjs/auth/auth_provider"),
     () => import("@adonisjs/ally/ally_provider"),
     () => import("#providers/api_provider"),
-    () => import('@foadonis/openapi/openapi_provider')
+    () => import("@foadonis/openapi/openapi_provider"),
   ],
 
   /*
@@ -93,4 +93,4 @@ export default defineConfig({
     ],
     forceExit: false,
   },
-})
+});

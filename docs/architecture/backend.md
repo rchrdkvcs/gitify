@@ -88,6 +88,7 @@ Réponse JSON
 ### Mode développement (`ENABLE_DEV_TOKEN=true`)
 
 Quand cette variable est activée (jamais en production) :
+
 - Un second cookie non-HttpOnly est posé en parallèle du cookie de session
 - `GET /auth/dev` retourne le token en JSON
 
@@ -125,8 +126,14 @@ Hérite de `BaseTransformer<User>`. Expose uniquement les champs nécessaires vi
 
 ```typescript
 return this.pick(this.resource, [
-  "id", "email", "name", "avatarUrl",
-  "isVerified", "preferences", "createdAt", "updatedAt"
+  "id",
+  "email",
+  "name",
+  "avatarUrl",
+  "isVerified",
+  "preferences",
+  "createdAt",
+  "updatedAt",
 ]);
 ```
 
@@ -146,9 +153,9 @@ Encapsule tous les appels à l'API GitHub.
 
 Construit la requête Search API selon la difficulté :
 
-| Difficulté | Filtre                                                          |
-| ---------- | --------------------------------------------------------------- |
-| `beginner` | `language:{lang} archived:false is:public good-first-issues:>0` |
+| Difficulté | Filtre                                                                       |
+| ---------- | ---------------------------------------------------------------------------- |
+| `beginner` | `language:{lang} archived:false is:public good-first-issues:>0`              |
 | `expert`   | `language:{lang} archived:false is:public stars:>1000 help-wanted-issues:>0` |
 
 Trie par étoiles décroissant, récupère jusqu'à 100 résultats. Filtre les dépôts où `has_issues: false || open_issues_count === 0` (GitHub inclut les PRs dans ce compteur).
@@ -157,13 +164,13 @@ Trie par étoiles décroissant, récupère jusqu'à 100 résultats. Filtre les d
 
 5 appels GitHub en parallèle :
 
-| Endpoint                                  | Donnée                                      |
-| ----------------------------------------- | ------------------------------------------- |
-| `GET /repos/{o}/{r}/readme`               | README décodé depuis base64 (UTF-8)         |
-| `GET /repos/{o}/{r}/languages`            | Répartition des langages en octets          |
-| `GET /repos/{o}/{r}/contributors?per_page=10` | Top 10 contributeurs (type `User` seulement) |
-| `GET /repos/{o}/{r}/releases/latest`      | Tag de la dernière release                  |
-| `GET /repos/{o}/{r}/contributors?per_page=1&anon=false` | Total via header `Link` |
+| Endpoint                                                | Donnée                                       |
+| ------------------------------------------------------- | -------------------------------------------- |
+| `GET /repos/{o}/{r}/readme`                             | README décodé depuis base64 (UTF-8)          |
+| `GET /repos/{o}/{r}/languages`                          | Répartition des langages en octets           |
+| `GET /repos/{o}/{r}/contributors?per_page=10`           | Top 10 contributeurs (type `User` seulement) |
+| `GET /repos/{o}/{r}/releases/latest`                    | Tag de la dernière release                   |
+| `GET /repos/{o}/{r}/contributors?per_page=1&anon=false` | Total via header `Link`                      |
 
 Le total de contributeurs est extrait du header `Link` (pattern `page=N>; rel="last"`) — évite de paginer toute la liste.
 
@@ -209,6 +216,7 @@ Enrichit le projet avec readme, languages, contributors, latestRelease, totalCon
 ### `getShowcase(serverToken?)`
 
 Pour chacun des 12 langages configurés :
+
 1. Charge les 30 meilleurs projets en base (triés par étoiles) avec leurs 2 premiers contributeurs
 2. Si le pool < 4 projets **et** un token serveur est disponible → `fetchAndStore` en fire-and-forget (sans bloquer la réponse)
 3. Sélectionne aléatoirement 6 projets dans le pool

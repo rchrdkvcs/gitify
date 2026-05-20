@@ -1,7 +1,8 @@
 import type { HttpContext } from "@adonisjs/core/http";
+import { UserDto, LogoutResponseDto, UnauthorizedResponseDto } from "#schemas/user_schemas";
 import AuthService from "#services/auth_service";
-import UserTransformer from "#transformers/user_transformer";
 import env from "#start/env";
+import UserTransformer from "#transformers/user_transformer";
 import {
   ApiCookieAuth,
   ApiExcludeOperation,
@@ -9,7 +10,6 @@ import {
   ApiResponse,
   ApiTags,
 } from "@foadonis/openapi/decorators";
-import { UserDto, LogoutResponseDto, UnauthorizedResponseDto } from "#schemas/user_schemas";
 
 @ApiTags("Auth")
 export default class AuthController {
@@ -40,9 +40,16 @@ export default class AuthController {
     return response.redirect(env.get("FRONTEND_URL"));
   }
 
-  @ApiOperation({ summary: "Utilisateur courant", description: "Retourne le profil de l'utilisateur authentifié." })
+  @ApiOperation({
+    summary: "Utilisateur courant",
+    description: "Retourne le profil de l'utilisateur authentifié.",
+  })
   @ApiCookieAuth()
-  @ApiResponse({ status: 200, type: () => UserDto, description: "Profil de l'utilisateur authentifié" })
+  @ApiResponse({
+    status: 200,
+    type: () => UserDto,
+    description: "Profil de l'utilisateur authentifié",
+  })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
   async me({ auth, serialize }: HttpContext) {
     return serialize.withoutWrapping(UserTransformer.transform(auth.getUserOrFail()));

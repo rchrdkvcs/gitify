@@ -1,8 +1,8 @@
+import gitifyConfig from "#config/gitify";
 import Contributor from "#models/contributor";
 import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
 import GitHubApiClient from "#services/github/github_api_client";
-import gitifyConfig from "#config/gitify";
 import { DateTime } from "luxon";
 
 export default class GitHubSyncService {

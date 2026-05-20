@@ -16,6 +16,7 @@ export default defineConfig({
     "**/node_modules/**",
     "**/*.d.ts",
     "**/public/assets/**",
+    "**/schema.ts",
   ],
   overrides: [
     {

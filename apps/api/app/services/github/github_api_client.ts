@@ -94,7 +94,10 @@ export default class GitHubApiClient {
       await Promise.all([
         fetch(`${base}/readme`, { headers }),
         fetch(`${base}/languages`, { headers }),
-        fetch(`${base}/contributors?per_page=${gitifyConfig.github.contributors.topContributorsLimit}`, { headers }),
+        fetch(
+          `${base}/contributors?per_page=${gitifyConfig.github.contributors.topContributorsLimit}`,
+          { headers },
+        ),
         fetch(`${base}/releases/latest`, { headers }),
         fetch(`${base}/contributors?per_page=1&anon=false`, { headers }),
       ]);

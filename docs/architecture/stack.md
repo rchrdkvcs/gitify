@@ -2,21 +2,21 @@
 
 ## Stack technique
 
-| Couche          | Technologie                                                  |
-| --------------- | ------------------------------------------------------------ |
-| Monorepo        | pnpm workspaces + Turborepo                                  |
-| Backend         | AdonisJS 7 + TypeScript (Node.js 24)                         |
-| Frontend        | Nuxt 4 + Vue 3 + Pinia + @nuxt/ui + Tailwind CSS v4          |
-| Base de données | PostgreSQL 15                                                |
-| ORM             | Lucid (AdonisJS)                                             |
-| Auth            | Adonis Ally (GitHub OAuth 2.0) + session HTTP-Only cookie    |
-| Validation      | VineJS                                                       |
-| Client API typé | Tuyau (génération auto depuis les routes AdonisJS)           |
-| OpenAPI         | @foadonis/openapi + Scalar UI (`GET /docs`)                  |
-| Linting         | oxlint                                                       |
-| Formatage       | oxfmt                                                        |
-| Tests           | Japa (intégré AdonisJS)                                      |
-| Infra dev       | Docker Compose                                               |
+| Couche          | Technologie                                               |
+| --------------- | --------------------------------------------------------- |
+| Monorepo        | pnpm workspaces + Turborepo                               |
+| Backend         | AdonisJS 7 + TypeScript (Node.js 24)                      |
+| Frontend        | Nuxt 4 + Vue 3 + Pinia + @nuxt/ui + Tailwind CSS v4       |
+| Base de données | PostgreSQL 15                                             |
+| ORM             | Lucid (AdonisJS)                                          |
+| Auth            | Adonis Ally (GitHub OAuth 2.0) + session HTTP-Only cookie |
+| Validation      | VineJS                                                    |
+| Client API typé | Tuyau (génération auto depuis les routes AdonisJS)        |
+| OpenAPI         | @foadonis/openapi + Scalar UI (`GET /docs`)               |
+| Linting         | oxlint                                                    |
+| Formatage       | oxfmt                                                     |
+| Tests           | Japa (intégré AdonisJS)                                   |
+| Infra dev       | Docker Compose                                            |
 
 ## Turborepo
 
@@ -106,19 +106,19 @@ apps/web/
 
 L'API utilise le système `imports` de Node.js (pas des alias TypeScript). Définis dans `apps/api/package.json` :
 
-| Alias          | Résolution                        |
-| -------------- | --------------------------------- |
-| `#controllers/*` | `./app/controllers/*.js`        |
-| `#services/*`  | `./app/services/*.js`             |
-| `#models/*`    | `./app/models/*.js`               |
-| `#schemas/*`   | `./app/schemas/*.js`              |
-| `#validators/*`| `./app/validators/*.js`           |
-| `#transformers/*`| `./app/transformers/*.js`       |
-| `#config/*`    | `./config/*.js`                   |
-| `#database/*`  | `./database/*.js`                 |
-| `#start/*`     | `./start/*.js`                    |
-| `#generated/*` | `./.adonisjs/server/*.js`         |
-| `#providers/*` | `./providers/*.js`                |
+| Alias             | Résolution                |
+| ----------------- | ------------------------- |
+| `#controllers/*`  | `./app/controllers/*.js`  |
+| `#services/*`     | `./app/services/*.js`     |
+| `#models/*`       | `./app/models/*.js`       |
+| `#schemas/*`      | `./app/schemas/*.js`      |
+| `#validators/*`   | `./app/validators/*.js`   |
+| `#transformers/*` | `./app/transformers/*.js` |
+| `#config/*`       | `./config/*.js`           |
+| `#database/*`     | `./database/*.js`         |
+| `#start/*`        | `./start/*.js`            |
+| `#generated/*`    | `./.adonisjs/server/*.js` |
+| `#providers/*`    | `./providers/*.js`        |
 
 ## Tuyau — génération du client typé
 

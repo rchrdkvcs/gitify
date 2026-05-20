@@ -1,4 +1,14 @@
 import type { HttpContext } from "@adonisjs/core/http";
+import {
+  BadRequestResponseDto,
+  FeedResponseDto,
+  InteractionResponseDto,
+  LikedProjectsResponseDto,
+  NotFoundResponseDto,
+  ShowcaseResponseDto,
+  ShowProjectResponseDto,
+} from "#schemas/project_schemas";
+import { UnauthorizedResponseDto } from "#schemas/user_schemas";
 import ProjectFeedService from "#services/project_feed_service";
 import env from "#start/env";
 import { projectIdValidator } from "#validators/project_id_validator";
@@ -10,16 +20,6 @@ import {
   ApiResponse,
   ApiTags,
 } from "@foadonis/openapi/decorators";
-import {
-  BadRequestResponseDto,
-  FeedResponseDto,
-  InteractionResponseDto,
-  LikedProjectsResponseDto,
-  NotFoundResponseDto,
-  ShowcaseResponseDto,
-  ShowProjectResponseDto,
-} from "#schemas/project_schemas";
-import { UnauthorizedResponseDto } from "#schemas/user_schemas";
 
 @ApiTags("Projects")
 export default class ProjectController {
@@ -28,7 +28,11 @@ export default class ProjectController {
     description:
       "Retourne une sélection de projets open-source populaires regroupés par langage. Aucune authentification requise.",
   })
-  @ApiResponse({ status: 200, type: () => ShowcaseResponseDto, description: "Projets regroupés par langage" })
+  @ApiResponse({
+    status: 200,
+    type: () => ShowcaseResponseDto,
+    description: "Projets regroupés par langage",
+  })
   async showcase({ response }: HttpContext) {
     const serverToken = env.get("GITHUB_SERVER_TOKEN") ?? undefined;
     const languages = await ProjectFeedService.getShowcase(serverToken);
@@ -41,7 +45,12 @@ export default class ProjectController {
       "Retourne les détails complets d'un projet, incluant le README, la répartition des langages et les contributeurs.",
   })
   @ApiCookieAuth()
-  @ApiParam({ name: "id", description: "Identifiant numérique du projet", required: true, schema: { type: "integer" } })
+  @ApiParam({
+    name: "id",
+    description: "Identifiant numérique du projet",
+    required: true,
+    schema: { type: "integer" },
+  })
   @ApiResponse({ status: 200, type: () => ShowProjectResponseDto, description: "Détail du projet" })
   @ApiResponse({ status: 404, type: () => NotFoundResponseDto, description: "Projet introuvable" })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
@@ -63,8 +72,16 @@ export default class ProjectController {
       "Retourne une liste personnalisée de projets non vus en fonction des préférences de difficulté et de langages. Les préférences doivent être configurées au préalable (`PUT /auth/preferences`).",
   })
   @ApiCookieAuth()
-  @ApiResponse({ status: 200, type: () => FeedResponseDto, description: "Fil de projets personnalisé" })
-  @ApiResponse({ status: 400, type: () => BadRequestResponseDto, description: "Préférences utilisateur non définies" })
+  @ApiResponse({
+    status: 200,
+    type: () => FeedResponseDto,
+    description: "Fil de projets personnalisé",
+  })
+  @ApiResponse({
+    status: 400,
+    type: () => BadRequestResponseDto,
+    description: "Préférences utilisateur non définies",
+  })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
   async feed({ auth, response }: HttpContext) {
     const user = auth.getUserOrFail();
@@ -87,8 +104,17 @@ export default class ProjectController {
     description: "Retourne une liste paginée des projets que l'utilisateur authentifié a aimés.",
   })
   @ApiCookieAuth()
-  @ApiQuery({ name: "page", description: "Numéro de page (défaut : 1)", required: false, schema: { type: "integer", minimum: 1 } })
-  @ApiResponse({ status: 200, type: () => LikedProjectsResponseDto, description: "Liste paginée des projets aimés" })
+  @ApiQuery({
+    name: "page",
+    description: "Numéro de page (défaut : 1)",
+    required: false,
+    schema: { type: "integer", minimum: 1 },
+  })
+  @ApiResponse({
+    status: 200,
+    type: () => LikedProjectsResponseDto,
+    description: "Liste paginée des projets aimés",
+  })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
   async liked({ auth, request, response }: HttpContext) {
     const page = Math.max(1, Number(request.qs().page ?? 1));
@@ -106,8 +132,17 @@ export default class ProjectController {
       "Enregistre une interaction 'aimé' pour le projet donné. Remplace toute interaction 'ignoré' précédente.",
   })
   @ApiCookieAuth()
-  @ApiParam({ name: "id", description: "Identifiant numérique du projet", required: true, schema: { type: "integer" } })
-  @ApiResponse({ status: 200, type: () => InteractionResponseDto, description: "Interaction enregistrée" })
+  @ApiParam({
+    name: "id",
+    description: "Identifiant numérique du projet",
+    required: true,
+    schema: { type: "integer" },
+  })
+  @ApiResponse({
+    status: 200,
+    type: () => InteractionResponseDto,
+    description: "Interaction enregistrée",
+  })
   @ApiResponse({ status: 404, type: () => NotFoundResponseDto, description: "Projet introuvable" })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
   async like({ auth, request, response }: HttpContext) {
@@ -126,8 +161,17 @@ export default class ProjectController {
       "Enregistre une interaction 'ignoré' pour le projet donné. Remplace toute interaction 'aimé' précédente.",
   })
   @ApiCookieAuth()
-  @ApiParam({ name: "id", description: "Identifiant numérique du projet", required: true, schema: { type: "integer" } })
-  @ApiResponse({ status: 200, type: () => InteractionResponseDto, description: "Interaction enregistrée" })
+  @ApiParam({
+    name: "id",
+    description: "Identifiant numérique du projet",
+    required: true,
+    schema: { type: "integer" },
+  })
+  @ApiResponse({
+    status: 200,
+    type: () => InteractionResponseDto,
+    description: "Interaction enregistrée",
+  })
   @ApiResponse({ status: 404, type: () => NotFoundResponseDto, description: "Projet introuvable" })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
   async pass({ auth, request, response }: HttpContext) {

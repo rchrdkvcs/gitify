@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import type { ProjectDetail } from "@gitify/types";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import type { ProjectDetail } from "@gitify/types";
 
 const route = useRoute();
 const { http } = useHttp();

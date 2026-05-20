@@ -18,6 +18,7 @@ Connexion exclusivement via GitHub OAuth. Aucun mot de passe, aucun JWT stocké 
 ### Préférences utilisateur
 
 Avant d'accéder au fil, l'utilisateur configure :
+
 - **Difficulté** : `beginner` (projets avec "good first issues") ou `expert` (projets populaires avec "help wanted")
 - **Langages** : un ou plusieurs parmi les 11 langages supportés
 

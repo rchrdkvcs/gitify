@@ -1,8 +1,8 @@
 import type { UserPreferences, ShowcaseLanguageResult, ShowcaseProject } from "@gitify/types";
+import gitifyConfig from "#config/gitify";
 import Project from "#models/project";
 import UserProjectInteraction from "#models/user_project_interaction";
 import GitHubSyncService from "#services/github/github_sync_service";
-import gitifyConfig from "#config/gitify";
 
 export default class ProjectFeedService {
   static async getShowcase(serverToken?: string): Promise<ShowcaseLanguageResult[]> {
@@ -25,27 +25,26 @@ export default class ProjectFeedService {
           ).catch((err) => console.error(`Showcase prefetch failed for ${language}:`, err));
         }
 
-        const projects: ShowcaseProject[] = pickRandom(
-          pool,
-          gitifyConfig.showcase.perLanguage,
-        ).map((p) => ({
-          id: p.id,
-          name: p.name,
-          ownerName: p.ownerName,
-          repositoryUrl: p.repositoryUrl,
-          description: p.description,
-          language: p.language,
-          stars: p.stars,
-          latestRelease: p.latestRelease,
-          updatedAt: p.updatedAt?.toISO() ?? null,
-          topics: p.topics?.slice(0, gitifyConfig.showcase.topicsDisplay) ?? [],
-          totalContributorsCount: p.totalContributorsCount,
-          contributors: p.contributors.map((c) => ({
-            login: c.login,
-            avatarUrl: c.avatarUrl,
-            profileUrl: c.profileUrl,
-          })),
-        }));
+        const projects: ShowcaseProject[] = pickRandom(pool, gitifyConfig.showcase.perLanguage).map(
+          (p) => ({
+            id: p.id,
+            name: p.name,
+            ownerName: p.ownerName,
+            repositoryUrl: p.repositoryUrl,
+            description: p.description,
+            language: p.language,
+            stars: p.stars,
+            latestRelease: p.latestRelease,
+            updatedAt: p.updatedAt?.toISO() ?? null,
+            topics: p.topics?.slice(0, gitifyConfig.showcase.topicsDisplay) ?? [],
+            totalContributorsCount: p.totalContributorsCount,
+            contributors: p.contributors.map((c) => ({
+              login: c.login,
+              avatarUrl: c.avatarUrl,
+              profileUrl: c.profileUrl,
+            })),
+          }),
+        );
 
         return { language, projects };
       }),

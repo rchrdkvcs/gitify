@@ -1,7 +1,7 @@
+import type { UserPreferences } from "@gitify/types";
 import { UserSchema } from "#database/schema";
 import { beforeCreate, column } from "@adonisjs/lucid/orm";
 import { ulid } from "ulid";
-import type { UserPreferences } from "@gitify/types";
 
 export type { UserPreferences };
 

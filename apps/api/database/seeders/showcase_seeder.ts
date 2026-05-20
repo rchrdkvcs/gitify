@@ -1,6 +1,6 @@
+import gitifyConfig from "#config/gitify";
 import Project from "#models/project";
 import GitHubSyncService from "#services/github/github_sync_service";
-import gitifyConfig from "#config/gitify";
 import env from "#start/env";
 
 export default class ShowcaseSeeder {
@@ -19,7 +19,12 @@ export default class ShowcaseSeeder {
       console.log(`\n[${language}] Fetching top ${pool} repos...`);
 
       try {
-        const count = await GitHubSyncService.fetchAndStore(language, seederDifficulty, serverToken, pool);
+        const count = await GitHubSyncService.fetchAndStore(
+          language,
+          seederDifficulty,
+          serverToken,
+          pool,
+        );
         console.log(`[${language}] Stored ${count} projects`);
 
         const projects = await Project.query()

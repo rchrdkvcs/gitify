@@ -45,34 +45,34 @@ cp apps/web/.env.example apps/web/.env
 
 ### API — `apps/api/.env`
 
-| Variable                | Description                                            | Défaut                                         |
-| ----------------------- | ------------------------------------------------------ | ---------------------------------------------- |
-| `PORT`                  | Port du serveur API                                    | `3333`                                         |
-| `HOST`                  | Interface réseau                                       | `localhost` (Docker surcharge à `0.0.0.0`)     |
-| `NODE_ENV`              | Environnement Node.js                                  | `development`                                  |
-| `TZ`                    | Fuseau horaire du processus                            | `UTC`                                          |
-| `LOG_LEVEL`             | Niveau de log (pino)                                   | `info`                                         |
-| `APP_KEY`               | Clé de chiffrement AdonisJS (sessions, cookies)        | Générer avec `node ace generate:key`           |
-| `FRONTEND_URL`          | URL du frontend (utilisée pour la redirection OAuth)   | `http://localhost:3000`                        |
-| `DB_HOST`               | Hôte PostgreSQL                                        | `127.0.0.1` (Docker surcharge à `database`)    |
-| `DB_PORT`               | Port PostgreSQL                                        | `5432`                                         |
-| `DB_USER`               | Utilisateur PostgreSQL                                 | `root`                                         |
-| `DB_PASSWORD`           | Mot de passe PostgreSQL                                | `root`                                         |
-| `DB_DATABASE`           | Nom de la base de données                              | `app`                                          |
-| `SESSION_DRIVER`        | Driver de session AdonisJS                             | `cookie`                                       |
-| `GITHUB_CLIENT_ID`      | Client ID de l'OAuth App GitHub                        | —                                              |
-| `GITHUB_CLIENT_SECRET`  | Client Secret de l'OAuth App GitHub                    | —                                              |
-| `GITHUB_CALLBACK_URL`   | URL de callback OAuth                                  | `http://localhost:3333/auth/github/callback`   |
-| `GITHUB_SERVER_TOKEN`   | PAT GitHub côté serveur (repos publics, aucun scope)   | Optionnel, requis pour le seeder showcase      |
-| `ENABLE_DEV_TOKEN`      | Active un cookie non-HttpOnly + `GET /auth/dev` pour tester dans Bruno/Postman | `true` (dev uniquement) |
+| Variable               | Description                                                                    | Défaut                                       |
+| ---------------------- | ------------------------------------------------------------------------------ | -------------------------------------------- |
+| `PORT`                 | Port du serveur API                                                            | `3333`                                       |
+| `HOST`                 | Interface réseau                                                               | `localhost` (Docker surcharge à `0.0.0.0`)   |
+| `NODE_ENV`             | Environnement Node.js                                                          | `development`                                |
+| `TZ`                   | Fuseau horaire du processus                                                    | `UTC`                                        |
+| `LOG_LEVEL`            | Niveau de log (pino)                                                           | `info`                                       |
+| `APP_KEY`              | Clé de chiffrement AdonisJS (sessions, cookies)                                | Générer avec `node ace generate:key`         |
+| `FRONTEND_URL`         | URL du frontend (utilisée pour la redirection OAuth)                           | `http://localhost:3000`                      |
+| `DB_HOST`              | Hôte PostgreSQL                                                                | `127.0.0.1` (Docker surcharge à `database`)  |
+| `DB_PORT`              | Port PostgreSQL                                                                | `5432`                                       |
+| `DB_USER`              | Utilisateur PostgreSQL                                                         | `root`                                       |
+| `DB_PASSWORD`          | Mot de passe PostgreSQL                                                        | `root`                                       |
+| `DB_DATABASE`          | Nom de la base de données                                                      | `app`                                        |
+| `SESSION_DRIVER`       | Driver de session AdonisJS                                                     | `cookie`                                     |
+| `GITHUB_CLIENT_ID`     | Client ID de l'OAuth App GitHub                                                | —                                            |
+| `GITHUB_CLIENT_SECRET` | Client Secret de l'OAuth App GitHub                                            | —                                            |
+| `GITHUB_CALLBACK_URL`  | URL de callback OAuth                                                          | `http://localhost:3333/auth/github/callback` |
+| `GITHUB_SERVER_TOKEN`  | PAT GitHub côté serveur (repos publics, aucun scope)                           | Optionnel, requis pour le seeder showcase    |
+| `ENABLE_DEV_TOKEN`     | Active un cookie non-HttpOnly + `GET /auth/dev` pour tester dans Bruno/Postman | `true` (dev uniquement)                      |
 
 > `GITHUB_SERVER_TOKEN` est un Personal Access Token sans scope particulier. Il est utilisé pour pré-remplir la vitrine au démarrage sans avoir besoin d'un utilisateur authentifié. Il n'est jamais requis en développement local si vous remplissez la base à la main.
 
 ### Web — `apps/web/.env`
 
-| Variable                    | Description              | Défaut                    |
-| --------------------------- | ------------------------ | ------------------------- |
-| `NUXT_PUBLIC_API_BASE_URL`  | URL de base de l'API     | `http://localhost:3333`   |
+| Variable                   | Description          | Défaut                  |
+| -------------------------- | -------------------- | ----------------------- |
+| `NUXT_PUBLIC_API_BASE_URL` | URL de base de l'API | `http://localhost:3333` |
 
 ---
 
@@ -88,11 +88,11 @@ pnpm docker:up
 
 Cela construit les images et démarre les trois services en arrière-plan.
 
-| Service    | URL                    |
-| ---------- | ---------------------- |
-| Frontend   | http://localhost:3000  |
-| API        | http://localhost:3333  |
-| PostgreSQL | `localhost:5432`       |
+| Service    | URL                   |
+| ---------- | --------------------- |
+| Frontend   | http://localhost:3000 |
+| API        | http://localhost:3333 |
+| PostgreSQL | `localhost:5432`      |
 
 ### Exécuter les migrations
 
@@ -180,35 +180,35 @@ pnpm dev:web   # Nuxt avec Vite
 
 ## 5. Tableau de bord des commandes
 
-| Commande                  | Description                                          |
-| ------------------------- | ---------------------------------------------------- |
-| `pnpm dev`                | Lance l'API et le frontend en parallèle (Turborepo)  |
-| `pnpm dev:api`            | Lance l'API uniquement                               |
-| `pnpm dev:web`            | Lance le frontend uniquement                         |
-| `pnpm build`              | Build de production des deux apps (Turborepo)        |
-| `pnpm lint`               | Lint avec oxlint                                     |
-| `pnpm lint:fix`           | Lint avec correction automatique                     |
-| `pnpm fmt`                | Formatage avec oxfmt                                 |
-| `pnpm fmt:check`          | Vérification du formatage                            |
-| `pnpm docker:up`          | Build et lance tout via Docker Compose               |
-| `pnpm docker:down`        | Arrête les containers (données conservées)           |
-| `pnpm docker:clean`       | Arrête tout et supprime les volumes                  |
-| `pnpm docker:logs`        | Affiche les logs en temps réel                       |
-| `pnpm docker:restart`     | Redémarre les services                               |
+| Commande              | Description                                         |
+| --------------------- | --------------------------------------------------- |
+| `pnpm dev`            | Lance l'API et le frontend en parallèle (Turborepo) |
+| `pnpm dev:api`        | Lance l'API uniquement                              |
+| `pnpm dev:web`        | Lance le frontend uniquement                        |
+| `pnpm build`          | Build de production des deux apps (Turborepo)       |
+| `pnpm lint`           | Lint avec oxlint                                    |
+| `pnpm lint:fix`       | Lint avec correction automatique                    |
+| `pnpm fmt`            | Formatage avec oxfmt                                |
+| `pnpm fmt:check`      | Vérification du formatage                           |
+| `pnpm docker:up`      | Build et lance tout via Docker Compose              |
+| `pnpm docker:down`    | Arrête les containers (données conservées)          |
+| `pnpm docker:clean`   | Arrête tout et supprime les volumes                 |
+| `pnpm docker:logs`    | Affiche les logs en temps réel                      |
+| `pnpm docker:restart` | Redémarre les services                              |
 
 ### Commandes API (`apps/api`)
 
-| Commande                              | Description                                      |
-| ------------------------------------- | ------------------------------------------------ |
-| `node ace migration:run`              | Applique les migrations en attente               |
-| `node ace migration:rollback`         | Annule la dernière migration                     |
-| `node ace migration:status`           | Affiche l'état des migrations                    |
-| `node ace db:seed`                    | Exécute tous les seeders                         |
-| `node ace generate:key`               | Génère une `APP_KEY`                             |
-| `node ace test`                       | Lance la suite de tests Japa                     |
-| `node ace test --suite=unit`          | Lance uniquement les tests unitaires             |
-| `node ace test --suite=functional`    | Lance uniquement les tests fonctionnels          |
-| `pnpm typecheck`                      | Vérification TypeScript sans compilation         |
+| Commande                           | Description                              |
+| ---------------------------------- | ---------------------------------------- |
+| `node ace migration:run`           | Applique les migrations en attente       |
+| `node ace migration:rollback`      | Annule la dernière migration             |
+| `node ace migration:status`        | Affiche l'état des migrations            |
+| `node ace db:seed`                 | Exécute tous les seeders                 |
+| `node ace generate:key`            | Génère une `APP_KEY`                     |
+| `node ace test`                    | Lance la suite de tests Japa             |
+| `node ace test --suite=unit`       | Lance uniquement les tests unitaires     |
+| `node ace test --suite=functional` | Lance uniquement les tests fonctionnels  |
+| `pnpm typecheck`                   | Vérification TypeScript sans compilation |
 
 ---
 

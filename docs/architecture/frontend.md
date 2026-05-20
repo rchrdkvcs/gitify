@@ -45,11 +45,11 @@ Navigation SPA
 Source de vérité unique pour l'état d'authentification.
 
 ```typescript
-user: Ref<Data.User | null>       // null = anonyme
-isAuthenticated: ComputedRef      // true si user !== null
-me()                              // $fetch GET /auth/me → user.value = data
-authenticate()                    // retourne l'URL de redirect OAuth
-logout()                          // DELETE /auth/logout + user.value = null
+user: Ref<Data.User | null>; // null = anonyme
+isAuthenticated: ComputedRef; // true si user !== null
+me(); // $fetch GET /auth/me → user.value = data
+authenticate(); // retourne l'URL de redirect OAuth
+logout(); // DELETE /auth/logout + user.value = null
 ```
 
 `Data.User` est le type inféré depuis `UserTransformer` via la génération Tuyau — `@gitify/api/data`.
@@ -105,7 +105,7 @@ Gère le formulaire de modification des préférences.
 ```typescript
 const tuyau = createTuyau({
   baseUrl: config.public.apiBaseUrl || "http://localhost:3333",
-  registry,                              // @gitify/api/registry
+  registry, // @gitify/api/registry
   credentials: "include",
   headers: useRequestHeaders(["cookie"]), // forwarding SSR
 });
@@ -135,9 +135,9 @@ Les pages `swipe.vue` et `liked.vue` consomment ces query options via `useQuery(
 
 ## Pages
 
-| Page                  | Route              | Auth | Description                                          |
-| --------------------- | ------------------ | ---- | ---------------------------------------------------- |
-| `index.vue`           | `/`                | Non  | Page d'accueil, vitrine publique (`GET /projects/showcase`) |
-| `swipe.vue`           | `/swipe`           | Oui  | Interface swipe principale (fil personnalisé)        |
-| `liked.vue`           | `/liked`           | Oui  | Liste paginée des projets aimés                      |
-| `projects/[id].vue`   | `/projects/:id`    | Non  | Détail d'un projet (README, langages, contributeurs) |
+| Page                | Route           | Auth | Description                                                 |
+| ------------------- | --------------- | ---- | ----------------------------------------------------------- |
+| `index.vue`         | `/`             | Non  | Page d'accueil, vitrine publique (`GET /projects/showcase`) |
+| `swipe.vue`         | `/swipe`        | Oui  | Interface swipe principale (fil personnalisé)               |
+| `liked.vue`         | `/liked`        | Oui  | Liste paginée des projets aimés                             |
+| `projects/[id].vue` | `/projects/:id` | Non  | Détail d'un projet (README, langages, contributeurs)        |
