@@ -1,13 +1,24 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import User from "#models/user";
+import { UserDto, LogoutResponseDto, UnauthorizedResponseDto } from "#schemas/user_schemas";
+import AuthService from "#services/auth_service";
 import env from "#start/env";
 import UserTransformer from "#transformers/user_transformer";
+import {
+  ApiCookieAuth,
+  ApiExcludeOperation,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@foadonis/openapi/decorators";
 
+@ApiTags("Auth")
 export default class AuthController {
+  @ApiExcludeOperation()
   async redirect({ ally }: HttpContext) {
     return ally.use("github").redirect();
   }
 
+  @ApiExcludeOperation()
   async callback({ ally, response, auth }: HttpContext) {
     const githubDrive = ally.use("github");
 
@@ -22,28 +33,34 @@ export default class AuthController {
     }
 
     const driverUser = await githubDrive.user();
-
-    const user = await User.updateOrCreate(
-      { email: driverUser.email },
-      {
-        name: driverUser.name ?? driverUser.original.login,
-        avatarUrl: driverUser.avatarUrl,
-        githubAccessToken: driverUser.token.token,
-        isVerified: driverUser.emailVerificationState === "verified",
-      },
-    );
+    const user = await AuthService.findOrCreateFromGitHub(driverUser);
 
     await auth.use("web").login(user);
 
     return response.redirect(env.get("FRONTEND_URL"));
   }
 
+  @ApiOperation({
+    summary: "Utilisateur courant",
+    description: "Retourne le profil de l'utilisateur authentifié.",
+  })
+  @ApiCookieAuth()
+  @ApiResponse({
+    status: 200,
+    type: () => UserDto,
+    description: "Profil de l'utilisateur authentifié",
+  })
+  @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
+  async me({ auth, serialize }: HttpContext) {
+    return serialize.withoutWrapping(UserTransformer.transform(auth.getUserOrFail()));
+  }
+
+  @ApiOperation({ summary: "Déconnexion", description: "Invalide le cookie de session courant." })
+  @ApiCookieAuth()
+  @ApiResponse({ status: 200, type: () => LogoutResponseDto, description: "Session invalidée" })
+  @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
   async logout({ auth, response }: HttpContext) {
     await auth.use("web").logout();
     return response.ok({ message: "Successfully logged out" });
-  }
-
-  async me({ auth, serialize }: HttpContext) {
-    return serialize(UserTransformer.transform(auth.getUserOrFail()));
   }
 }

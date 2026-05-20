@@ -1,24 +1,7 @@
+import gitifyConfig from "#config/gitify";
 import Project from "#models/project";
-import GitHubService from "#services/git_hub_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import env from "#start/env";
-
-const SHOWCASE_LANGUAGES = [
-  "typescript",
-  "javascript",
-  "python",
-  "rust",
-  "go",
-  "c++",
-  "php",
-  "java",
-  "kotlin",
-  "swift",
-  "dart",
-  "ruby",
-];
-
-const PER_PAGE = 30;
-const DIFFICULTY = "expert" as const;
 
 export default class ShowcaseSeeder {
   async run() {
@@ -29,31 +12,32 @@ export default class ShowcaseSeeder {
       return;
     }
 
-    console.log(`Seeding ${SHOWCASE_LANGUAGES.length} languages, ${PER_PAGE} projects each...`);
+    const { languages, pool, seederDifficulty } = gitifyConfig.showcase;
+    console.log(`Seeding ${languages.length} languages, ${pool} projects each...`);
 
-    for (const language of SHOWCASE_LANGUAGES) {
-      console.log(`\n[${language}] Fetching top ${PER_PAGE} repos...`);
+    for (const language of languages) {
+      console.log(`\n[${language}] Fetching top ${pool} repos...`);
 
       try {
-        const count = await GitHubService.fetchAndStore(
+        const count = await GitHubSyncService.fetchAndStore(
           language,
-          DIFFICULTY,
+          seederDifficulty,
           serverToken,
-          PER_PAGE,
+          pool,
         );
         console.log(`[${language}] Stored ${count} projects`);
 
         const projects = await Project.query()
           .where("language", language)
-          .where("difficulty", DIFFICULTY)
+          .where("difficulty", seederDifficulty)
           .orderBy("stars", "desc")
-          .limit(PER_PAGE);
+          .limit(pool);
 
         console.log(`[${language}] Fetching details for ${projects.length} projects...`);
 
         for (const project of projects) {
           try {
-            await GitHubService.fetchProjectDetails(project, serverToken);
+            await GitHubSyncService.fetchProjectDetails(project, serverToken);
           } catch (error) {
             console.warn(`[${language}] Failed details for ${project.name}:`, error);
           }

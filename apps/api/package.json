@@ -17,7 +17,8 @@
     "#config/*": "./config/*.js",
     "#generated/*": "./.adonisjs/server/*.js",
     "#transformers/*": "./app/transformers/*.js",
-    "#providers/*": "./providers/*.js"
+    "#providers/*": "./providers/*.js",
+    "#schemas/*": "./app/schemas/*.js"
   },
   "exports": {
     "./registry": "./.adonisjs/client/registry/index.ts",
@@ -37,6 +38,8 @@
     "@adonisjs/cors": "^3.0.0",
     "@adonisjs/lucid": "^22.4.2",
     "@adonisjs/session": "^8.1.0",
+    "@foadonis/openapi": "^1.0.1",
+    "@gitify/types": "workspace:*",
     "@tuyau/core": "^1.2.2",
     "@vinejs/vine": "^4.4.0",
     "luxon": "^3.7.2",

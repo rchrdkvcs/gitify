@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@gitify/api": "workspace:*",
+    "@gitify/types": "workspace:*",
     "@nuxt/image": "2.0.0",
     "@nuxt/ui": "4.7.0",
     "@pinia/colada": "^1.2.0",
