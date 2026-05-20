@@ -2,47 +2,33 @@ import type { UserPreferences, ShowcaseLanguageResult, ShowcaseProject } from "@
 import Project from "#models/project";
 import UserProjectInteraction from "#models/user_project_interaction";
 import GitHubSyncService from "#services/github/github_sync_service";
-
-const SHOWCASE_LANGUAGES = [
-  "typescript",
-  "javascript",
-  "python",
-  "rust",
-  "go",
-  "c++",
-  "php",
-  "java",
-  "kotlin",
-  "swift",
-  "dart",
-  "ruby",
-];
-
-const FEED_FETCH_THRESHOLD = 25;
-const FEED_PER_LANGUAGE_LIMIT = 60;
-const FEED_TOTAL_LIMIT = 60;
-const SHOWCASE_POOL = 30;
-const SHOWCASE_PER_LANGUAGE = 6;
-const SHOWCASE_MIN_THRESHOLD = 4;
-const LIKED_PAGE_LIMIT = 20;
+import gitifyConfig from "#config/gitify";
 
 export default class ProjectFeedService {
   static async getShowcase(serverToken?: string): Promise<ShowcaseLanguageResult[]> {
     const languagesData = await Promise.all(
-      SHOWCASE_LANGUAGES.map(async (language) => {
+      gitifyConfig.showcase.languages.map(async (language) => {
         const pool = await Project.query()
           .where("language", language)
           .orderBy("stars", "desc")
-          .limit(SHOWCASE_POOL)
-          .preload("contributors", (q) => q.orderBy("contributions", "desc").limit(2));
-
-        if (pool.length < SHOWCASE_MIN_THRESHOLD && serverToken) {
-          GitHubSyncService.fetchAndStore(language, "expert", serverToken, SHOWCASE_POOL).catch(
-            (err) => console.error(`Showcase prefetch failed for ${language}:`, err),
+          .limit(gitifyConfig.showcase.pool)
+          .preload("contributors", (q) =>
+            q.orderBy("contributions", "desc").limit(gitifyConfig.showcase.topContributorsDisplay),
           );
+
+        if (pool.length < gitifyConfig.showcase.minThreshold && serverToken) {
+          GitHubSyncService.fetchAndStore(
+            language,
+            gitifyConfig.showcase.seederDifficulty,
+            serverToken,
+            gitifyConfig.showcase.pool,
+          ).catch((err) => console.error(`Showcase prefetch failed for ${language}:`, err));
         }
 
-        const projects: ShowcaseProject[] = pickRandom(pool, SHOWCASE_PER_LANGUAGE).map((p) => ({
+        const projects: ShowcaseProject[] = pickRandom(
+          pool,
+          gitifyConfig.showcase.perLanguage,
+        ).map((p) => ({
           id: p.id,
           name: p.name,
           ownerName: p.ownerName,
@@ -52,7 +38,7 @@ export default class ProjectFeedService {
           stars: p.stars,
           latestRelease: p.latestRelease,
           updatedAt: p.updatedAt?.toISO() ?? null,
-          topics: p.topics?.slice(0, 2) ?? [],
+          topics: p.topics?.slice(0, gitifyConfig.showcase.topicsDisplay) ?? [],
           totalContributorsCount: p.totalContributorsCount,
           contributors: p.contributors.map((c) => ({
             login: c.login,
@@ -99,7 +85,7 @@ export default class ProjectFeedService {
 
     const available = await countAvailable(difficulty, languages, seenIdsOrFallback);
 
-    if (available < FEED_FETCH_THRESHOLD) {
+    if (available < gitifyConfig.feed.fetchThreshold) {
       await Promise.all(
         languages.map(async (language) => {
           if (await GitHubSyncService.needsFetch(language, difficulty)) {
@@ -116,12 +102,12 @@ export default class ProjectFeedService {
           .where("language", language)
           .whereNotIn("id", seenIdsOrFallback)
           .orderBy("stars", "desc")
-          .limit(FEED_PER_LANGUAGE_LIMIT),
+          .limit(gitifyConfig.feed.perLanguageLimit),
       ),
     );
 
     return {
-      projects: roundRobin(projectsPerLanguage, FEED_TOTAL_LIMIT),
+      projects: roundRobin(projectsPerLanguage, gitifyConfig.feed.totalLimit),
       available: await countAvailable(difficulty, languages, seenIdsOrFallback),
     };
   }
@@ -132,7 +118,7 @@ export default class ProjectFeedService {
       .where("type", "liked")
       .orderBy("createdAt", "desc")
       .preload("project")
-      .paginate(page, LIKED_PAGE_LIMIT);
+      .paginate(page, gitifyConfig.feed.likedPageLimit);
   }
 
   static async recordInteraction(
