@@ -1,48 +1,51 @@
-# PRODUCT CONTEXT - GitMatch (Tinder for Open Source)
+# Contexte produit
 
-## 1. Project Vision
+## Vision
 
-GitMatch is a web platform designed to help student and junior developers find Open Source projects that match their skill level. It uses a "Tinder-like" interface (Swipe Right to Like/Save, Swipe Left to Pass) to make the discovery process engaging and simple.
+Gitify est une plateforme web qui aide les développeurs à découvrir des projets open-source GitHub correspondant à leur niveau et à leurs langages. L'interface reprend le principe du swipe (comme Tinder) : un projet à la fois, liker pour sauvegarder, passer pour ignorer.
 
-## 2. Target Audience
+## Public cible
 
-- **Users:** Students, Junior Developers, Contributors looking for "Good First Issues".
-- **Needs:** Gamified discovery of projects by language and difficulty.
+- Étudiants et développeurs juniors cherchant leurs premières contributions open-source
+- Développeurs expérimentés cherchant des projets actifs dans leur stack
 
-## 3. Core Features (MVP)
+## Fonctionnalités
 
-### A. Authentication
+### Authentification GitHub
 
-- **GitHub OAuth:** Users login via GitHub (Adonis Ally).
-- **Session:** AdonisJS native session stored in a secure HTTP-Only cookie — pas de JWT, pas de localStorage.
+Connexion exclusivement via GitHub OAuth. Aucun mot de passe, aucun JWT stocké côté client. La session est gérée par AdonisJS dans un cookie HTTP-Only — elle n'est jamais exposée à JavaScript.
 
-### B. User Onboarding
+### Préférences utilisateur
 
-- **Profiling:** Auto-detection of languages based on the user's GitHub profile.
-- **Preferences:** User selects difficulty (Beginner/Expert) and confirms stack.
+Avant d'accéder au fil, l'utilisateur configure :
+- **Difficulté** : `beginner` (projets avec "good first issues") ou `expert` (projets populaires avec "help wanted")
+- **Langages** : un ou plusieurs parmi les 11 langages supportés
 
-### C. The Matching Engine (Lazy-Loading Strategy)
+Les préférences sont sauvegardées en base (`users.preferences`) et peuvent être modifiées à tout moment.
 
-We use a **Reactive/Lazy Ingestion** strategy.
+### Vitrine (`GET /projects/showcase`)
 
-1.  **User Trigger:** The user looks for projects (e.g., "JavaScript" + "Beginner").
-2.  **Cache First:** The Backend queries the **Local PostgreSQL Database**.
-3.  **Lazy Load (The Switch):**
+Page d'accueil publique (aucune authentification requise). Affiche une sélection de 6 projets par langage parmi 12 langages configurés. Les projets sont piochés aléatoirement dans un pool local pour varier les affichages. Si le pool est insuffisant, un fetch GitHub est déclenché en arrière-plan avec le token serveur.
 
-- If local results are sufficient: Return them immediately.
-- If local results are insufficient (Cache Miss): **Call the GitHub API in real-time**.
-- **Batching:** Fetch a batch of **100 repositories** matching the criteria.
-- **Upsert:** Store these 100 repos in the DB immediately.
-- **Return:** Serve the newly fetched data to the user.
+### Fil personnalisé (`GET /projects/feed`)
 
-### D. Interface
+Retourne jusqu'à 60 projets non encore vus, correspondant aux préférences de l'utilisateur. Les projets sont distribués en round-robin entre les langages sélectionnés pour éviter qu'un seul langage monopolise le fil. Si moins de 25 projets sont disponibles, un fetch GitHub est déclenché automatiquement avant la réponse.
 
-- **Swipe Mode:** Main view displays one Project Card at a time.
-- **Actions:** Like (Save to Favorites), Pass (Hide), View Details.
-- **Dark Mode:** Default.
+### Swipe
 
-## 4. Data Entities
+- **Like** (`POST /projects/:id/like`) — sauvegarde le projet dans les favoris
+- **Pass** (`POST /projects/:id/pass`) — marque le projet comme ignoré
 
-- **User:** GitHub ID, Preferences, Session (HTTP-Only cookie).
-- **Project:** GitHub Repo ID, Name, Description, Stars, Language, Topics.
-- **Match/Favorite:** Relation between User and Project (Swiped Right).
+Les deux actions créent ou mettent à jour une `user_project_interaction`. Un projet passé peut être re-liké (et inversement).
+
+### Projets aimés (`GET /projects/liked`)
+
+Liste paginée (20 par page) des projets likés, triés par date d'interaction décroissante.
+
+### Détail d'un projet (`GET /projects/:id`)
+
+Retourne les informations complètes du projet : README, répartition des langages, contributeurs. Ces données sont enrichies depuis GitHub à la demande et mises en cache 7 jours.
+
+## Langages supportés
+
+TypeScript, JavaScript, Python, Rust, Go, C++, PHP, Java, Kotlin, Swift, Dart, Ruby
