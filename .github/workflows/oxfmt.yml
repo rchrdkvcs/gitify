@@ -1,9 +1,9 @@
 name: OXFmt
 
 on:
-  pull_request:
   push:
-    branches: [master]
+    branches:
+      - master
 
 jobs:
   format:
