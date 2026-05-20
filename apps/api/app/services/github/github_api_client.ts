@@ -1,4 +1,5 @@
 import type { Difficulty } from "@gitify/types";
+import gitifyConfig from "#config/gitify";
 
 interface GitHubContributor {
   id: number;
@@ -41,14 +42,11 @@ export interface ProjectDetails {
 }
 
 export default class GitHubApiClient {
-  protected static BASE_URL = "https://api.github.com/search/repositories";
-  protected static REPO_BASE_URL = "https://api.github.com/repos";
-
   static buildHeaders(token: string): Record<string, string> {
     return {
       Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2026-03-10",
+      Accept: gitifyConfig.github.acceptHeader,
+      "X-GitHub-Api-Version": gitifyConfig.github.apiVersion,
     };
   }
 
@@ -57,22 +55,22 @@ export default class GitHubApiClient {
     if (difficulty === "beginner") {
       return `${base} good-first-issues:>0`;
     }
-    return `${base} stars:>1000 help-wanted-issues:>0`;
+    return `${base} stars:>${gitifyConfig.github.search.expertMinStars} help-wanted-issues:>0`;
   }
 
   static async searchRepositories(
     language: string,
     difficulty: Difficulty,
     token: string,
-    perPage: number = 100,
+    perPage: number = gitifyConfig.github.search.defaultPerPage,
   ): Promise<GitHubRepo[]> {
     const query = this.buildSearchQuery(language, difficulty);
-    const url = `${this.BASE_URL}?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=${perPage}`;
+    const url = `${gitifyConfig.github.baseUrl}?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=${perPage}`;
 
     const res = await fetch(url, {
       headers: {
         ...this.buildHeaders(token),
-        Accept: "application/vnd.github.text-match+json",
+        Accept: gitifyConfig.github.textMatchAcceptHeader,
       },
     });
 
@@ -90,13 +88,13 @@ export default class GitHubApiClient {
     token: string,
   ): Promise<ProjectDetails> {
     const headers = this.buildHeaders(token);
-    const base = `${this.REPO_BASE_URL}/${ownerName}/${repoName}`;
+    const base = `${gitifyConfig.github.repoBaseUrl}/${ownerName}/${repoName}`;
 
     const [readmeRes, languagesRes, contributorsRes, releaseRes, totalContribRes] =
       await Promise.all([
         fetch(`${base}/readme`, { headers }),
         fetch(`${base}/languages`, { headers }),
-        fetch(`${base}/contributors?per_page=10`, { headers }),
+        fetch(`${base}/contributors?per_page=${gitifyConfig.github.contributors.topContributorsLimit}`, { headers }),
         fetch(`${base}/releases/latest`, { headers }),
         fetch(`${base}/contributors?per_page=1&anon=false`, { headers }),
       ]);

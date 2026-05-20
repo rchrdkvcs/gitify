@@ -2,12 +2,10 @@ import Contributor from "#models/contributor";
 import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
 import GitHubApiClient from "#services/github/github_api_client";
+import gitifyConfig from "#config/gitify";
 import { DateTime } from "luxon";
 
 export default class GitHubSyncService {
-  protected static CACHE_TTL_HOURS = 24;
-  protected static DETAILS_CACHE_DAYS = 7;
-
   static async needsFetch(language: string, difficulty: "beginner" | "expert"): Promise<boolean> {
     const cache = await GithubFetchCache.query()
       .where("language", language.toLowerCase())
@@ -19,14 +17,14 @@ export default class GitHubSyncService {
     }
 
     const hoursSinceLastFetch = DateTime.now().diff(cache.fetchedAt, "hours").hours;
-    return hoursSinceLastFetch >= this.CACHE_TTL_HOURS;
+    return hoursSinceLastFetch >= gitifyConfig.cache.fetchTtlHours;
   }
 
   static async fetchAndStore(
     language: string,
     difficulty: "beginner" | "expert",
     token: string,
-    perPage: number = 100,
+    perPage: number = gitifyConfig.github.search.defaultPerPage,
   ): Promise<number> {
     const repos = await GitHubApiClient.searchRepositories(language, difficulty, token, perPage);
 
@@ -66,7 +64,7 @@ export default class GitHubSyncService {
       return true;
     }
     const daysSince = DateTime.now().diff(project.detailsFetchedAt, "days").days;
-    return daysSince >= this.DETAILS_CACHE_DAYS;
+    return daysSince >= gitifyConfig.cache.detailsCacheDays;
   }
 
   static async fetchProjectDetails(project: Project, token: string): Promise<void> {

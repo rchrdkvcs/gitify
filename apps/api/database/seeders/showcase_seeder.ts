@@ -1,24 +1,7 @@
 import Project from "#models/project";
 import GitHubSyncService from "#services/github/github_sync_service";
+import gitifyConfig from "#config/gitify";
 import env from "#start/env";
-
-const SHOWCASE_LANGUAGES = [
-  "typescript",
-  "javascript",
-  "python",
-  "rust",
-  "go",
-  "c++",
-  "php",
-  "java",
-  "kotlin",
-  "swift",
-  "dart",
-  "ruby",
-];
-
-const PER_PAGE = 30;
-const DIFFICULTY = "expert" as const;
 
 export default class ShowcaseSeeder {
   async run() {
@@ -29,20 +12,21 @@ export default class ShowcaseSeeder {
       return;
     }
 
-    console.log(`Seeding ${SHOWCASE_LANGUAGES.length} languages, ${PER_PAGE} projects each...`);
+    const { languages, pool, seederDifficulty } = gitifyConfig.showcase;
+    console.log(`Seeding ${languages.length} languages, ${pool} projects each...`);
 
-    for (const language of SHOWCASE_LANGUAGES) {
-      console.log(`\n[${language}] Fetching top ${PER_PAGE} repos...`);
+    for (const language of languages) {
+      console.log(`\n[${language}] Fetching top ${pool} repos...`);
 
       try {
-        const count = await GitHubSyncService.fetchAndStore(language, DIFFICULTY, serverToken, PER_PAGE);
+        const count = await GitHubSyncService.fetchAndStore(language, seederDifficulty, serverToken, pool);
         console.log(`[${language}] Stored ${count} projects`);
 
         const projects = await Project.query()
           .where("language", language)
-          .where("difficulty", DIFFICULTY)
+          .where("difficulty", seederDifficulty)
           .orderBy("stars", "desc")
-          .limit(PER_PAGE);
+          .limit(pool);
 
         console.log(`[${language}] Fetching details for ${projects.length} projects...`);
 
