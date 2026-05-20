@@ -9,7 +9,7 @@ export const useAuthStore = defineStore("auth", () => {
   const me = async () => {
     const headers = useRequestHeaders(["cookie"]);
 
-    const { data } = await $fetch<any>(config.public.apiBaseUrl + "/auth/me", {
+    const data = await $fetch<Data.User>(config.public.apiBaseUrl + "/auth/me", {
       credentials: "include",
       headers,
     });

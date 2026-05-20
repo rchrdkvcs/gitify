@@ -6,6 +6,24 @@ import type { ApiDefinition } from './tree.d.ts'
 const placeholder: any = {}
 
 const routes = {
+  'openapi.html': {
+    methods: ["GET","HEAD"],
+    pattern: '/docs',
+    tokens: [{"old":"/docs","type":0,"val":"docs","end":""}],
+    types: placeholder as Registry['openapi.html']['types'],
+  },
+  'openapi.json': {
+    methods: ["GET","HEAD"],
+    pattern: '/docs.json',
+    tokens: [{"old":"/docs.json","type":0,"val":"docs.json","end":""}],
+    types: placeholder as Registry['openapi.json']['types'],
+  },
+  'openapi.yaml': {
+    methods: ["GET","HEAD"],
+    pattern: '/docs.yaml',
+    tokens: [{"old":"/docs.yaml","type":0,"val":"docs.yaml","end":""}],
+    types: placeholder as Registry['openapi.yaml']['types'],
+  },
   'auth.redirect': {
     methods: ["GET","HEAD"],
     pattern: '/auth/github/redirect',
