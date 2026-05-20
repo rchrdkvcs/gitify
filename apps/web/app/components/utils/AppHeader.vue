@@ -25,9 +25,9 @@ const navigationItems = ref([
     <template #right>
       <UButton
         v-if="!authStore.isAuthenticated"
-        label="Se connecter"
         icon="lucide:log-in"
-        to="/login"
+        label="Se connecter"
+        :to="authStore.authenticate()"
       />
 
       <UUser

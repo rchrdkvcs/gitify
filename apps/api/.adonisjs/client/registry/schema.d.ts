@@ -119,24 +119,24 @@ export interface Registry {
     methods: ["POST"]
     pattern: '/projects/:id/like'
     types: {
-      body: {}
+      body: ExtractBody<InferInput<(typeof import('#validators/project_id_validator').projectIdValidator)>>
       paramsTuple: [ParamValue]
       params: { id: ParamValue }
-      query: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/project_id_validator').projectIdValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/project_controller').default['like']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/project_controller').default['like']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/project_controller').default['like']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'project.pass': {
     methods: ["POST"]
     pattern: '/projects/:id/pass'
     types: {
-      body: {}
+      body: ExtractBody<InferInput<(typeof import('#validators/project_id_validator').projectIdValidator)>>
       paramsTuple: [ParamValue]
       params: { id: ParamValue }
-      query: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/project_id_validator').projectIdValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/project_controller').default['pass']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/project_controller').default['pass']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/project_controller').default['pass']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
 }
