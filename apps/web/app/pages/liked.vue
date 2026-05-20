@@ -1,12 +1,5 @@
 <script setup lang="ts">
-import type { Project } from "~/composables/useSwipe";
-
-interface PaginationMeta {
-  total: number;
-  perPage: number;
-  currentPage: number;
-  lastPage: number;
-}
+import type { Project, PaginationMeta } from "@gitify/types";
 
 const { http } = useHttp();
 const projects = ref<Project[]>([]);

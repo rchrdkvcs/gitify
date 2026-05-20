@@ -1,18 +1,7 @@
+import type { User, UserPreferences } from "@gitify/types";
 import { useApi } from "~/composables/useApi";
 
-export interface UserPreferences {
-  difficulty: "beginner" | "expert";
-  languages: string[];
-}
-
-export interface User {
-  id: number;
-  email: string;
-  name: string | null;
-  avatar_url?: string | null;
-  avatarUrl?: string | null;
-  preferences: UserPreferences | null;
-}
+export type { User, UserPreferences };
 
 export function useAuth() {
   const user = ref<User | null>(null);

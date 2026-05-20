@@ -1,3 +1,5 @@
+import type { Difficulty } from "@gitify/types";
+
 interface GitHubContributor {
   id: number;
   login: string;
@@ -50,7 +52,7 @@ export default class GitHubApiClient {
     };
   }
 
-  static buildSearchQuery(language: string, difficulty: "beginner" | "expert"): string {
+  static buildSearchQuery(language: string, difficulty: Difficulty): string {
     const base = `language:${language} archived:false is:public`;
     if (difficulty === "beginner") {
       return `${base} good-first-issues:>0`;
@@ -60,7 +62,7 @@ export default class GitHubApiClient {
 
   static async searchRepositories(
     language: string,
-    difficulty: "beginner" | "expert",
+    difficulty: Difficulty,
     token: string,
     perPage: number = 100,
   ): Promise<GitHubRepo[]> {

@@ -1,15 +1,6 @@
-export interface Project {
-  id: number;
-  name: string;
-  ownerName: string;
-  description: string | null;
-  repositoryUrl: string;
-  stars: number;
-  language: string | null;
-  topics: string[] | null;
-  openIssuesCount: number;
-  difficulty: "beginner" | "expert";
-}
+import type { Project } from "@gitify/types";
+
+export type { Project };
 
 export function useSwipe() {
   const { http } = useHttp();
