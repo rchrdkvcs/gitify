@@ -1,7 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import User from "#models/user";
-import env from "#start/env";
+import AuthService from "#services/auth_service";
 import UserTransformer from "#transformers/user_transformer";
+import env from "#start/env";
 
 export default class AuthController {
   async redirect({ ally }: HttpContext) {
@@ -22,16 +22,7 @@ export default class AuthController {
     }
 
     const driverUser = await githubDrive.user();
-
-    const user = await User.updateOrCreate(
-      { email: driverUser.email },
-      {
-        name: driverUser.name ?? driverUser.original.login,
-        avatarUrl: driverUser.avatarUrl,
-        githubAccessToken: driverUser.token.token,
-        isVerified: driverUser.emailVerificationState === "verified",
-      },
-    );
+    const user = await AuthService.findOrCreateFromGitHub(driverUser);
 
     await auth.use("web").login(user);
 
