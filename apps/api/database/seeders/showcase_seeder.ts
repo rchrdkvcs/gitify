@@ -1,5 +1,5 @@
 import Project from "#models/project";
-import GitHubService from "#services/git_hub_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import env from "#start/env";
 
 const SHOWCASE_LANGUAGES = [
@@ -35,12 +35,7 @@ export default class ShowcaseSeeder {
       console.log(`\n[${language}] Fetching top ${PER_PAGE} repos...`);
 
       try {
-        const count = await GitHubService.fetchAndStore(
-          language,
-          DIFFICULTY,
-          serverToken,
-          PER_PAGE,
-        );
+        const count = await GitHubSyncService.fetchAndStore(language, DIFFICULTY, serverToken, PER_PAGE);
         console.log(`[${language}] Stored ${count} projects`);
 
         const projects = await Project.query()
@@ -53,7 +48,7 @@ export default class ShowcaseSeeder {
 
         for (const project of projects) {
           try {
-            await GitHubService.fetchProjectDetails(project, serverToken);
+            await GitHubSyncService.fetchProjectDetails(project, serverToken);
           } catch (error) {
             console.warn(`[${language}] Failed details for ${project.name}:`, error);
           }
