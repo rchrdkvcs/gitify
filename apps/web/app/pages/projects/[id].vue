@@ -1,26 +1,7 @@
 <script setup lang="ts">
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import type { Project } from "~/composables/useSwipe";
-
-interface Contributor {
-  id: number;
-  login: string;
-  avatarUrl: string;
-  profileUrl: string;
-  contributions: number;
-}
-
-interface ProjectDetail extends Project {
-  readme: string | null;
-  languages: Record<string, number> | null;
-  forksCount: number;
-  totalContributorsCount: number | null;
-  latestRelease: string | null;
-  createdAt: string;
-  updatedAt: string;
-  contributors: Contributor[];
-}
+import type { ProjectDetail } from "@gitify/types";
 
 const route = useRoute();
 const { http } = useHttp();

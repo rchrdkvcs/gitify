@@ -1,4 +1,4 @@
-import type { UserPreferences } from "#models/user";
+import type { UserPreferences, ShowcaseLanguageResult, ShowcaseProject } from "@gitify/types";
 import Project from "#models/project";
 import UserProjectInteraction from "#models/user_project_interaction";
 import GitHubSyncService from "#services/github/github_sync_service";
@@ -26,26 +26,6 @@ const SHOWCASE_PER_LANGUAGE = 6;
 const SHOWCASE_MIN_THRESHOLD = 4;
 const LIKED_PAGE_LIMIT = 20;
 
-export interface ShowcaseLanguageResult {
-  language: string;
-  projects: ShowcaseProject[];
-}
-
-interface ShowcaseProject {
-  id: unknown;
-  name: string;
-  ownerName: string;
-  repositoryUrl: string;
-  description: string | null;
-  language: string | null;
-  stars: number;
-  latestRelease: string | null;
-  updatedAt: unknown;
-  topics: string[];
-  totalContributorsCount: number | null;
-  contributors: { login: string; avatarUrl: string; profileUrl: string }[];
-}
-
 export default class ProjectFeedService {
   static async getShowcase(serverToken?: string): Promise<ShowcaseLanguageResult[]> {
     const languagesData = await Promise.all(
@@ -62,7 +42,7 @@ export default class ProjectFeedService {
           );
         }
 
-        const projects = pickRandom(pool, SHOWCASE_PER_LANGUAGE).map((p) => ({
+        const projects: ShowcaseProject[] = pickRandom(pool, SHOWCASE_PER_LANGUAGE).map((p) => ({
           id: p.id,
           name: p.name,
           ownerName: p.ownerName,
@@ -71,7 +51,7 @@ export default class ProjectFeedService {
           language: p.language,
           stars: p.stars,
           latestRelease: p.latestRelease,
-          updatedAt: p.updatedAt,
+          updatedAt: p.updatedAt?.toISO() ?? null,
           topics: p.topics?.slice(0, 2) ?? [],
           totalContributorsCount: p.totalContributorsCount,
           contributors: p.contributors.map((c) => ({
