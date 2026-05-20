@@ -1,0 +1,22 @@
+/* eslint-disable prettier/prettier */
+import type { routes } from './index.ts'
+
+export interface ApiDefinition {
+  auth: {
+    redirect: typeof routes['auth.redirect']
+    callback: typeof routes['auth.callback']
+    me: typeof routes['auth.me']
+    logout: typeof routes['auth.logout']
+  }
+  preferences: {
+    update: typeof routes['preferences.update']
+  }
+  project: {
+    showcase: typeof routes['project.showcase']
+    feed: typeof routes['project.feed']
+    liked: typeof routes['project.liked']
+    show: typeof routes['project.show']
+    like: typeof routes['project.like']
+    pass: typeof routes['project.pass']
+  }
+}
