@@ -168,9 +168,7 @@ async function countAvailable(
   languages: string[],
   seenIds: string[],
 ): Promise<number> {
-  const query = Project.query()
-    .where("difficulty", difficulty)
-    .whereIn("language", languages);
+  const query = Project.query().where("difficulty", difficulty).whereIn("language", languages);
 
   if (seenIds.length > 0) {
     query.whereNotIn("id", seenIds);
