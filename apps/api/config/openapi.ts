@@ -2,6 +2,7 @@ import { defineConfig } from "@foadonis/openapi";
 
 export default defineConfig({
   ui: "scalar",
+  tagger: () => [],
   document: {
     info: {
       title: "Gitify API",

@@ -15,7 +15,6 @@ import { projectIdValidator } from "#validators/project_id_validator";
 import {
   ApiCookieAuth,
   ApiOperation,
-  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -45,12 +44,6 @@ export default class ProjectController {
       "Retourne les détails complets d'un projet, incluant le README, la répartition des langages et les contributeurs.",
   })
   @ApiCookieAuth()
-  @ApiParam({
-    name: "id",
-    description: "Identifiant numérique du projet",
-    required: true,
-    schema: { type: "integer" },
-  })
   @ApiResponse({ status: 200, type: () => ShowProjectResponseDto, description: "Détail du projet" })
   @ApiResponse({ status: 404, type: () => NotFoundResponseDto, description: "Projet introuvable" })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
@@ -132,12 +125,6 @@ export default class ProjectController {
       "Enregistre une interaction 'aimé' pour le projet donné. Remplace toute interaction 'ignoré' précédente.",
   })
   @ApiCookieAuth()
-  @ApiParam({
-    name: "id",
-    description: "Identifiant numérique du projet",
-    required: true,
-    schema: { type: "integer" },
-  })
   @ApiResponse({
     status: 200,
     type: () => InteractionResponseDto,
@@ -161,12 +148,6 @@ export default class ProjectController {
       "Enregistre une interaction 'ignoré' pour le projet donné. Remplace toute interaction 'aimé' précédente.",
   })
   @ApiCookieAuth()
-  @ApiParam({
-    name: "id",
-    description: "Identifiant numérique du projet",
-    required: true,
-    schema: { type: "integer" },
-  })
   @ApiResponse({
     status: 200,
     type: () => InteractionResponseDto,
