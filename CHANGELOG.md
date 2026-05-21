@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.1](https://github.com/rchrdkvcs/gitify/compare/v1.0.0...v1.0.1) (2026-05-21)
+
+
+### Corrections
+
+* await serialization in auth controller ([f2b113f](https://github.com/rchrdkvcs/gitify/commit/f2b113f81b89bfe60fb8cc4471340341ffe58cea))
+* normalize languages to lowercase in preferences handling and validation ([82d0be5](https://github.com/rchrdkvcs/gitify/commit/82d0be5a71f75b62898e43fdc9babe8068754928))
+* remove redundant ApiParam decorators for project ID in controller ([9d89e24](https://github.com/rchrdkvcs/gitify/commit/9d89e24113ed977a348742ad92e31ec93c5d9b0b))
+* update project ID type from number to string for consistency in project interactions ([5d83f65](https://github.com/rchrdkvcs/gitify/commit/5d83f6548d19e5384d3ad57f38eb49a3bcab8d7c))
+* update project ID validation to enforce string format and regex pattern ([8946f95](https://github.com/rchrdkvcs/gitify/commit/8946f956ab730af695878f2acbb3ea6980eb5ac5))
+
+
+### Maintenance
+
+* add ignorePatterns for CHANGELOG.md in oxfmt.config.ts ([3c42287](https://github.com/rchrdkvcs/gitify/commit/3c42287fc9d30ae4c067503b83236ac9fd80b107))
+* update ignorePatterns format in oxfmt.config.ts ([24735b1](https://github.com/rchrdkvcs/gitify/commit/24735b1518f8c3749216c9d70420ff277f0f8579))
+* update workflow triggers to remove pull_request event from oxfmt.yml and oxlint.yml ([5259447](https://github.com/rchrdkvcs/gitify/commit/5259447b1509325424adbd3fc55260819fb0e0e5))
+
 ## 1.0.0 (2026-05-20)
 
 
