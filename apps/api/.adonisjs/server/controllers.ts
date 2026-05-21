@@ -4,7 +4,7 @@
  */
 
 export const controllers = {
-  Auth: () => import('#controllers/auth_controller'),
-  Preferences: () => import('#controllers/preferences_controller'),
-  Project: () => import('#controllers/project_controller'),
-}
+  Auth: () => import("#controllers/auth_controller"),
+  Preferences: () => import("#controllers/preferences_controller"),
+  Project: () => import("#controllers/project_controller"),
+};
