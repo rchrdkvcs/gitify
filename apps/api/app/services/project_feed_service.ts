@@ -74,7 +74,8 @@ export default class ProjectFeedService {
     preferences: UserPreferences,
     token: string,
   ): Promise<{ projects: Project[]; available: number }> {
-    const { difficulty, languages } = preferences;
+    const { difficulty } = preferences;
+    const languages = preferences.languages.map((l) => l.toLowerCase());
 
     const interactions = await UserProjectInteraction.query()
       .where("userId", userId)
