@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/rchrdkvcs/gitify/compare/v1.0.1...v1.0.2) (2026-05-21)
+
+
+### Maintenance
+
+* add CI workflow for linting and formatting checks ([405eec5](https://github.com/rchrdkvcs/gitify/commit/405eec537eaad947ccff07a3b425a028f12996c2))
+* apply lint & fmt ([b00b1bb](https://github.com/rchrdkvcs/gitify/commit/b00b1bb5f0c965e6d2a04292ee309a25b5ff34b6))
+
 ## [1.0.1](https://github.com/rchrdkvcs/gitify/compare/v1.0.0...v1.0.1) (2026-05-21)
 
 
