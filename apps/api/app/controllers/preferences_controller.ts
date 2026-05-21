@@ -31,14 +31,14 @@ export default class PreferencesController {
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
   @ApiResponse({ status: 422, description: "Erreur de validation" })
   async update({ auth, request, response, serialize }: HttpContext) {
-    const user = auth.user!;
+    const user = auth.getUserOrFail();
 
     user.preferences = await request.validateUsing(updatePreferencesValidator);
     await user.save();
 
     return response.ok({
       message: "Preferences updated successfully",
-      user: serialize.withoutWrapping(UserTransformer.transform(user)),
+      user: await serialize.withoutWrapping(UserTransformer.transform(user)),
     });
   }
 }

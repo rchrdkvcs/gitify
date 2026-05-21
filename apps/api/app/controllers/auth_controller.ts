@@ -52,7 +52,7 @@ export default class AuthController {
   })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
   async me({ auth, serialize }: HttpContext) {
-    return serialize.withoutWrapping(UserTransformer.transform(auth.getUserOrFail()));
+    return await serialize.withoutWrapping(UserTransformer.transform(auth.getUserOrFail()));
   }
 
   @ApiOperation({ summary: "Déconnexion", description: "Invalide le cookie de session courant." })
