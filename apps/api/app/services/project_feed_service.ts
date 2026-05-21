@@ -53,7 +53,7 @@ export default class ProjectFeedService {
     return languagesData.filter((l) => l.projects.length > 0);
   }
 
-  static async getProject(id: number, token: string): Promise<Project | null> {
+  static async getProject(id: string, token: string): Promise<Project | null> {
     const project = await Project.find(id);
     if (!project) {
       return null;
@@ -79,10 +79,9 @@ export default class ProjectFeedService {
     const interactions = await UserProjectInteraction.query()
       .where("userId", userId)
       .select("projectId");
-    const seenIds = interactions.map((i) => Number(i.projectId));
-    const seenIdsOrFallback = seenIds.length > 0 ? seenIds : [-1];
+    const seenIds = interactions.map((i) => i.projectId as string);
 
-    const available = await countAvailable(difficulty, languages, seenIdsOrFallback);
+    const available = await countAvailable(difficulty, languages, seenIds);
 
     if (available < gitifyConfig.feed.fetchThreshold) {
       await Promise.all(
@@ -95,19 +94,24 @@ export default class ProjectFeedService {
     }
 
     const projectsPerLanguage = await Promise.all(
-      languages.map((language) =>
-        Project.query()
+      languages.map((language) => {
+        const query = Project.query()
           .where("difficulty", difficulty)
           .where("language", language)
-          .whereNotIn("id", seenIdsOrFallback)
           .orderBy("stars", "desc")
-          .limit(gitifyConfig.feed.perLanguageLimit),
-      ),
+          .limit(gitifyConfig.feed.perLanguageLimit);
+
+        if (seenIds.length > 0) {
+          query.whereNotIn("id", seenIds);
+        }
+
+        return query;
+      }),
     );
 
     return {
       projects: roundRobin(projectsPerLanguage, gitifyConfig.feed.totalLimit),
-      available: await countAvailable(difficulty, languages, seenIdsOrFallback),
+      available: await countAvailable(difficulty, languages, seenIds),
     };
   }
 
@@ -122,7 +126,7 @@ export default class ProjectFeedService {
 
   static async recordInteraction(
     userId: string,
-    projectId: number,
+    projectId: string,
     type: "liked" | "passed",
   ): Promise<Project | null> {
     const project = await Project.find(projectId);
@@ -161,12 +165,16 @@ function roundRobin(groups: Project[][], limit: number): Project[] {
 async function countAvailable(
   difficulty: string,
   languages: string[],
-  seenIdsOrFallback: number[],
+  seenIds: string[],
 ): Promise<number> {
-  const result = await Project.query()
+  const query = Project.query()
     .where("difficulty", difficulty)
-    .whereIn("language", languages)
-    .whereNotIn("id", seenIdsOrFallback)
-    .count("* as total");
+    .whereIn("language", languages);
+
+  if (seenIds.length > 0) {
+    query.whereNotIn("id", seenIds);
+  }
+
+  const result = await query.count("* as total");
   return Number(result[0].$extras.total);
 }
