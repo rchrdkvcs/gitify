@@ -157,6 +157,9 @@ importers:
         specifier: ^5.0.6
         version: 5.0.6(@pinia/colada@1.2.0(pinia@3.0.4(typescript@6.0.3)(vue@3.5.33(typescript@6.0.3)))(vue@3.5.33(typescript@6.0.3)))(@vue/compiler-sfc@3.5.33)(pinia@3.0.4(typescript@6.0.3)(vue@3.5.33(typescript@6.0.3)))(vue@3.5.33(typescript@6.0.3))
     devDependencies:
+      '@nuxtjs/google-fonts':
+        specifier: ^3.2.0
+        version: 3.2.0(magicast@0.5.2)
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.2.4)
@@ -1487,6 +1490,9 @@ packages:
 
   '@nuxtjs/color-mode@3.5.2':
     resolution: {integrity: sha512-cC6RfgZh3guHBMLLjrBB2Uti5eUoGM9KyauOaYS9ETmxNWBMTvpgjvSiSJp1OFljIXPIqVTJ3xtJpSNZiO3ZaA==}
+
+  '@nuxtjs/google-fonts@3.2.0':
+    resolution: {integrity: sha512-cGAjDJoeQ2jm6VJCo4AtSmKO6KjsbO9RSLj8q261fD0lMVNMZCxkCxBkg8L0/2Vfgp+5QBHWVXL71p1tiybJFw==}
 
   '@oxc-minify/binding-android-arm-eabi@0.117.0':
     resolution: {integrity: sha512-5Hf2KsGRjxp3HnPU/mse7cQJa5tWfMFUPZQcgSMVsv2JZnGFFOIDzA0Oja2KDD+VPJqMpEJKc2dCHAGZgJxsGg==}
@@ -4424,6 +4430,9 @@ packages:
   globby@16.1.1:
     resolution: {integrity: sha512-dW7vl+yiAJSp6aCekaVnVJxurRv7DCOLyXqEG3RYMYUg7AuJ2jCqPkZTA8ooqC2vtnkaMcV5WfFBMuEnTu1OQg==}
     engines: {node: '>=20'}
+
+  google-fonts-helper@3.7.4:
+    resolution: {integrity: sha512-LNq+i6DjgFfJkb+DN2aztI2Bv/QXKMTQAzwU0arxmK6OZjUY/OxqQJQVWf+31WZFJQzTGFvtaCrSiN+kUosNTw==}
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -8502,6 +8511,14 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
+  '@nuxtjs/google-fonts@3.2.0(magicast@0.5.2)':
+    dependencies:
+      '@nuxt/kit': 3.21.2(magicast@0.5.2)
+      google-fonts-helper: 3.7.4
+      pathe: 1.1.2
+    transitivePeerDependencies:
+      - magicast
+
   '@oxc-minify/binding-android-arm-eabi@0.117.0':
     optional: true
 
@@ -11066,6 +11083,13 @@ snapshots:
       is-path-inside: 4.0.0
       slash: 5.1.0
       unicorn-magic: 0.4.0
+
+  google-fonts-helper@3.7.4:
+    dependencies:
+      deepmerge: 4.3.1
+      hookable: 5.5.3
+      ofetch: 1.5.1
+      ufo: 1.6.3
 
   gopd@1.2.0: {}
 

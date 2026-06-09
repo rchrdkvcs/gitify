@@ -16,7 +16,7 @@
           width="500"
           height="500"
           rx="250"
-          fill="#FF2302"
+          fill="#1F4F41"
           fill-opacity="0.2"
         />
       </g>

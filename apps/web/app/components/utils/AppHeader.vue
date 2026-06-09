@@ -1,15 +1,35 @@
 <script setup lang="ts">
 const authStore = useAuthStore();
+const isLoading = ref(false);
 
 const navigationItems = ref([
-  { label: "Explore", to: "/explore" },
-  { label: "Community", to: "/community" },
+  { label: "Explorer", to: "/explore" },
+  { label: "Communauté", to: "/community" },
   { label: "Ressources", to: "/ressources" },
 ]);
+
+const handleLogin = () => {
+  isLoading.value = true;
+  window.location.href = authStore.authenticate();
+};
+
+const handleLogout = async () => {
+  await authStore.logout();
+};
+
+const dropdownItems = [
+  [
+    {
+      label: "Déconnexion",
+      icon: "lucide:log-out",
+      onSelect: handleLogout,
+    },
+  ],
+];
 </script>
 
 <template>
-  <UHeader>
+  <UHeader class="border-b border-darkgreen bg-dark">
     <template #left>
       <ULink to="/">
         <AppLogo />
@@ -27,18 +47,19 @@ const navigationItems = ref([
         v-if="!authStore.isAuthenticated"
         icon="lucide:log-in"
         label="Se connecter"
-        :to="authStore.authenticate()"
+        color="brand"
+        :loading="isLoading"
+        @click="handleLogin"
       />
 
-      <UUser
-        v-else
-        :name="authStore.user?.name!"
-        :description="authStore.user?.email!"
-        :avatar="{
-          src: authStore.user?.avatarUrl!,
-          alt: authStore.user?.name!,
-        }"
-      />
+      <UDropdownMenu v-else arrow :items="dropdownItems" class="cursor-pointer">
+        <UUser
+          :avatar="{
+            src: authStore.user?.avatarUrl!,
+            alt: authStore.user?.name!,
+          }"
+        />
+      </UDropdownMenu>
     </template>
   </UHeader>
 </template>
