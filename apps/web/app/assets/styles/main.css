@@ -16,39 +16,43 @@
 }
 
 @theme {
-    --color-primary: #FF2303;
-    --color-secondary: #1F2B27;
-    --color-light: white;
-    --color-lightgray: #99a1af;
-    --color-lightgreen: #A6F0D3;
-    --color-darkgreen: #1F2B27;
-    --color-dark: #0C0E0D;
-    --color-card: #14352B;
+  --color-primary: #ff2303;
+  --color-secondary: #1f2b27;
+  --color-light: white;
+  --color-lightgray: #99a1af;
+  --color-lightgreen: #a6f0d3;
+  --color-darkgreen: #1f2b27;
+  --color-dark: #0c0e0d;
+  --color-card: #14352b;
 
-    --font-grotesk: "Space Grotesk", serif;
-    --font-jetbrains: "JetBrains Mono", monospace;
-    --font-antic: "Antic", serif;
+  --font-grotesk: "Space Grotesk", serif;
+  --font-jetbrains: "JetBrains Mono", monospace;
+  --font-antic: "Antic", serif;
 }
 
 @layer base {
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-    *,
-    *::before,
-    *::after {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+  body {
+    background-color: var(--color-dark);
+    color: var(--color-light);
+    font-family: var(--font-grotesk), serif;
+  }
 
-    body {
-        background-color: var(--color-dark);
-        color: var(--color-light);
-        font-family: var(--font-grotesk), serif;
-    }
-
-    h1, h2, h3, h4, h5, h6 {
-        font-family: var(--font-jetbrains), monospace;
-    }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-jetbrains), monospace;
+  }
 }
 
 @layer components {
