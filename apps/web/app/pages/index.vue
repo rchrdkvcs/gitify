@@ -1,127 +1,127 @@
 <script setup lang="ts">
-const featuresItems = ref([
-  {
-    title: "Curated Issues",
-    description:
-      "Hand-picked tasks specifically tagged for beginners. No more digging through complex backlogs.",
-    icon: "lucide:bug",
-  },
-  {
-    title: "Mentorship Friendly",
-    description:
-      "Connect with senior devs willing to guide you through your first meaningful contribution.",
-    icon: "lucide:users",
-  },
-  {
-    title: "Portfolio Builder",
-    description:
-      "Automatically generate a showcase of your merged PRs to impress future employers.",
-    icon: "lucide:briefcase",
-  },
-]);
+import { ref, computed, watch, onMounted } from 'vue'
+import type {ProjectGroup} from "~/types/projects";
+
+const projectsStore = useProjectsStore();
+await projectsStore.fetchVitrine();
+
+const selectedLanguage = ref('Tous les langages')
+const filteredShowcaseData = ref<ProjectGroup[]>([]);
+
+const availableLanguages = computed(() => {
+  if (!projectsStore.showcaseData) return ['Tous les langages']
+  return ['Tous les langages', ...projectsStore.showcaseData.map(group => group.language)]
+});
+
+const updateShowcaseData = () => {
+  if (!projectsStore.showcaseData) return;
+
+  if (selectedLanguage.value === 'Tous les langages') {
+    const allProjects = projectsStore.showcaseData.flatMap(group => group.projects);
+
+    if (import.meta.server) {
+      filteredShowcaseData.value = [{ language: 'Tous les langages', projects: allProjects.slice(0, 6) }];
+      return;
+    }
+
+    const shuffled = [...allProjects];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    filteredShowcaseData.value = [{ language: 'Tous les langages', projects: shuffled.slice(0, 6) }];
+  } else {
+    filteredShowcaseData.value = projectsStore.showcaseData.filter(
+        group => group.language.toLowerCase() === selectedLanguage.value.toLowerCase()
+    );
+  }
+};
+
+watch(selectedLanguage, updateShowcaseData);
+watch(() => projectsStore.showcaseData, updateShowcaseData, { immediate: true });
+
+onMounted(() => {
+  if (selectedLanguage.value === 'Tous les langages') updateShowcaseData();
+});
 </script>
 
 <template>
   <UPageHero
-    description="The launchpad for junior developers. Find 'Good First Issues', merge your first PR, and level up your career with a community of builders."
-    :links="[
-      {
-        label: 'Start Contributing',
-        to: '/explore',
-        icon: 'lucide:rocket',
-      },
-      {
-        label: 'Learn More',
-        to: '/about',
-        color: 'neutral',
-        variant: 'subtle',
-        icon: 'lucide:book-open',
-      },
+      description="Le tremplin des développeurs juniors. Trouvez des Good First Issues, fusionnez votre première PR et faites décoller votre carrière aux côtés d'une communauté de passionnés."
+      :links="[
+      { label: 'Commencer à contribuer', to: '/explore', color: 'brand', icon: 'lucide:rocket' },
+      { label: 'En savoir plus', to: '/about', color: 'secondary', icon: 'lucide:book-open' }
     ]"
   >
     <template #top>
-      <HeroBackground />
+      <HeroBackground/>
     </template>
 
     <template #title>
-      <h1
-        class="font-mono text-5xl font-bold tracking-tight text-pretty text-highlighted sm:text-7xl"
-      >
-        Code, Collab, <span class="text-primary">Conquer</span>
+      <h1 class="font-jetbrains text-5xl font-bold tracking-tight text-pretty text-highlighted sm:text-7xl">
+        Coder, Collaborer, <span class="text-primary">Conquérir</span>
       </h1>
     </template>
   </UPageHero>
 
   <UContainer class="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2 lg:grid-cols-3">
     <UPageCard
-      v-for="feature in featuresItems"
-      :key="feature.title"
-      :title="feature.title"
-      :description="feature.description"
-      :icon="feature.icon"
-      :ui="{
-        root: 'border-2 border-muted/50 bg-muted/50',
+        v-for="feature in featuresItems"
+        :key="feature.title"
+        :title="feature.title"
+        :description="feature.description"
+        :icon="feature.icon"
+        :ui="{
+        container: feature.bgClass,
+        leading: feature.wrapperClass,
+        leadingIcon: feature.iconColorClass
       }"
     />
   </UContainer>
 
   <UContainer class="flex flex-col py-8 lg:gap-8 lg:py-16 xl:gap-16 xl:py-20">
-    <div class="flex w-full flex-col items-center gap-4">
-      <div class="flex w-full flex-col items-start gap-1">
-        <h3 class="text-xl font-semibold lg:text-2xl xl:text-4xl">Featured Repositories</h3>
-        <p class="text-muted xl:text-lg">Discover projects that need your help right now</p>
+    <div class="flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h3 class="text-xl font-semibold lg:text-2xl xl:text-4xl">Repositories à la une</h3>
+        <p class="text-muted xl:text-lg">Découvrez des projets qui ont besoin de votre aide dès maintenant.</p>
       </div>
 
-      <div class="no-scrollbar flex w-full items-start gap-2 overflow-y-scroll">
-        <UBadge
-          label="Javascript"
-          size="lg"
-          class="cursor-pointer rounded-full"
-          color="neutral"
-          variant="subtle"
-          v-for="i in 10"
-          :key="i"
+      <div class="w-full sm:w-72 shrink-0">
+        <USelectMenu
+            v-model="selectedLanguage"
+            :items="availableLanguages"
+            icon="lucide:code"
+            size="lg"
+            class="capitalize w-full"
         />
       </div>
     </div>
 
     <UPageGrid>
-      <UPageCard
-        v-for="i in 6"
-        :key="i"
-        title="Example Repository"
-        description="A brief description of the repository goes here."
-        icon="lucide:folder"
-        :ui="{
-          root: 'border-2 border-muted/50 bg-muted/50',
-        }"
-      />
+      <template v-for="group in filteredShowcaseData" :key="group.language">
+        <ProjectCard
+            v-for="project in group.projects"
+            :key="project.id"
+            :project="project"
+        />
+      </template>
     </UPageGrid>
 
     <UButton
-      trailing-icon="lucide:arrow-right"
-      label="View All Repositories"
-      color="neutral"
-      variant="ghost"
-      to="/explore"
-      class="mx-auto w-fit"
-      block
+        trailing-icon="lucide:arrow-right"
+        label="View All Repositories"
+        color="secondary"
+        variant="ghost"
+        to="/explore"
+        class="mx-auto w-fit"
+        block
     />
   </UContainer>
 
   <UPageSection
-    title="Ready to make your mark?"
-    description="Connect your GitHub account today and start building your developer portfolio with real-world contributions."
-    :ui="{
-      root: 'bg-linear-to-t from-primary/25 to-transparent',
-      title: 'font-mono',
-    }"
-    :links="[
-      {
-        label: 'Start Contributing',
-        to: '/explore',
-        icon: 'lucide:rocket',
-      },
-    ]"
+      title="Prêt à te démarquer ?"
+      description="Connecte ton compte GitHub dès aujourd'hui et commence à bâtir ton portfolio de développeur avec des contributions concrètes."
+      :ui="{ root: 'bg-linear-to-t from-[#1F4F41]/20 to-transparent', header: 'flex flex-col items-center', title: 'font-jetbrains', description: 'w-auto lg:w-1/2' }"
+      :links="[{ label: 'Start Contributing', to: '/explore', color: 'brand', icon: 'lucide:rocket' }]"
   />
 </template>

@@ -3,7 +3,23 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
 
-  modules: ["@nuxt/ui", "@nuxt/image", "@pinia/nuxt", "@pinia/colada-nuxt"],
+  modules: ["@nuxt/ui", "@nuxt/image", "@pinia/nuxt", "@pinia/colada-nuxt", "@nuxtjs/google-fonts"],
+
+  googleFonts: {
+    families: {
+      "Space Grotesk": {
+        wght: [300, 400, 500, 600, 700],
+      },
+      "JetBrains Mono": {
+        wght: [300, 400, 500, 600, 700],
+      },
+      Antic: {
+        wght: [400],
+      },
+    },
+    display: "swap",
+  },
+
   css: ["~/assets/styles/main.css"],
 
   vite: {
