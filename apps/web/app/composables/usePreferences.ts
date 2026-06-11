@@ -10,20 +10,6 @@ export function usePreferences() {
   const formDifficulty = ref<"beginner" | "expert">("beginner");
   const formLanguages = ref<string[]>([]);
 
-  const availableLanguages = [
-    "javascript",
-    "typescript",
-    "python",
-    "java",
-    "c++",
-    "c#",
-    "ruby",
-    "go",
-    "rust",
-    "php",
-    "swift",
-  ];
-
   function toggleLanguage(lang: string) {
     if (formLanguages.value.includes(lang)) {
       formLanguages.value = formLanguages.value.filter((l) => l !== lang);
@@ -72,7 +58,6 @@ export function usePreferences() {
     isEditingPreferences,
     formDifficulty,
     formLanguages,
-    availableLanguages,
     toggleLanguage,
     editPreferences,
     savePreferences,

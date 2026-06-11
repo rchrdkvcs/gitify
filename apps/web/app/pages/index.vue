@@ -51,6 +51,7 @@ onMounted(() => {
 
 <template>
   <UPageHero
+    class="py-32"
     description="Le tremplin des développeurs juniors. Trouvez des Good First Issues, fusionnez votre première PR et faites décoller votre carrière aux côtés d'une communauté de passionnés."
     :links="[
       { label: 'Commencer à contribuer', to: '/explore', color: 'brand', icon: 'lucide:rocket' },
@@ -62,11 +63,7 @@ onMounted(() => {
     </template>
 
     <template #title>
-      <h1
-        class="font-jetbrains text-5xl font-bold tracking-tight text-pretty text-highlighted sm:text-7xl"
-      >
-        Coder, Collaborer, <span class="text-primary">Conquérir</span>
-      </h1>
+      <h1 class="title text-5xl">Coder, Collaborer, <span class="text-primary">Conquérir</span></h1>
     </template>
   </UPageHero>
 
@@ -107,7 +104,7 @@ onMounted(() => {
 
     <UPageGrid>
       <template v-for="group in filteredShowcaseData" :key="group.language">
-        <ProjectCard v-for="project in group.projects" :key="project.id" :project="project" />
+        <Card v-for="project in group.projects" :key="project.id" :project="project" />
       </template>
     </UPageGrid>
 
