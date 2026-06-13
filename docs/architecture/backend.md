@@ -78,12 +78,12 @@ Réponse JSON
    → Crée la session AdonisJS
    → Pose le cookie adonis-session (HTTP-Only, SameSite=Lax)
 
-   if (!user.preferences) {
-      return response.redirect(`${env.get("FRONTEND_URL")}/preferences`);
-    } else {
-      return response.redirect(env.get("FRONTEND_URL"));
-    }
-   → Vérifie si l'utilisateur à ces préférences de configurées
+   const redirectUrl = user.preferences
+      ? env.get("FRONTEND_URL")
+      : `${env.get("FRONTEND_URL")}/preferences`;
+
+    return response.redirect(redirectUrl);
+   → Vérifie si l'utilisateur a ses préférences de configurées
 ```
 
 ### Protection des routes

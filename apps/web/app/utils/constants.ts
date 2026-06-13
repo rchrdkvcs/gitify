@@ -57,10 +57,10 @@ export const stepperItems = ref([
     ],
   },
   {
-    title: "Quels sont vos languages favoris ?",
+    title: "Quels sont vos langages favoris ?",
     description:
       'Sélectionnez les technologies avec lesquelles vous êtes le plus à l\'aise. Cela nous aidera à vous recommander des "Good First Issues" pertinentes.',
-    label: "Languages",
+    label: "Langages",
     data: [
       {
         title: "JavaScript",

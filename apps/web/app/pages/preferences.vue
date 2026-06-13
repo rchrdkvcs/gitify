@@ -6,8 +6,16 @@ definePageMeta({
   middleware: "auth",
 });
 
-const { user, formDifficulty, formLanguages, toggleLanguage, savePreferences, submitting } =
-  usePreferences();
+const {
+  user,
+  formDifficulty,
+  formLanguages,
+  toggleLanguage,
+  editPreferences,
+  savePreferences,
+  submitting,
+  isEditingPreferences,
+} = usePreferences();
 
 const checkStepValidation = (currentStep: number) => {
   if (currentStep === 1) return !!formDifficulty.value;
@@ -17,8 +25,13 @@ const checkStepValidation = (currentStep: number) => {
 
 const handleFinalSubmit = async () => {
   await savePreferences();
-  await navigateTo("/");
 };
+
+onMounted(() => {
+  if (isEditingPreferences) {
+    editPreferences();
+  }
+});
 </script>
 
 <template>

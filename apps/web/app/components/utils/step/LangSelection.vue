@@ -1,12 +1,22 @@
 <script setup lang="ts">
-defineProps<{
-  items: any[];
+import type { Preference } from "~/types/preferences";
+
+const props = defineProps<{
+  items: Preference[];
   languages: string[];
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "toggle", title: string): void;
 }>();
+
+const isSelected = (title: string) => {
+  return props.languages.includes(title.toLowerCase());
+};
+
+const handleToggle = (title: string) => {
+  emit("toggle", title.toLowerCase());
+};
 </script>
 
 <template>
@@ -14,31 +24,21 @@ defineEmits<{
     <UCard
       v-for="item in items"
       :key="item.title"
-      @click="$emit('toggle', item.title)"
+      @click="handleToggle(item.title)"
       class="preferences-card block hover:bg-card/30! md:p-4"
-      :class="{ 'preferences-card-active': languages.includes(item.title) }"
+      :class="{ 'preferences-card-active': isSelected(item.title) }"
       :ui="{ body: 'items-center gap-6' }"
     >
-      <UIcon
-        v-if="languages.includes(item.title)"
-        name="lets-icons:check-fill"
-        class="check-icon"
-      />
-      <div
-        class="container-icon size-12"
-        :class="{ 'bg-primary/20': languages.includes(item.title) }"
-      >
+      <UIcon v-if="isSelected(item.title)" name="lets-icons:check-fill" class="check-icon" />
+      <div class="container-icon size-12" :class="{ 'bg-primary/20': isSelected(item.title) }">
         <span
           class="font-jetbrains text-xl font-bold text-lightgray"
-          :class="{ 'text-primary': languages.includes(item.title) }"
+          :class="{ 'text-primary': isSelected(item.title) }"
         >
           {{ item.label || item.title }}
         </span>
       </div>
-      <p
-        class="font-medium text-lightgray"
-        :class="{ 'text-white': languages.includes(item.title) }"
-      >
+      <p class="font-medium text-lightgray" :class="{ 'text-white': isSelected(item.title) }">
         {{ item.title }}
       </p>
     </UCard>

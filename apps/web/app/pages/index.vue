@@ -104,7 +104,7 @@ onMounted(() => {
 
     <UPageGrid>
       <template v-for="group in filteredShowcaseData" :key="group.language">
-        <Card v-for="project in group.projects" :key="project.id" :project="project" />
+        <ProjectCard v-for="project in group.projects" :key="project.id" :project="project" />
       </template>
     </UPageGrid>
 

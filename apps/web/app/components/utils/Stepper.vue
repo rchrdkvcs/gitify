@@ -2,22 +2,11 @@
 import { ref } from "vue";
 import type { PreferenceGroup } from "~/types/preferences";
 
-const props = defineProps({
-  difficulty: String,
-  languages: Array as PropType<string[]>,
-  steps: {
-    type: Array as PropType<PreferenceGroup[]>,
-    required: true,
-  },
-  validateStep: {
-    type: Function,
-    default: () => true,
-  },
-  loading: {
-    type: Boolean,
-    default: false,
-  },
-});
+const props = defineProps<{
+  steps: PreferenceGroup[];
+  validateStep: (step: number) => boolean;
+  loading: boolean;
+}>();
 
 const emit = defineEmits<{
   (e: "submit"): void;

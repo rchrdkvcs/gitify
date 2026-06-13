@@ -1,9 +1,15 @@
 <script setup lang="ts">
+import type { Preference } from "~/types/preferences";
+
 defineProps<{
-  items: any[];
+  items: Preference[];
 }>();
 
 const model = defineModel<"beginner" | "expert">();
+
+const handleSelection = (label: string | undefined) => {
+  model.value = label as "beginner" | "expert";
+};
 </script>
 
 <template>
@@ -11,7 +17,7 @@ const model = defineModel<"beginner" | "expert">();
     <article
       v-for="item in items"
       :key="item.title"
-      @click="model = item.label"
+      @click="handleSelection(item.label)"
       class="preferences-card hover:bg-card/30!"
       :class="{ 'preferences-card-active': model === item.label }"
     >
