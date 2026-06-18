@@ -21,7 +21,6 @@
   --color-light: white;
   --color-lightgray: #99a1af;
   --color-lightgreen: #a6f0d3;
-  --color-darkgreen: #1f2b27;
   --color-dark: #0c0e0d;
   --color-card: #14352b;
 
@@ -56,4 +55,27 @@
 }
 
 @layer components {
+  .title {
+    @apply font-jetbrains text-4xl font-bold tracking-tight text-pretty text-highlighted sm:text-6xl;
+  }
+
+  .preferences-card {
+    @apply flex cursor-pointer gap-4 rounded-sm border border-white/5 bg-card/20 p-4 transition-all md:gap-8 md:p-8;
+  }
+
+  .preferences-card-active {
+    @apply relative! ring-2! ring-primary!;
+  }
+
+  .container-icon {
+    @apply flex h-min w-min items-center justify-center rounded-sm bg-lightgray/20 p-2 md:p-3;
+  }
+
+  .icon {
+    @apply h-7 w-7 text-lightgray md:h-10 md:w-10;
+  }
+
+  .check-icon {
+    @apply absolute top-4 right-4 size-7 text-primary;
+  }
 }

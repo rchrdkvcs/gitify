@@ -14,18 +14,19 @@ export default defineAppConfig({
           brand:
             "text-light bg-primary rounded-sm hover:bg-primary/75 active:bg-primary/75 disabled:bg-primary aria-disabled:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
           secondary:
-            "!text-lightgreen !bg-darkgreen rounded-sm border border-lightgreen/10 hover:!bg-darkgreen/75 active:!bg-darkgreen/75 disabled:!bg-darkgreen aria-disabled:!bg-darkgreen focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-darkgreen",
+            "!text-lightgreen !bg-secondary rounded-sm border border-lightgreen/10 hover:!bg-secondary/75 active:!bg-secondary/75 disabled:!bg-secondary aria-disabled:!bg-secondary focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-secondary",
         },
       },
     },
     pageHero: {
       slots: {
+        container: "!py-8 !px-0 md:!py-16",
         wrapper: "flex flex-col gap-10",
       },
     },
     dropdownMenu: {
       slots: {
-        content: "bg-dark-green text-white border border-lightgreen/10 bg-darkgreen shadow-xl",
+        content: "text-white border border-lightgreen/10 bg-secondary shadow-xl",
         group: "p-1 isolate",
         label: "w-full flex items-center font-semibold text-white/70 px-2 py-1.5",
         separator: "-mx-1 my-1 h-px bg-white/20",
@@ -71,18 +72,23 @@ export default defineAppConfig({
     },
     selectMenu: {
       slots: {
-        base: "!bg-darkgreen border border-lightgreen/10 hover:!bg-darkgreen/75 transition-all duration-200 rounded-xl cursor-pointer",
+        base: "!bg-secondary border border-lightgreen/10 hover:!bg-secondary/75 transition-all duration-200 rounded-xl cursor-pointer",
         value: "text-lightgreen font-medium",
         placeholder: "text-lightgray",
         leadingIcon: "text-lightgreen",
         trailingIcon: "text-lightgreen",
-        content: "bg-darkgreen ring-1 ring-white/10 shadow-2xl rounded-xl",
+        content: "bg-secondary ring-1 ring-white/10 shadow-2xl rounded-xl",
         viewport: "p-1",
         item: "text-white data-highlighted:not-data-disabled:text-white data-highlighted:not-data-disabled:before:bg-white/5 transition-colors before:rounded-md cursor-pointer",
         itemLeadingIcon:
           "text-lightgray group-data-highlighted:not-group-data-disabled:text-white transition-colors",
         input: "border-b border-white/10 text-white placeholder-gray-500 bg-transparent py-2",
         empty: "text-lightgray text-sm py-4 font-mono text-center",
+      },
+    },
+    separator: {
+      slots: {
+        border: "!border-white/5",
       },
     },
   },
