@@ -20,6 +20,11 @@ const handleLogout = async () => {
 const dropdownItems = [
   [
     {
+      label: "Profil",
+      icon: "ix:user-profile-filled",
+      to: "/profil",
+    },
+    {
       label: "Déconnexion",
       icon: "lucide:log-out",
       onSelect: handleLogout,
