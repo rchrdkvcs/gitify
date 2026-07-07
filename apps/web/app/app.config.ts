@@ -15,6 +15,8 @@ export default defineAppConfig({
             "text-light bg-primary rounded-sm hover:bg-primary/75 active:bg-primary/75 disabled:bg-primary aria-disabled:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
           secondary:
             "!text-lightgreen !bg-secondary rounded-sm border border-lightgreen/10 hover:!bg-secondary/75 active:!bg-secondary/75 disabled:!bg-secondary aria-disabled:!bg-secondary focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-secondary",
+          yellow:
+            "!text-yellow-500 !bg-yellow-500/10 rounded-sm border border-yellow-500/30 hover:!bg-yellow-500/20 active:!bg-yellow-500/75 focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-yellow-500/10",
         },
       },
     },
@@ -77,7 +79,7 @@ export default defineAppConfig({
         placeholder: "text-lightgray",
         leadingIcon: "text-lightgreen",
         trailingIcon: "text-lightgreen",
-        content: "bg-secondary ring-1 ring-white/10 shadow-2xl rounded-xl",
+        content: "bg-dark ring-1 ring-white/10 shadow-2xl rounded-xl",
         viewport: "p-1",
         item: "text-white data-highlighted:not-data-disabled:text-white data-highlighted:not-data-disabled:before:bg-white/5 transition-colors before:rounded-md cursor-pointer",
         itemLeadingIcon:
@@ -89,6 +91,21 @@ export default defineAppConfig({
     separator: {
       slots: {
         border: "!border-white/5",
+      },
+    },
+    badge: {
+      variants: {
+        color: {
+          primary:
+            "text-jetbrains text-sm text-primary bg-primary/20 !px-3 !py-1.5 !rounded-sm border border-primary !ring-0",
+          secondary:
+            "text-jetbrains text-sm !text-light !bg-dark !px-3 !py-1.5 !rounded-sm border border-green-500/20",
+        },
+      },
+    },
+    tooltip: {
+      slots: {
+        content: "bg-dark border border-green-500/20 ring-0",
       },
     },
   },

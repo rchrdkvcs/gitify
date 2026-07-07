@@ -62,7 +62,7 @@ defineProps<{
       <UBadge
         variant="subtle"
         size="sm"
-        class="rounded-sm bg-green-500/10 text-green-400 ring-1 ring-green-500/20"
+        class="rounded-sm border-green-500/20 bg-green-500/10 text-green-400 ring-1 ring-green-500/20"
       >
         Good First Issue
       </UBadge>
