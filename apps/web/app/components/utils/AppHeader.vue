@@ -26,6 +26,7 @@ const dropdownItems = [
     },
     {
       label: "Déconnexion",
+      color: "error",
       icon: "lucide:log-out",
       onSelect: handleLogout,
     },

@@ -82,7 +82,7 @@ onMounted(() => {
     />
   </UContainer>
 
-  <UContainer class="flex flex-col py-8 lg:gap-8 lg:py-16 xl:gap-16 xl:py-20">
+  <UContainer class="flex flex-col gap-8 py-8 lg:gap-8 lg:py-16 xl:gap-16 xl:py-20">
     <div class="flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h3 class="text-xl font-semibold lg:text-2xl xl:text-4xl">Repositories à la une</h3>

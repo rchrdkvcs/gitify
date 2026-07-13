@@ -28,3 +28,14 @@ const AVATAR_COLORS: Record<string, string> = {
 export const getAvatarColor = (language: string) => {
   return AVATAR_COLORS[language?.toLowerCase()] || "bg-gray-500/20 text-gray-400";
 };
+
+export const formatDate = (iso: string) => {
+  const d = new Date(iso);
+  const day = d.getDate().toString().padStart(2, "0");
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  return `${day}-${month}-${d.getFullYear()}`;
+};
+
+export const formatCompact = (n: number) => {
+  return new Intl.NumberFormat("en", { notation: "compact" }).format(n).toLowerCase();
+};

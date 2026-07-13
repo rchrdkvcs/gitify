@@ -9,20 +9,20 @@ export function usePreferences() {
   const submitting = ref(false);
   const isEditingPreferences = ref(false);
   const formDifficulty = ref<"beginner" | "expert" | null>(null);
-  const formLanguages = ref<string[]>([]);
+  const formLangages = ref<string[]>([]);
 
   function toggleLanguage(lang: string) {
-    if (formLanguages.value.includes(lang)) {
-      formLanguages.value = formLanguages.value.filter((l) => l !== lang);
+    if (formLangages.value.includes(lang)) {
+      formLangages.value = formLangages.value.filter((l) => l !== lang);
     } else {
-      formLanguages.value.push(lang);
+      formLangages.value.push(lang);
     }
   }
 
   function editPreferences() {
     if (user.value?.preferences) {
       formDifficulty.value = user.value.preferences.difficulty;
-      formLanguages.value = [...user.value.preferences.languages];
+      formLangages.value = [...user.value.preferences.languages];
     } else {
       formDifficulty.value = "beginner";
     }
@@ -30,7 +30,7 @@ export function usePreferences() {
   }
 
   async function savePreferences() {
-    if (formLanguages.value.length === 0) {
+    if (formLangages.value.length === 0) {
       toast.add({
         title: "Veuillez sélectionner au moins un langage.",
         icon: "i-heroicons-exclamation-circle-20-solid",
@@ -49,7 +49,7 @@ export function usePreferences() {
         credentials: "include",
         body: {
           difficulty: formDifficulty.value,
-          languages: formLanguages.value,
+          languages: formLangages.value,
         },
       });
       authStore.user = response.user;
@@ -83,7 +83,7 @@ export function usePreferences() {
     submitting,
     isEditingPreferences,
     formDifficulty,
-    formLanguages,
+    formLangages,
     toggleLanguage,
     editPreferences,
     savePreferences,

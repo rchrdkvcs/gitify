@@ -9,7 +9,7 @@ definePageMeta({
 const {
   user,
   formDifficulty,
-  formLanguages,
+  formLangages,
   toggleLanguage,
   editPreferences,
   savePreferences,
@@ -19,7 +19,7 @@ const {
 
 const checkStepValidation = (currentStep: number) => {
   if (currentStep === 1) return !!formDifficulty.value;
-  if (currentStep === 2) return formLanguages.value.length > 0;
+  if (currentStep === 2) return formLangages.value.length > 0;
   return true;
 };
 
@@ -48,7 +48,7 @@ onMounted(() => {
       :steps="stepperItems"
       :validate-step="checkStepValidation"
       :difficulty="formDifficulty"
-      :languages="formLanguages"
+      :languages="formLangages"
       :loading="submitting"
       @submit="handleFinalSubmit"
     >
@@ -58,14 +58,14 @@ onMounted(() => {
 
       <template #step-2>
         <LangSelection
-          :languages="formLanguages"
+          :languages="formLangages"
           :items="stepperItems[1]?.data"
           @toggle="toggleLanguage"
         />
       </template>
 
       <template #step-3>
-        <Summary :level="formDifficulty" :languages="formLanguages" :user="user" />
+        <Summary :level="formDifficulty" :languages="formLangages" :user="user" />
       </template>
     </Stepper>
   </div>
