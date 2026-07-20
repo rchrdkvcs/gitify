@@ -76,17 +76,20 @@ defineProps<{
         >
       </div>
 
-      <ULink
-        :to="project.repositoryUrl + '/issues'"
-        target="_blank"
-        class="group flex items-center gap-1 text-sm font-semibold text-white transition-colors hover:text-gray-300"
-      >
-        View Issues
-        <UIcon
-          name="lucide:arrow-right"
-          class="size-4 transition-transform group-hover:translate-x-1"
-        />
-      </ULink>
+      <div class="flex items-center gap-4">
+        <ULink
+          :to="project.repositoryUrl + '/issues'"
+          target="_blank"
+          class="group flex items-center gap-1 text-sm font-semibold text-white transition-colors hover:text-gray-300"
+        >
+          Voir détails
+          <UIcon
+            name="lucide:arrow-right"
+            class="size-4 transition-transform group-hover:translate-x-1"
+          />
+        </ULink>
+        <UButton label="Contribuer" color="brand" size="lg" :to="'/projects/' + project.id" />
+      </div>
     </div>
   </UCard>
 </template>

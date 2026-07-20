@@ -7,7 +7,8 @@ export default defineAppConfig({
     },
     button: {
       slots: {
-        base: "cursor-pointer",
+        base: "cursor-pointer !px-2.5 !py-1.5 !text-sm md:!text-base md:!px-3 md:!py-2",
+        leadingIcon: "!size-5",
       },
       variants: {
         color: {
@@ -22,7 +23,7 @@ export default defineAppConfig({
     },
     pageHero: {
       slots: {
-        container: "!py-8 !px-0 md:!py-16",
+        container: "!py-8 !px-0 md:py-16",
         wrapper: "flex flex-col gap-10",
       },
     },
@@ -43,6 +44,18 @@ export default defineAppConfig({
         itemDescription: "truncate text-white/60",
         itemLabelExternalIcon: "inline-block size-3 align-top text-white/60",
       },
+      compoundVariants: [
+        {
+          color: "error",
+          active: false,
+          class: {
+            item: "text-red-400 data-[highlighted]:bg-red-500/15 data-[highlighted]:text-red-400",
+            itemLeadingIcon: "text-red-400/70 group-data-[highlighted]:text-red-400",
+            itemLabel: "text-red-400",
+            itemTrailingIcon: "text-red-400/70 group-data-[highlighted]:text-red-400",
+          },
+        },
+      ],
     },
     navigationMenu: {
       slots: {
@@ -70,6 +83,28 @@ export default defineAppConfig({
         description: "mt-1 text-muted text-sm",
         body: "h-full flex flex-col justify-between !p-4 sm:p-6",
         footer: "p-4 sm:px-6",
+      },
+    },
+    input: {
+      slots: {
+        base: "!bg-secondary border border-lightgreen/10 hover:!bg-secondary/75 focus:!bg-secondary/75 transition-all duration-200 rounded-xl text-lightgreen placeholder:text-lightgray",
+        leadingIcon: "text-lightgreen",
+        trailingIcon: "text-lightgreen",
+      },
+    },
+    select: {
+      slots: {
+        base: "!bg-secondary border border-lightgreen/10 hover:!bg-secondary/75 transition-all duration-200 rounded-xl cursor-pointer",
+        value: "text-lightgreen font-medium",
+        placeholder: "text-lightgray",
+        leadingIcon: "text-lightgreen",
+        trailingIcon: "text-lightgreen",
+        content: "bg-dark ring-1 ring-white/10 shadow-2xl rounded-xl",
+        viewport: "p-1",
+        item: "text-white data-highlighted:not-data-disabled:text-white data-highlighted:not-data-disabled:before:bg-white/5 transition-colors before:rounded-md cursor-pointer",
+        itemLeadingIcon:
+          "text-lightgray group-data-highlighted:not-group-data-disabled:text-white transition-colors",
+        empty: "text-lightgray text-sm py-4 font-mono text-center",
       },
     },
     selectMenu: {
@@ -107,6 +142,17 @@ export default defineAppConfig({
       slots: {
         content: "bg-dark border border-green-500/20 ring-0",
       },
+    },
+    checkbox: {
+      slots: {
+        base: "!rounded-xs cursor-pointer",
+        indicator: "!bg-red-500",
+        icon: "hidden",
+        label: "!text-lightgreen capitalize",
+      },
+    },
+    skeleton: {
+      base: "!bg-white/5",
     },
   },
 });
