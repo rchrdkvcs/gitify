@@ -37,7 +37,11 @@ export default class AuthController {
 
     await auth.use("web").login(user);
 
-    return response.redirect(env.get("FRONTEND_URL"));
+    const redirectUrl = user.preferences
+      ? env.get("FRONTEND_URL")
+      : `${env.get("FRONTEND_URL")}/preferences`;
+
+    return response.redirect(redirectUrl);
   }
 
   @ApiOperation({

@@ -6,13 +6,7 @@
       <AppLogo />
     </template>
 
-    <UNavigationMenu
-      :items="[
-        { label: 'Explore', to: '/explore' },
-        { label: 'Community', to: '/community' },
-        { label: 'Ressources', to: '/ressources' },
-      ]"
-    />
+    <p class="text-sm text-lightgray">© 2026 Gitify. All rights reserved.</p>
 
     <template #right>
       <UButton label="Twitter" color="neutral" variant="ghost" />
