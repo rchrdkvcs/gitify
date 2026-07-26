@@ -19,7 +19,7 @@ RUN pnpm turbo run build --filter=@gitify/api...
 FROM base AS prod-deps
 WORKDIR /app
 COPY --from=installer /app/apps/api/build ./
-RUN pnpm install --prod
+RUN npm pkg delete devDependencies && pnpm install --prod
 
 FROM base AS runner
 WORKDIR /app

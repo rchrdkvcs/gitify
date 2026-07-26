@@ -20,6 +20,7 @@ RUN pnpm turbo run build --filter=@gitify/web...
 
 FROM base AS runner
 WORKDIR /app
+ENV PORT=80
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nuxtjs
 USER nuxtjs

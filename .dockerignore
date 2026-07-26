@@ -52,6 +52,7 @@ coverage
 *.spec.ts
 tests
 **/tests
+apps/api/bin/test.ts
 
 # =============================================
 # Documentation
