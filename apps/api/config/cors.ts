@@ -1,3 +1,4 @@
+import env from "#start/env";
 import { defineConfig } from "@adonisjs/cors";
 
 /**
@@ -7,7 +8,7 @@ import { defineConfig } from "@adonisjs/cors";
  */
 const corsConfig = defineConfig({
   enabled: true,
-  origin: ["http://localhost:3000"],
+  origin: [env.get("FRONTEND_URL")],
   methods: ["GET", "HEAD", "POST", "PUT", "DELETE"],
   headers: true,
   exposeHeaders: [],
