@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import type {
-  ArchiveHoverInfo,
-  ArchiveSceneHandle,
-  ArchiveSceneProject,
-} from "~/types/archive";
+import type { ArchiveHoverInfo, ArchiveSceneHandle, ArchiveSceneProject } from "~/types/archive";
 
 const { isOpen, isLoading, projects, loadError, close } = useArchiveEasterEgg();
 

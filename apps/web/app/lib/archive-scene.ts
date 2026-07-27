@@ -1,11 +1,7 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import type {
-  ArchiveHoverInfo,
-  ArchiveSceneHandle,
-  ArchiveSceneProject,
-} from "~/types/archive";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import type { ArchiveHoverInfo, ArchiveSceneHandle, ArchiveSceneProject } from "~/types/archive";
 
 export type { ArchiveHoverInfo, ArchiveSceneHandle, ArchiveSceneProject };
 

@@ -6,7 +6,7 @@
 `Error: IPC connection closed` at `@nuxt/vite-builder/dist/vite-node.mjs`.
 
 **It is never the real error.** The vite-node client multiplexes all SSR module
-requests over one Unix socket. When *any single* module transform fails, the
+requests over one Unix socket. When _any single_ module transform fails, the
 client's retry loop calls `clientSocket.destroy()`, which rejects every other
 in-flight request with `IPC connection closed`. The genuine error is swallowed
 by `server.on("error", () => {})` and an empty `catch` in `sendError`.
