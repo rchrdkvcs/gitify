@@ -25,7 +25,14 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss() as any],
     optimizeDeps: {
-      include: ["@tuyau/core/client"],
+      // three is lazy-imported by the archive easter egg — prebundle it so the
+      // first open doesn't trigger a Vite dep-discovery full reload in dev
+      include: [
+        "@tuyau/core/client",
+        "three",
+        "three/addons/loaders/GLTFLoader.js",
+        "three/addons/environments/RoomEnvironment.js",
+      ],
     },
   },
 
