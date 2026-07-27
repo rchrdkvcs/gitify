@@ -24,12 +24,14 @@
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.4",
+    "three": "^0.185.1",
     "typescript": "^6.0.3",
     "vue": "^3.5.33",
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
     "@nuxtjs/google-fonts": "^3.2.0",
-    "@tailwindcss/typography": "^0.5.19"
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/three": "^0.185.1"
   }
 }
