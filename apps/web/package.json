@@ -10,6 +10,7 @@
     "preview": "nuxt preview"
   },
   "dependencies": {
+    "@comark/nuxt": "^0.5.1",
     "@gitify/api": "workspace:*",
     "@gitify/types": "workspace:*",
     "@nuxt/image": "2.0.0",
@@ -19,8 +20,6 @@
     "@pinia/nuxt": "0.11.3",
     "@tailwindcss/vite": "^4.2.4",
     "@tuyau/core": "^1.2.2",
-    "dompurify": "^3.4.1",
-    "marked": "^18.0.2",
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.4",

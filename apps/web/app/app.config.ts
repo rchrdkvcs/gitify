@@ -154,5 +154,12 @@ export default defineAppConfig({
     skeleton: {
       base: "!bg-white/5",
     },
+    prose: {
+      pre: {
+        slots: {
+          copy: "absolute top-2 right-2 lg:opacity-0 lg:group-hover:opacity-100 transition !p-1 !min-h-0 !size-7 !gap-0",
+        },
+      },
+    },
   },
 });

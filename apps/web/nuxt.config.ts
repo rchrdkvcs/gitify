@@ -3,7 +3,14 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
 
-  modules: ["@nuxt/ui", "@nuxt/image", "@pinia/nuxt", "@pinia/colada-nuxt", "@nuxtjs/google-fonts"],
+  modules: [
+    "@nuxt/ui",
+    "@nuxt/image",
+    "@pinia/nuxt",
+    "@pinia/colada-nuxt",
+    "@nuxtjs/google-fonts",
+    "@comark/nuxt",
+  ],
 
   googleFonts: {
     families: {

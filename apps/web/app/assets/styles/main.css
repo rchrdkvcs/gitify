@@ -81,3 +81,130 @@
     @apply absolute top-4 right-4 size-7 text-primary;
   }
 }
+
+/* README markdown (Comark / Nuxt UI prose) */
+.readme-body {
+  color: var(--color-lightgray);
+  font-size: 0.925rem;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+}
+
+.readme-body :where(h1, h2, h3, h4) {
+  color: var(--color-light);
+  font-family: var(--font-jetbrains), monospace;
+  font-weight: 700;
+  margin: 1.5em 0 0.6em;
+}
+
+.readme-body :where(h1, h2):first-child {
+  margin-top: 0;
+}
+
+.readme-body :where(h1) {
+  font-size: 1.5rem;
+}
+
+.readme-body :where(h2) {
+  font-size: 1.25rem;
+  border-bottom: 1px solid var(--color-secondary);
+  padding-bottom: 0.4em;
+}
+
+.readme-body :where(h3) {
+  font-size: 1.05rem;
+}
+
+.readme-body :where(p, ul, ol, blockquote, table) {
+  margin-bottom: 1em;
+}
+
+.readme-body :where(a) {
+  color: var(--color-lightgreen);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.readme-body :where(ul) {
+  list-style: disc;
+  padding-left: 1.5em;
+}
+
+.readme-body :where(ol) {
+  list-style: decimal;
+  padding-left: 1.5em;
+}
+
+.readme-body :where(code) {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 0.85em;
+  background: var(--color-secondary);
+  color: var(--color-lightgreen);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+}
+
+.readme-body :where(pre) {
+  background: var(--color-dark);
+  border: 1px solid var(--color-secondary);
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin-bottom: 1em;
+}
+
+/* ProsePre copy button — global UButton uses large !padding / !icon size */
+.readme-body :where(.group.relative > button) {
+  top: 0.5rem !important;
+  right: 0.5rem !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  height: auto !important;
+  width: auto !important;
+  padding: 0.25rem !important;
+  font-size: 0.75rem !important;
+  line-height: 1 !important;
+  gap: 0 !important;
+}
+
+.readme-body :where(.group.relative > button span),
+.readme-body :where(.group.relative > button svg) {
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+}
+
+.readme-body :where(pre code) {
+  background: transparent;
+  padding: 0;
+  color: var(--color-lightgreen);
+}
+
+.readme-body :where(blockquote) {
+  border-left: 3px solid var(--color-secondary);
+  padding-left: 1em;
+  color: var(--color-lightgray);
+  font-style: italic;
+}
+
+.readme-body :where(img) {
+  display: inline;
+  vertical-align: middle;
+  max-width: 100%;
+  margin: 0;
+}
+
+.readme-body :where(table) {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.readme-body :where(th, td) {
+  border: 1px solid var(--color-secondary);
+  padding: 0.4em 0.8em;
+}
+
+.readme-body :where(hr) {
+  border-color: var(--color-secondary);
+  margin: 1.5em 0;
+}
