@@ -1,7 +1,23 @@
 <script setup lang="ts">
-defineProps<{
-  project: any;
+import type { Project, ShowcaseProject } from "@gitify/types";
+
+const props = defineProps<{
+  project: Project | ShowcaseProject;
 }>();
+
+const emit = defineEmits<{
+  favoriteChange: [projectId: string, isFavorite: boolean];
+}>();
+
+const canFavorite = computed(() => "isFavorite" in props.project);
+
+const { isFavorite, pending, toggleFavorite } = useFavorite(
+  () => ({
+    id: props.project.id,
+    isFavorite: "isFavorite" in props.project ? props.project.isFavorite : false,
+  }),
+  (value) => emit("favoriteChange", props.project.id, value),
+);
 </script>
 
 <template>
@@ -25,15 +41,32 @@ defineProps<{
         </div>
       </div>
 
-      <UBadge
-        v-if="project.latestRelease"
-        color="neutral"
-        variant="subtle"
-        size="sm"
-        class="shrink-0 rounded-full bg-surface text-xs whitespace-nowrap text-muted ring-1 ring-border"
-      >
-        {{ project.latestRelease }}
-      </UBadge>
+      <div class="flex shrink-0 items-center gap-2">
+        <UBadge
+          v-if="project.latestRelease"
+          color="neutral"
+          variant="subtle"
+          size="sm"
+          class="rounded-full bg-surface text-xs whitespace-nowrap text-muted ring-1 ring-border"
+        >
+          {{ project.latestRelease }}
+        </UBadge>
+        <UTooltip
+          v-if="canFavorite"
+          :text="isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+        >
+          <UButton
+            :icon="isFavorite ? 'tabler:heart-filled' : 'tabler:heart'"
+            :aria-label="isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+            :loading="pending"
+            color="secondary"
+            variant="ghost"
+            size="sm"
+            :class="isFavorite ? 'text-red-600' : 'text-muted hover:text-red-600'"
+            @click="toggleFavorite"
+          />
+        </UTooltip>
+      </div>
     </div>
 
     <p class="mb-6 line-clamp-2 flex-1 text-sm leading-relaxed text-muted">
@@ -50,7 +83,7 @@ defineProps<{
         {{ project.language }}
       </UBadge>
       <UBadge
-        v-for="topic in project.topics.slice(0, 2)"
+        v-for="topic in (project.topics ?? []).slice(0, 2)"
         :key="topic"
         color="neutral"
         variant="subtle"

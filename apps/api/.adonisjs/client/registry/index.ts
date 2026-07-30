@@ -89,14 +89,14 @@ const routes = {
     ],
     types: placeholder as Registry["project.feed"]["types"],
   },
-  "project.liked": {
+  "project.favorites": {
     methods: ["GET", "HEAD"],
-    pattern: "/projects/liked",
+    pattern: "/projects/favorites",
     tokens: [
-      { old: "/projects/liked", type: 0, val: "projects", end: "" },
-      { old: "/projects/liked", type: 0, val: "liked", end: "" },
+      { old: "/projects/favorites", type: 0, val: "projects", end: "" },
+      { old: "/projects/favorites", type: 0, val: "favorites", end: "" },
     ],
-    types: placeholder as Registry["project.liked"]["types"],
+    types: placeholder as Registry["project.favorites"]["types"],
   },
   "project.show": {
     methods: ["GET", "HEAD"],
@@ -107,25 +107,25 @@ const routes = {
     ],
     types: placeholder as Registry["project.show"]["types"],
   },
-  "project.like": {
+  "project.add_favorite": {
     methods: ["POST"],
-    pattern: "/projects/:id/like",
+    pattern: "/projects/:id/favorite",
     tokens: [
-      { old: "/projects/:id/like", type: 0, val: "projects", end: "" },
-      { old: "/projects/:id/like", type: 1, val: "id", end: "" },
-      { old: "/projects/:id/like", type: 0, val: "like", end: "" },
+      { old: "/projects/:id/favorite", type: 0, val: "projects", end: "" },
+      { old: "/projects/:id/favorite", type: 1, val: "id", end: "" },
+      { old: "/projects/:id/favorite", type: 0, val: "favorite", end: "" },
     ],
-    types: placeholder as Registry["project.like"]["types"],
+    types: placeholder as Registry["project.add_favorite"]["types"],
   },
-  "project.pass": {
-    methods: ["POST"],
-    pattern: "/projects/:id/pass",
+  "project.remove_favorite": {
+    methods: ["DELETE"],
+    pattern: "/projects/:id/favorite",
     tokens: [
-      { old: "/projects/:id/pass", type: 0, val: "projects", end: "" },
-      { old: "/projects/:id/pass", type: 1, val: "id", end: "" },
-      { old: "/projects/:id/pass", type: 0, val: "pass", end: "" },
+      { old: "/projects/:id/favorite", type: 0, val: "projects", end: "" },
+      { old: "/projects/:id/favorite", type: 1, val: "id", end: "" },
+      { old: "/projects/:id/favorite", type: 0, val: "favorite", end: "" },
     ],
-    types: placeholder as Registry["project.pass"]["types"],
+    types: placeholder as Registry["project.remove_favorite"]["types"],
   },
 } as const satisfies Record<string, AdonisEndpoint>;
 

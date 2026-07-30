@@ -15,10 +15,10 @@ DELETE /auth/logout               → Déconnexion
 PUT    /auth/preferences          → Mise à jour des préférences
 
 GET  /projects/feed               → Fil personnalisé
-GET  /projects/liked              → Projets aimés (paginé)
+GET  /projects/favorites          → Projets favoris (paginé)
 GET  /projects/:id                → Détail d'un projet
-POST /projects/:id/like           → Liker un projet
-POST /projects/:id/pass           → Passer un projet
+POST /projects/:id/favorite       → Ajouter un favori
+DELETE /projects/:id/favorite     → Retirer un favori
 ```
 
 ---
@@ -44,7 +44,7 @@ Controller
     ▼
 Service
     ├─ AuthService — User.updateOrCreate depuis driverUser GitHub
-    ├─ ProjectFeedService — orchestration du fil, interactions, showcase
+    ├─ ProjectFeedService — orchestration du fil, favoris, showcase
     └─ GitHubSyncService → GitHubApiClient — ingestion GitHub → DB
     ▼
 Model Lucid
@@ -207,12 +207,12 @@ Enrichit le projet avec readme, languages, contributors, latestRelease, totalCon
 ### `getFeed(userId, preferences, token)`
 
 ```
-1. Charge tous les projectId vus (liked + passed) par l'utilisateur
-2. Compte les projets disponibles (matching prefs, non vus)
-3. Si disponibles < fetchThreshold (25) :
+1. Compte les projets correspondant aux préférences
+2. Si disponibles < fetchThreshold (25) :
    → Pour chaque langage : si needsFetch → fetchAndStore
-4. Pour chaque langage : récupère jusqu'à perLanguageLimit (60) projets
-5. Round-robin entre les langages → max totalLimit (60) projets
+3. Pour chaque langage : récupère jusqu'à perLanguageLimit (60) projets
+4. Round-robin entre les langages → max totalLimit (60) projets
+5. Charge les IDs favoris et renseigne `isFavorite`
 6. Retourne { projects, available }
 ```
 
@@ -226,19 +226,20 @@ Pour chacun des 12 langages configurés :
 2. Si le pool < 4 projets **et** un token serveur est disponible → `fetchAndStore` en fire-and-forget (sans bloquer la réponse)
 3. Sélectionne aléatoirement 6 projets dans le pool
 
-### `getProject(id, token)`
+### `getProject(id, userId, token)`
 
 1. `Project.find(id)`
 2. Si `needsDetailsFetch` → `fetchProjectDetails` (peut être lent, ~500ms)
 3. Charge les contributors via `project.load("contributors")`
+4. Renseigne l'état `isFavorite` pour l'utilisateur
 
-### `getLikedProjects(userId, page)`
+### `getFavoriteProjects(userId, page)`
 
-Pagine les `user_project_interactions` de type `liked`, triées par `createdAt` desc, avec preload du projet associé. 20 éléments par page.
+Pagine les `user_project_favorites`, triés par `createdAt` desc, avec preload du projet associé. 20 éléments par page.
 
-### `recordInteraction(userId, projectId, type)`
+### `addFavorite(userId, projectId)` / `removeFavorite(userId, projectId)`
 
-`UserProjectInteraction.updateOrCreate({ userId, projectId }, { type })` — un like peut remplacer un pass et vice-versa.
+Ajout ou suppression idempotente d'un `UserProjectFavorite` pour le couple `(userId, projectId)`.
 
 ---
 

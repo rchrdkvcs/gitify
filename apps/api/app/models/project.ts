@@ -1,10 +1,13 @@
 import type { HasMany } from "@adonisjs/lucid/types/relations";
 import { ProjectSchema } from "#database/schema";
 import Contributor from "#models/contributor";
-import { beforeCreate, column, hasMany } from "@adonisjs/lucid/orm";
+import { beforeCreate, column, computed, hasMany } from "@adonisjs/lucid/orm";
 import { ulid } from "ulid";
 
 export default class Project extends ProjectSchema {
+  @computed()
+  declare isFavorite: boolean;
+
   @beforeCreate()
   static generateId(model: Project) {
     model.id = ulid();

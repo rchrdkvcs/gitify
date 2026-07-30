@@ -67,15 +67,15 @@ export function useArchiveEasterEgg() {
   const loadError = useState<string | null>("archive-easter-egg-error", () => null);
 
   async function fetchArchiveProjects(): Promise<Project[]> {
-    const likedRes = await http<{ projects: Project[]; meta: PaginationMeta }>(
-      "/projects/liked?page=1",
+    const favoritesResponse = await http<{ projects: Project[]; meta: PaginationMeta }>(
+      "/projects/favorites?page=1",
     );
-    let result = [...(likedRes.projects ?? [])];
+    let result = [...(favoritesResponse.projects ?? [])];
 
-    if (result.length < MAX_PROJECTS && (likedRes.meta?.lastPage ?? 1) > 1) {
+    if (result.length < MAX_PROJECTS && (favoritesResponse.meta?.lastPage ?? 1) > 1) {
       try {
         const page2 = await http<{ projects: Project[]; meta: PaginationMeta }>(
-          "/projects/liked?page=2",
+          "/projects/favorites?page=2",
         );
         const seen = new Set(result.map((p) => p.id));
         for (const p of page2.projects ?? []) {

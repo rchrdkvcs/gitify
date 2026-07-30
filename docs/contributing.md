@@ -21,7 +21,7 @@ Chaque branche doit être créée depuis `master` et cibler `master` en PR. La c
 ```bash
 git checkout master
 git pull
-git checkout -b feat/liked-projects-filter
+git checkout -b feat/favorite-projects-filter
 ```
 
 ---

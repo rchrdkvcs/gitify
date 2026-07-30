@@ -1,6 +1,6 @@
 export const PROJECT_QUERY_KEYS = {
   feed: ["projects", "feed"] as const,
-  liked: ["projects", "liked"] as const,
+  favorites: ["projects", "favorites"] as const,
 };
 
 export const feedQuery = defineQueryOptions(() => ({
@@ -8,7 +8,7 @@ export const feedQuery = defineQueryOptions(() => ({
   query: () => useApi("/projects/feed"),
 }));
 
-export const likedQuery = defineQueryOptions(() => ({
-  key: PROJECT_QUERY_KEYS.liked,
-  query: () => useApi("/projects/liked"),
+export const favoritesQuery = defineQueryOptions(() => ({
+  key: PROJECT_QUERY_KEYS.favorites,
+  query: () => useApi("/projects/favorites"),
 }));

@@ -14,10 +14,10 @@ export type ScannedRoutes = {
     "preferences.update": { paramsTuple?: []; params?: {} };
     "project.showcase": { paramsTuple?: []; params?: {} };
     "project.feed": { paramsTuple?: []; params?: {} };
-    "project.liked": { paramsTuple?: []; params?: {} };
+    "project.favorites": { paramsTuple?: []; params?: {} };
     "project.show": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
-    "project.like": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
-    "project.pass": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
+    "project.add_favorite": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
+    "project.remove_favorite": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
   };
   GET: {
     "openapi.html": { paramsTuple?: []; params?: {} };
@@ -28,7 +28,7 @@ export type ScannedRoutes = {
     "auth.me": { paramsTuple?: []; params?: {} };
     "project.showcase": { paramsTuple?: []; params?: {} };
     "project.feed": { paramsTuple?: []; params?: {} };
-    "project.liked": { paramsTuple?: []; params?: {} };
+    "project.favorites": { paramsTuple?: []; params?: {} };
     "project.show": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
   };
   HEAD: {
@@ -40,18 +40,18 @@ export type ScannedRoutes = {
     "auth.me": { paramsTuple?: []; params?: {} };
     "project.showcase": { paramsTuple?: []; params?: {} };
     "project.feed": { paramsTuple?: []; params?: {} };
-    "project.liked": { paramsTuple?: []; params?: {} };
+    "project.favorites": { paramsTuple?: []; params?: {} };
     "project.show": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
   };
   DELETE: {
     "auth.logout": { paramsTuple?: []; params?: {} };
+    "project.remove_favorite": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
   };
   PUT: {
     "preferences.update": { paramsTuple?: []; params?: {} };
   };
   POST: {
-    "project.like": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
-    "project.pass": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
+    "project.add_favorite": { paramsTuple: [ParamValue]; params: { id: ParamValue } };
   };
 };
 declare module "@adonisjs/core/types/http" {

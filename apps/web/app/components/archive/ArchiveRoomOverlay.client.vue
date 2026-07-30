@@ -159,7 +159,7 @@ watch(isOpen, (open) => {
           >
             <p class="font-jetbrains text-sm text-[#e8d48b]">Aucune caisse pour l’instant</p>
             <p class="mt-2 text-sm text-white/60">
-              Like des projets dans le swipe pour remplir les backrooms.
+              Ajoutez des projets à vos favoris pour remplir les backrooms.
             </p>
           </div>
         </div>

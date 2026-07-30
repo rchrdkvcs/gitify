@@ -61,7 +61,7 @@ logout(); // DELETE /auth/logout + user.value = null
 ### `middlewares/auth.ts`
 
 Vérifie `authStore.isAuthenticated`. Si `false`, redirige vers `/`.  
-Appliqué sur les pages `swipe.vue` et `liked.vue`.
+Appliqué sur les pages `explore.vue`, `favorites.vue` et `projects/[id].vue`.
 
 ### `middlewares/guest.ts`
 
@@ -80,14 +80,9 @@ const { http } = useHttp();
 const data = await http<{ projects: Project[] }>("/projects/feed");
 ```
 
-### `useSwipe`
+### `useFavorite`
 
-Gère le cycle de vie du fil de projets dans la page swipe.
-
-- **`fetchFeed()`** — appelle `GET /projects/feed` et ajoute les projets à la liste locale
-- **`swipe(type)`** — appelle `POST /projects/:id/like` ou `/pass`, incrémente l'index courant, déclenche un nouveau `fetchFeed()` si moins de 5 projets restants
-- `currentProject` — projet calculé à l'index courant
-- `remaining` — nombre de projets non encore swipés
+Gère l'ajout et le retrait optimistes d'un favori depuis les cartes et le détail d'un projet. Le bouton est bloqué pendant la requête et revient à son état précédent avec un toast si l'appel échoue.
 
 ### `usePreferences`
 
@@ -123,13 +118,13 @@ export const feedQuery = defineQueryOptions(() => ({
   query: () => useApi("/projects/feed"),
 }));
 
-export const likedQuery = defineQueryOptions(() => ({
-  key: ["projects", "liked"],
-  query: () => useApi("/projects/liked"),
+export const favoritesQuery = defineQueryOptions(() => ({
+  key: ["projects", "favorites"],
+  query: () => useApi("/projects/favorites"),
 }));
 ```
 
-Les pages `swipe.vue` et `liked.vue` consomment ces query options via `useQuery()`. Pinia Colada gère la mise en cache, la déduplication des requêtes en vol et l'état `pending` / `error`.
+Pinia Colada gère la mise en cache, la déduplication des requêtes en vol et l'état `pending` / `error`.
 
 ---
 
@@ -138,6 +133,6 @@ Les pages `swipe.vue` et `liked.vue` consomment ces query options via `useQuery(
 | Page                | Route           | Auth | Description                                                 |
 | ------------------- | --------------- | ---- | ----------------------------------------------------------- |
 | `index.vue`         | `/`             | Non  | Page d'accueil, vitrine publique (`GET /projects/showcase`) |
-| `swipe.vue`         | `/swipe`        | Oui  | Interface swipe principale (fil personnalisé)               |
-| `liked.vue`         | `/liked`        | Oui  | Liste paginée des projets aimés                             |
-| `projects/[id].vue` | `/projects/:id` | Non  | Détail d'un projet (README, langages, contributeurs)        |
+| `explore.vue`       | `/explore`      | Oui  | Fil personnalisé avec ajout et retrait des favoris          |
+| `favorites.vue`     | `/favorites`    | Oui  | Liste paginée des projets favoris                           |
+| `projects/[id].vue` | `/projects/:id` | Oui  | Détail d'un projet (README, langages, contributeurs)        |

@@ -1,7 +1,7 @@
 import type { UserPreferences, ShowcaseLanguageResult, ShowcaseProject } from "@gitify/types";
 import gitifyConfig from "#config/gitify";
 import Project from "#models/project";
-import UserProjectInteraction from "#models/user_project_interaction";
+import UserProjectFavorite from "#models/user_project_favorite";
 import GitHubSyncService from "#services/github/github_sync_service";
 
 export default class ProjectFeedService {
@@ -53,7 +53,7 @@ export default class ProjectFeedService {
     return languagesData.filter((l) => l.projects.length > 0);
   }
 
-  static async getProject(id: string, token: string): Promise<Project | null> {
+  static async getProject(id: string, userId: string, token: string): Promise<Project | null> {
     const project = await Project.find(id);
     if (!project) {
       return null;
@@ -66,6 +66,11 @@ export default class ProjectFeedService {
     }
 
     await project.load("contributors");
+    project.isFavorite = await UserProjectFavorite.query()
+      .where("userId", userId)
+      .where("projectId", project.id)
+      .first()
+      .then(Boolean);
     return project;
   }
 
@@ -77,12 +82,7 @@ export default class ProjectFeedService {
     const { difficulty } = preferences;
     const languages = preferences.languages.map((l) => l.toLowerCase());
 
-    const interactions = await UserProjectInteraction.query()
-      .where("userId", userId)
-      .select("projectId");
-    const seenIds = interactions.map((i) => i.projectId as string);
-
-    const available = await countAvailable(difficulty, languages, seenIds);
+    const available = await countAvailable(difficulty, languages);
 
     if (available < gitifyConfig.feed.fetchThreshold) {
       await Promise.all(
@@ -102,40 +102,53 @@ export default class ProjectFeedService {
           .orderBy("stars", "desc")
           .limit(gitifyConfig.feed.perLanguageLimit);
 
-        if (seenIds.length > 0) {
-          query.whereNotIn("id", seenIds);
-        }
-
         return query;
       }),
     );
 
+    const projects = roundRobin(projectsPerLanguage, gitifyConfig.feed.totalLimit);
+    await setFavoriteState(projects, userId);
+
     return {
-      projects: roundRobin(projectsPerLanguage, gitifyConfig.feed.totalLimit),
-      available: await countAvailable(difficulty, languages, seenIds),
+      projects,
+      available: await countAvailable(difficulty, languages),
     };
   }
 
-  static async getLikedProjects(userId: string, page: number) {
-    return UserProjectInteraction.query()
+  static async getFavoriteProjects(userId: string, page: number) {
+    const favorites = await UserProjectFavorite.query()
       .where("userId", userId)
-      .where("type", "liked")
       .orderBy("createdAt", "desc")
       .preload("project")
-      .paginate(page, gitifyConfig.feed.likedPageLimit);
+      .paginate(page, gitifyConfig.feed.favoritePageLimit);
+
+    favorites.all().forEach((favorite) => {
+      favorite.project.isFavorite = true;
+    });
+
+    return favorites;
   }
 
-  static async recordInteraction(
-    userId: string,
-    projectId: string,
-    type: "liked" | "passed",
-  ): Promise<Project | null> {
+  static async addFavorite(userId: string, projectId: string): Promise<Project | null> {
     const project = await Project.find(projectId);
     if (!project) {
       return null;
     }
 
-    await UserProjectInteraction.updateOrCreate({ userId, projectId: project.id }, { type });
+    await UserProjectFavorite.firstOrCreate({ userId, projectId: project.id });
+    return project;
+  }
+
+  static async removeFavorite(userId: string, projectId: string): Promise<Project | null> {
+    const project = await Project.find(projectId);
+    if (!project) {
+      return null;
+    }
+
+    await UserProjectFavorite.query()
+      .where("userId", userId)
+      .where("projectId", project.id)
+      .delete();
     return project;
   }
 }
@@ -163,17 +176,28 @@ function roundRobin(groups: Project[][], limit: number): Project[] {
   return result;
 }
 
-async function countAvailable(
-  difficulty: string,
-  languages: string[],
-  seenIds: string[],
-): Promise<number> {
-  const query = Project.query().where("difficulty", difficulty).whereIn("language", languages);
-
-  if (seenIds.length > 0) {
-    query.whereNotIn("id", seenIds);
+async function setFavoriteState(projects: Project[], userId: string) {
+  if (projects.length === 0) {
+    return;
   }
 
+  const favorites = await UserProjectFavorite.query()
+    .where("userId", userId)
+    .whereIn(
+      "projectId",
+      projects.map((project) => project.id),
+    )
+    .select("projectId");
+  const favoriteIds = new Set(favorites.map((favorite) => favorite.projectId));
+
+  projects.forEach((project) => {
+    project.isFavorite = favoriteIds.has(project.id);
+  });
+}
+
+async function countAvailable(difficulty: string, languages: string[]): Promise<number> {
+  const query = Project.query().where("difficulty", difficulty).whereIn("language", languages);
+
   const result = await query.count("* as total");
-  return Number(result[0].$extras.total);
+  return Number(result[0]?.$extras.total ?? 0);
 }

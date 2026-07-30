@@ -19,9 +19,9 @@ export interface ApiDefinition {
   project: {
     showcase: (typeof routes)["project.showcase"];
     feed: (typeof routes)["project.feed"];
-    liked: (typeof routes)["project.liked"];
+    favorites: (typeof routes)["project.favorites"];
     show: (typeof routes)["project.show"];
-    like: (typeof routes)["project.like"];
-    pass: (typeof routes)["project.pass"];
+    addFavorite: (typeof routes)["project.add_favorite"];
+    removeFavorite: (typeof routes)["project.remove_favorite"];
   };
 }

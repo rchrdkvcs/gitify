@@ -171,19 +171,19 @@ export interface Registry {
       >;
     };
   };
-  "project.liked": {
+  "project.favorites": {
     methods: ["GET", "HEAD"];
-    pattern: "/projects/liked";
+    pattern: "/projects/favorites";
     types: {
       body: {};
       paramsTuple: [];
       params: {};
       query: {};
       response: ExtractResponse<
-        Awaited<ReturnType<import("#controllers/project_controller").default["liked"]>>
+        Awaited<ReturnType<import("#controllers/project_controller").default["favorites"]>>
       >;
       errorResponse: ExtractErrorResponse<
-        Awaited<ReturnType<import("#controllers/project_controller").default["liked"]>>
+        Awaited<ReturnType<import("#controllers/project_controller").default["favorites"]>>
       >;
     };
   };
@@ -207,9 +207,9 @@ export interface Registry {
         | { status: 422; response: { errors: SimpleError[] } };
     };
   };
-  "project.like": {
+  "project.add_favorite": {
     methods: ["POST"];
-    pattern: "/projects/:id/like";
+    pattern: "/projects/:id/favorite";
     types: {
       body: ExtractBody<
         InferInput<typeof import("#validators/project_id_validator").projectIdValidator>
@@ -220,18 +220,18 @@ export interface Registry {
         InferInput<typeof import("#validators/project_id_validator").projectIdValidator>
       >;
       response: ExtractResponse<
-        Awaited<ReturnType<import("#controllers/project_controller").default["like"]>>
+        Awaited<ReturnType<import("#controllers/project_controller").default["addFavorite"]>>
       >;
       errorResponse:
         | ExtractErrorResponse<
-            Awaited<ReturnType<import("#controllers/project_controller").default["like"]>>
+            Awaited<ReturnType<import("#controllers/project_controller").default["addFavorite"]>>
           >
         | { status: 422; response: { errors: SimpleError[] } };
     };
   };
-  "project.pass": {
-    methods: ["POST"];
-    pattern: "/projects/:id/pass";
+  "project.remove_favorite": {
+    methods: ["DELETE"];
+    pattern: "/projects/:id/favorite";
     types: {
       body: ExtractBody<
         InferInput<typeof import("#validators/project_id_validator").projectIdValidator>
@@ -242,11 +242,11 @@ export interface Registry {
         InferInput<typeof import("#validators/project_id_validator").projectIdValidator>
       >;
       response: ExtractResponse<
-        Awaited<ReturnType<import("#controllers/project_controller").default["pass"]>>
+        Awaited<ReturnType<import("#controllers/project_controller").default["removeFavorite"]>>
       >;
       errorResponse:
         | ExtractErrorResponse<
-            Awaited<ReturnType<import("#controllers/project_controller").default["pass"]>>
+            Awaited<ReturnType<import("#controllers/project_controller").default["removeFavorite"]>>
           >
         | { status: 422; response: { errors: SimpleError[] } };
     };

@@ -43,14 +43,14 @@ apps/api/
 │   │   ├── user.ts
 │   │   ├── project.ts
 │   │   ├── contributor.ts
-│   │   ├── user_project_interaction.ts
+│   │   ├── user_project_favorite.ts
 │   │   └── github_fetch_cache.ts
 │   ├── schemas/              # DTOs OpenAPI (classes décorées @ApiProperty)
 │   │   ├── user_schemas.ts
 │   │   └── project_schemas.ts
 │   ├── services/
 │   │   ├── auth_service.ts                        # Upsert utilisateur depuis GitHub
-│   │   ├── project_feed_service.ts                # Orchestration du fil et des interactions
+│   │   ├── project_feed_service.ts                # Orchestration du fil et des favoris
 │   │   └── github/
 │   │       ├── github_api_client.ts               # Client HTTP GitHub API
 │   │       └── github_sync_service.ts             # Ingestion et cache GitHub → DB
@@ -83,21 +83,21 @@ apps/web/
 ├── app/
 │   ├── composables/
 │   │   ├── useHttp.ts          # Wrapper $fetch avec baseURL + credentials
-│   │   ├── useSwipe.ts         # Logique swipe — chargement du fil, like/pass
+│   │   ├── useFavorite.ts      # Ajout/retrait optimiste des favoris
 │   │   └── usePreferences.ts   # Formulaire de préférences utilisateur
 │   ├── middlewares/
 │   │   ├── auth.ts             # Redirige vers / si non authentifié
 │   │   └── guest.ts            # Redirige vers / si déjà authentifié
 │   ├── pages/
 │   │   ├── index.vue           # Page d'accueil / vitrine
-│   │   ├── swipe.vue           # Interface swipe (route protégée)
-│   │   ├── liked.vue           # Projets aimés (route protégée)
+│   │   ├── explore.vue         # Fil personnalisé (route protégée)
+│   │   ├── favorites.vue       # Projets favoris (route protégée)
 │   │   └── projects/[id].vue   # Détail d'un projet
 │   ├── plugins/
 │   │   ├── auth.ts             # Initialise l'état auth au démarrage (SSR + client)
 │   │   └── tuyau.ts            # Instancie le client Tuyau typé
 │   ├── queries/
-│   │   └── projects.ts         # Query options Pinia Colada (feed + liked)
+│   │   └── projects.ts         # Query options Pinia Colada (feed + favoris)
 │   └── stores/
 │       └── auth.ts             # Pinia store — source de vérité utilisateur
 ```

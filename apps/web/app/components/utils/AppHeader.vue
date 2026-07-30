@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { DropdownMenuItem } from "@nuxt/ui";
+
 const authStore = useAuthStore();
 const isLoading = ref(false);
 
@@ -25,13 +27,18 @@ const dropdownItems = [
       to: "/profil",
     },
     {
+      label: "Mes favoris",
+      icon: "tabler:heart-filled",
+      to: "/favorites",
+    },
+    {
       label: "Déconnexion",
       color: "error",
       icon: "lucide:log-out",
       onSelect: handleLogout,
     },
   ],
-];
+] satisfies DropdownMenuItem[][];
 </script>
 
 <template>

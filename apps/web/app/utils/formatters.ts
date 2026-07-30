@@ -1,6 +1,6 @@
 const rtf = new Intl.RelativeTimeFormat("fr", { numeric: "auto" });
 
-export const timeAgo = (dateString: string) => {
+export const timeAgo = (dateString: string | null) => {
   if (!dateString) return "";
   const diffInMs = new Date(dateString).getTime() - Date.now();
   const diffInHours = Math.round(diffInMs / (1000 * 60 * 60));
@@ -25,7 +25,7 @@ const AVATAR_COLORS: Record<string, string> = {
   ruby: "bg-linear-to-br from-[#CC342D] to-[#671A17] text-white",
 };
 
-export const getAvatarColor = (language: string) => {
+export const getAvatarColor = (language: string | null) => {
   return AVATAR_COLORS[language?.toLowerCase()] || "bg-gray-500/20 text-muted";
 };
 
