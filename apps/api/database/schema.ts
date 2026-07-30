@@ -4,176 +4,128 @@
  * Run "node ace migration:run" command to re-generate this file
  */
 
-import { BaseModel, column } from "@adonisjs/lucid/orm";
-import { DateTime } from "luxon";
+import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { DateTime } from 'luxon'
 
 export class ContributorSchema extends BaseModel {
-  static $columns = [
-    "avatarUrl",
-    "contributions",
-    "createdAt",
-    "githubUserId",
-    "id",
-    "login",
-    "profileUrl",
-    "projectId",
-    "updatedAt",
-  ] as const;
-  $columns = ContributorSchema.$columns;
+  static $columns = ['avatarUrl', 'contributions', 'createdAt', 'githubUserId', 'id', 'login', 'profileUrl', 'projectId', 'updatedAt'] as const
+  $columns = ContributorSchema.$columns
   @column()
-  declare avatarUrl: string;
+  declare avatarUrl: string
   @column()
-  declare contributions: number | null;
+  declare contributions: number | null
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null;
+  declare createdAt: DateTime | null
   @column()
-  declare githubUserId: bigint | number | null;
+  declare githubUserId: bigint | number | null
   @column({ isPrimary: true })
-  declare id: string;
+  declare id: string
   @column()
-  declare login: string;
+  declare login: string
   @column()
-  declare profileUrl: string;
+  declare profileUrl: string
   @column()
-  declare projectId: string | null;
+  declare projectId: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null;
+  declare updatedAt: DateTime | null
 }
 
 export class GithubFetchCacheSchema extends BaseModel {
-  static $columns = [
-    "createdAt",
-    "difficulty",
-    "fetchedAt",
-    "id",
-    "language",
-    "totalStored",
-    "updatedAt",
-  ] as const;
-  $columns = GithubFetchCacheSchema.$columns;
+  static $columns = ['createdAt', 'difficulty', 'fetchedAt', 'id', 'language', 'totalStored', 'updatedAt'] as const
+  $columns = GithubFetchCacheSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null;
+  declare createdAt: DateTime | null
   @column()
-  declare difficulty: string;
+  declare difficulty: string
   @column.dateTime()
-  declare fetchedAt: DateTime;
+  declare fetchedAt: DateTime
   @column({ isPrimary: true })
-  declare id: string;
+  declare id: string
   @column()
-  declare language: string;
+  declare language: string
   @column()
-  declare totalStored: number;
+  declare totalStored: number
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null;
+  declare updatedAt: DateTime | null
 }
 
 export class ProjectSchema extends BaseModel {
-  static $columns = [
-    "createdAt",
-    "description",
-    "detailsFetchedAt",
-    "difficulty",
-    "forksCount",
-    "githubRepoId",
-    "id",
-    "language",
-    "languages",
-    "latestRelease",
-    "name",
-    "openIssuesCount",
-    "ownerName",
-    "readme",
-    "repositoryUrl",
-    "stars",
-    "topics",
-    "totalContributorsCount",
-    "updatedAt",
-  ] as const;
-  $columns = ProjectSchema.$columns;
+  static $columns = ['createdAt', 'description', 'detailsFetchedAt', 'difficulty', 'forksCount', 'githubRepoId', 'id', 'language', 'languages', 'latestRelease', 'name', 'openIssuesCount', 'ownerName', 'readme', 'repositoryUrl', 'stars', 'topics', 'totalContributorsCount', 'updatedAt'] as const
+  $columns = ProjectSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null;
+  declare createdAt: DateTime | null
   @column()
-  declare description: string | null;
+  declare description: string | null
   @column.dateTime()
-  declare detailsFetchedAt: DateTime | null;
+  declare detailsFetchedAt: DateTime | null
   @column()
-  declare difficulty: string;
+  declare difficulty: string
   @column()
-  declare forksCount: number;
+  declare forksCount: number
   @column()
-  declare githubRepoId: bigint | number;
+  declare githubRepoId: bigint | number
   @column({ isPrimary: true })
-  declare id: string;
+  declare id: string
   @column()
-  declare language: string | null;
+  declare language: string | null
   @column()
-  declare languages: any | null;
+  declare languages: any | null
   @column()
-  declare latestRelease: string | null;
+  declare latestRelease: string | null
   @column()
-  declare name: string;
+  declare name: string
   @column()
-  declare openIssuesCount: number;
+  declare openIssuesCount: number
   @column()
-  declare ownerName: string;
+  declare ownerName: string
   @column()
-  declare readme: string | null;
+  declare readme: string | null
   @column()
-  declare repositoryUrl: string;
+  declare repositoryUrl: string
   @column()
-  declare stars: number;
+  declare stars: number
   @column()
-  declare topics: any | null;
+  declare topics: any | null
   @column()
-  declare totalContributorsCount: number | null;
+  declare totalContributorsCount: number | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null;
+  declare updatedAt: DateTime | null
 }
 
 export class UserProjectFavoriteSchema extends BaseModel {
-  static $columns = ["createdAt", "id", "projectId", "updatedAt", "userId"] as const;
-  $columns = UserProjectFavoriteSchema.$columns;
+  static $columns = ['createdAt', 'id', 'projectId', 'updatedAt', 'userId'] as const
+  $columns = UserProjectFavoriteSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null;
+  declare createdAt: DateTime | null
   @column({ isPrimary: true })
-  declare id: string;
+  declare id: string
   @column()
-  declare projectId: string;
+  declare projectId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null;
+  declare updatedAt: DateTime | null
   @column()
-  declare userId: string;
+  declare userId: string
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = [
-    "avatarUrl",
-    "createdAt",
-    "email",
-    "githubAccessToken",
-    "id",
-    "isVerified",
-    "name",
-    "preferences",
-    "updatedAt",
-  ] as const;
-  $columns = UserSchema.$columns;
+  static $columns = ['avatarUrl', 'createdAt', 'email', 'githubAccessToken', 'id', 'isVerified', 'name', 'preferences', 'updatedAt'] as const
+  $columns = UserSchema.$columns
   @column()
-  declare avatarUrl: string | null;
+  declare avatarUrl: string | null
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null;
+  declare createdAt: DateTime | null
   @column()
-  declare email: string;
+  declare email: string
   @column()
-  declare githubAccessToken: string | null;
+  declare githubAccessToken: string | null
   @column({ isPrimary: true })
-  declare id: string;
+  declare id: string
   @column()
-  declare isVerified: boolean | null;
+  declare isVerified: boolean | null
   @column()
-  declare name: string | null;
+  declare name: string | null
   @column()
-  declare preferences: any | null;
+  declare preferences: any | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null;
+  declare updatedAt: DateTime | null
 }
