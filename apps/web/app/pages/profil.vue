@@ -41,16 +41,18 @@ const profileStatus = computed(() => {
     <section class="my-5 flex flex-col items-center gap-6 md:my-12 md:flex-row md:justify-between">
       <div class="flex flex-col items-center md:flex md:flex-row md:gap-6">
         <UUser
-          :ui="{ avatar: 'size-40 border border-secondary/20', root: 'w-min' }"
+          :ui="{ avatar: 'size-40 border border-border', root: 'w-min' }"
           :avatar="{ src: user?.avatarUrl, alt: user?.name }"
         />
         <div class="mt-3 flex flex-col items-center gap-3 md:items-start md:justify-center">
-          <span class="font-jetbrains text-sm text-lightgreen uppercase">Connecté en tant que</span>
+          <span class="font-jetbrains text-sm text-brand-green uppercase"
+            >Connecté en tant que</span
+          >
           <div class="flex items-center justify-center gap-2">
             <UIcon class="size-6 md:size-9" name="ix:user-profile" />
             <p class="font-jetbrains text-2xl md:text-3xl">{{ user?.name }}</p>
           </div>
-          <p class="text-md text-lightgray">{{ user?.email }}</p>
+          <p class="text-md text-muted">{{ user?.email }}</p>
         </div>
       </div>
 

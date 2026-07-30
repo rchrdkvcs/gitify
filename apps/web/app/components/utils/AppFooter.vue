@@ -6,7 +6,7 @@
       <AppLogo />
     </template>
 
-    <p class="text-sm text-lightgray">© 2026 Gitify. All rights reserved.</p>
+    <p class="text-sm text-muted">© 2026 Gitify. All rights reserved.</p>
 
     <template #right>
       <UButton label="Twitter" color="neutral" variant="ghost" />

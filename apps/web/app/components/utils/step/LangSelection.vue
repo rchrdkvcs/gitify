@@ -25,20 +25,20 @@ const handleToggle = (title: string) => {
       v-for="item in items"
       :key="item.title"
       @click="handleToggle(item.title)"
-      class="preferences-card block hover:bg-card/30! md:p-4"
+      class="preferences-card block hover:bg-surface! md:p-4"
       :class="{ 'preferences-card-active': isSelected(item.title) }"
       :ui="{ body: 'items-center gap-6' }"
     >
       <UIcon v-if="isSelected(item.title)" name="lets-icons:check-fill" class="check-icon" />
       <div class="container-icon size-12" :class="{ 'bg-primary/20': isSelected(item.title) }">
         <span
-          class="font-jetbrains text-xl font-bold text-lightgray"
+          class="font-jetbrains text-xl font-bold text-muted"
           :class="{ 'text-primary': isSelected(item.title) }"
         >
           {{ item.label || item.title }}
         </span>
       </div>
-      <p class="font-medium text-lightgray" :class="{ 'text-white': isSelected(item.title) }">
+      <p class="font-medium text-muted" :class="{ 'text-ink': isSelected(item.title) }">
         {{ item.title }}
       </p>
     </UCard>

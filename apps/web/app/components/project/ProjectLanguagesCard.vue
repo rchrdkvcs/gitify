@@ -18,19 +18,19 @@ const languagesWithPercent = computed(() => {
 <template>
   <div
     v-if="languagesWithPercent.length"
-    class="rounded-lg border border-secondary bg-linear-to-r from-dark to-card p-5"
+    class="rounded-lg border border-border bg-linear-to-r from-canvas to-surface p-5"
   >
-    <h2 class="pb-4 font-jetbrains text-lg font-bold text-white">Langages</h2>
+    <h2 class="pb-4 font-jetbrains text-lg font-bold text-ink">Langages</h2>
     <div class="flex flex-col gap-3">
       <div v-for="lang in languagesWithPercent" :key="lang.name">
         <div class="flex items-center justify-between pb-1 text-sm">
-          <span class="text-white">{{ lang.name }}</span>
-          <span class="font-jetbrains text-lightgray">{{ lang.percent }}%</span>
+          <span class="text-ink">{{ lang.name }}</span>
+          <span class="font-jetbrains text-muted">{{ lang.percent }}%</span>
         </div>
         <UProgress
           :model-value="lang.percent"
           size="sm"
-          :ui="{ base: 'bg-dark', indicator: 'bg-lightgreen' }"
+          :ui="{ base: 'bg-canvas', indicator: 'bg-brand-green' }"
         />
       </div>
     </div>

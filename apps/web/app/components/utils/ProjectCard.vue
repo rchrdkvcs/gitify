@@ -16,8 +16,8 @@ defineProps<{
         </div>
 
         <div class="min-w-0 flex-1">
-          <h3 class="truncate font-mono text-lg font-bold text-white">
-            <span class="text-white/40">{{ project.ownerName }}/</span>{{ project.name }}
+          <h3 class="truncate font-mono text-lg font-bold text-ink">
+            <span class="text-muted">{{ project.ownerName }}/</span>{{ project.name }}
           </h3>
           <p class="capitalize-first mt-0.5 truncate text-xs text-gray-500">
             {{ timeAgo(project.updatedAt) }}
@@ -30,13 +30,13 @@ defineProps<{
         color="neutral"
         variant="subtle"
         size="sm"
-        class="shrink-0 rounded-full bg-white/5 text-xs whitespace-nowrap text-gray-400 ring-1 ring-white/10"
+        class="shrink-0 rounded-full bg-surface text-xs whitespace-nowrap text-muted ring-1 ring-border"
       >
         {{ project.latestRelease }}
       </UBadge>
     </div>
 
-    <p class="mb-6 line-clamp-2 flex-1 text-sm leading-relaxed text-gray-400">
+    <p class="mb-6 line-clamp-2 flex-1 text-sm leading-relaxed text-muted">
       {{ project.description || "No description provided for this repository." }}
     </p>
 
@@ -55,7 +55,7 @@ defineProps<{
         color="neutral"
         variant="subtle"
         size="sm"
-        class="rounded-sm bg-white/5 text-gray-300 ring-1 ring-white/10"
+        class="rounded-sm bg-surface text-muted ring-1 ring-border"
       >
         {{ topic }}
       </UBadge>
@@ -68,10 +68,10 @@ defineProps<{
       </UBadge>
     </div>
 
-    <div class="mt-auto flex items-center justify-between border-t border-white/5 pt-4">
+    <div class="mt-auto flex items-center justify-between border-t border-border pt-4">
       <div class="flex items-center">
         <UIcon name="tabler:star-filled" class="size-4 text-yellow-500" />
-        <span class="ml-2 text-xs font-semibold text-gray-400"
+        <span class="ml-2 text-xs font-semibold text-muted"
           >+{{ project.stars.toLocaleString() }}</span
         >
       </div>
@@ -80,7 +80,7 @@ defineProps<{
         <ULink
           :to="project.repositoryUrl"
           target="_blank"
-          class="group flex items-center gap-1 text-sm font-semibold text-white transition-colors hover:text-gray-300"
+          class="group flex items-center gap-1 text-sm font-semibold text-ink transition-colors hover:text-muted"
         >
           Contribuer
           <UIcon

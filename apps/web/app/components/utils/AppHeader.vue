@@ -35,7 +35,7 @@ const dropdownItems = [
 </script>
 
 <template>
-  <UHeader class="border-b border-secondary bg-dark">
+  <UHeader class="border-b border-border bg-canvas">
     <template #left>
       <ULink to="/">
         <AppLogo />

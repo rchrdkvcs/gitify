@@ -2,8 +2,18 @@
 @import "@nuxt/ui";
 
 :root {
+  color-scheme: light;
   --ui-radius: 0.5rem;
   --ui-container: 90rem;
+  --ui-bg: var(--color-canvas);
+  --ui-bg-muted: var(--color-surface);
+  --ui-bg-elevated: var(--color-canvas);
+  --ui-bg-accented: var(--color-surface-strong);
+  --ui-text: var(--color-ink);
+  --ui-text-muted: var(--color-muted);
+  --ui-text-highlighted: var(--color-ink);
+  --ui-border: var(--color-border);
+  --ui-border-accented: var(--color-control);
 }
 
 .no-scrollbar {
@@ -16,15 +26,17 @@
 }
 
 @theme {
-  --color-primary: #ff2303;
-  --color-secondary: #1f2b27;
-  --color-light: white;
-  --color-lightgray: #99a1af;
-  --color-lightgreen: #a6f0d3;
-  --color-dark: #0c0e0d;
-  --color-card: #14352b;
-  --color-green-500: #4edea3;
-  --color-yellow-500: #deae4e;
+  --color-primary: #d9341a;
+  --color-canvas: #ffffff;
+  --color-surface: #f5f7f6;
+  --color-surface-strong: #e9efec;
+  --color-border: #d7e0db;
+  --color-control: #87968e;
+  --color-ink: #14201b;
+  --color-muted: #5e6b65;
+  --color-brand-green: #176b4b;
+  --color-green-500: #187a54;
+  --color-yellow-500: #855b00;
 
   --font-grotesk: "Space Grotesk", serif;
   --font-jetbrains: "JetBrains Mono", monospace;
@@ -41,8 +53,8 @@
   }
 
   body {
-    background-color: var(--color-dark);
-    color: var(--color-light);
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
     font-family: var(--font-grotesk), serif;
   }
 
@@ -62,7 +74,7 @@
   }
 
   .preferences-card {
-    @apply flex cursor-pointer gap-4 rounded-sm border border-white/5 bg-card/20 p-4 transition-all md:gap-8 md:p-8;
+    @apply flex cursor-pointer gap-4 rounded-sm border border-border bg-surface p-4 transition-all md:gap-8 md:p-8;
   }
 
   .preferences-card-active {
@@ -70,11 +82,11 @@
   }
 
   .container-icon {
-    @apply flex h-min w-min items-center justify-center rounded-sm bg-lightgray/20 p-2 md:p-3;
+    @apply flex h-min w-min items-center justify-center rounded-sm bg-surface-strong p-2 md:p-3;
   }
 
   .icon {
-    @apply h-7 w-7 text-lightgray md:h-10 md:w-10;
+    @apply h-7 w-7 text-muted md:h-10 md:w-10;
   }
 
   .check-icon {
@@ -84,14 +96,14 @@
 
 /* README markdown (Comark / Nuxt UI prose) */
 .readme-body {
-  color: var(--color-lightgray);
+  color: var(--color-muted);
   font-size: 0.925rem;
   line-height: 1.7;
   overflow-wrap: break-word;
 }
 
 .readme-body :where(h1, h2, h3, h4) {
-  color: var(--color-light);
+  color: var(--color-ink);
   font-family: var(--font-jetbrains), monospace;
   font-weight: 700;
   margin: 1.5em 0 0.6em;
@@ -107,7 +119,7 @@
 
 .readme-body :where(h2) {
   font-size: 1.25rem;
-  border-bottom: 1px solid var(--color-secondary);
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 0.4em;
 }
 
@@ -120,7 +132,7 @@
 }
 
 .readme-body :where(a) {
-  color: var(--color-lightgreen);
+  color: var(--color-brand-green);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -138,15 +150,15 @@
 .readme-body :where(code) {
   font-family: var(--font-jetbrains), monospace;
   font-size: 0.85em;
-  background: var(--color-secondary);
-  color: var(--color-lightgreen);
+  background: var(--color-surface-strong);
+  color: var(--color-brand-green);
   border-radius: 4px;
   padding: 0.15em 0.4em;
 }
 
 .readme-body :where(pre) {
-  background: var(--color-dark);
-  border: 1px solid var(--color-secondary);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 1em;
   overflow-x: auto;
@@ -176,13 +188,13 @@
 .readme-body :where(pre code) {
   background: transparent;
   padding: 0;
-  color: var(--color-lightgreen);
+  color: var(--color-brand-green);
 }
 
 .readme-body :where(blockquote) {
-  border-left: 3px solid var(--color-secondary);
+  border-left: 3px solid var(--color-border);
   padding-left: 1em;
-  color: var(--color-lightgray);
+  color: var(--color-muted);
   font-style: italic;
 }
 
@@ -200,11 +212,11 @@
 }
 
 .readme-body :where(th, td) {
-  border: 1px solid var(--color-secondary);
+  border: 1px solid var(--color-border);
   padding: 0.4em 0.8em;
 }
 
 .readme-body :where(hr) {
-  border-color: var(--color-secondary);
+  border-color: var(--color-border);
   margin: 1.5em 0;
 }

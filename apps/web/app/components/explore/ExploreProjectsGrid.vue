@@ -23,7 +23,7 @@ defineProps<{
       </template>
     </div>
 
-    <p v-if="!loading && !projects.length" class="py-16 text-center font-jetbrains text-lightgray">
+    <p v-if="!loading && !projects.length" class="py-16 text-center font-jetbrains text-muted">
       Aucun projet ne correspond à tes filtres.
     </p>
   </div>

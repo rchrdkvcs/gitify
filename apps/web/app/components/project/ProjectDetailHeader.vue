@@ -16,17 +16,17 @@ const difficultyLabel = computed(() =>
     <UBreadcrumb
       :items="[
         { label: 'Projets', to: '/explore' },
-        { label: project.name, class: 'text-lightgreen' },
+        { label: project.name, class: 'text-brand-green' },
       ]"
       separator-icon="lucide:chevron-right"
       class="hidden pb-6 lg:block"
       :ui="{
-        link: 'text-sm font-normal text-lightgray hover:text-white transition-colors',
-        separatorIcon: 'size-4 text-lightgray',
+        link: 'text-sm font-normal text-muted hover:text-ink transition-colors',
+        separatorIcon: 'size-4 text-muted',
       }"
     />
     <button
-      class="flex cursor-pointer items-center gap-2 pb-6 font-jetbrains font-bold text-white transition-colors hover:text-lightgreen lg:hidden"
+      class="flex cursor-pointer items-center gap-2 pb-6 font-jetbrains font-bold text-ink transition-colors hover:text-brand-green lg:hidden"
       @click="$router.back()"
     >
       <UIcon name="lucide:arrow-left" class="size-5 text-primary" />
@@ -35,7 +35,7 @@ const difficultyLabel = computed(() =>
 
     <header class="flex flex-col gap-4 pb-8">
       <div class="flex flex-wrap items-center gap-3">
-        <h1 class="font-jetbrains text-3xl font-bold tracking-tight text-white sm:text-4xl">
+        <h1 class="font-jetbrains text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           {{ project.name }}
         </h1>
         <span
@@ -45,7 +45,7 @@ const difficultyLabel = computed(() =>
         </span>
       </div>
 
-      <p class="max-w-2xl text-base text-lightgray">
+      <p class="max-w-2xl text-base text-muted">
         {{ project.description || "Aucune description disponible pour ce repository." }}
       </p>
 

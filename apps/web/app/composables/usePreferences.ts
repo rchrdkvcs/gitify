@@ -35,7 +35,7 @@ export function usePreferences() {
         title: "Veuillez sélectionner au moins un langage.",
         icon: "i-heroicons-exclamation-circle-20-solid",
         ui: {
-          root: "bg-dark border border-light/5",
+          root: "bg-canvas border border-border",
         },
       });
       return;
@@ -60,7 +60,7 @@ export function usePreferences() {
         icon: "i-heroicons-check-circle-20-solid",
         color: "success",
         ui: {
-          root: "bg-dark border border-light/5",
+          root: "bg-canvas border border-border",
         },
       });
     } catch (e) {
@@ -70,7 +70,7 @@ export function usePreferences() {
         description: "Impossible de joindre le serveur. Merci de réessayer.",
         icon: "i-heroicons-exclamation-circle-20-solid",
         ui: {
-          root: "bg-dark border border-light/5",
+          root: "bg-canvas border border-border",
         },
       });
     } finally {

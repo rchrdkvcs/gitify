@@ -37,13 +37,13 @@ onBeforeUnmount(() => {
 
   <aside
     :class="open ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed top-(--ui-header-height) bottom-0 left-0 z-40 w-72 shrink-0 border-r border-secondary bg-dark transition-transform duration-300 lg:static lg:z-auto lg:w-64 lg:translate-x-0 lg:bg-transparent lg:transition-none"
+    class="fixed top-(--ui-header-height) bottom-0 left-0 z-40 w-72 shrink-0 border-r border-border bg-canvas transition-transform duration-300 lg:static lg:z-auto lg:w-64 lg:translate-x-0 lg:bg-transparent lg:transition-none"
   >
     <div
       class="flex h-full flex-col px-5 py-6 lg:sticky lg:top-(--ui-header-height) lg:h-[calc(100vh-var(--ui-header-height))]"
     >
       <div class="flex-1 overflow-y-auto">
-        <div class="flex items-center gap-2 pb-8 text-lightgreen/40">
+        <div class="flex items-center gap-2 pb-8 text-brand-green/70">
           <UIcon class="size-4" name="line-md:filter" />
           <h2 class="font-grotesk text-sm font-bold uppercase">Filtres</h2>
           <UButton
@@ -56,7 +56,7 @@ onBeforeUnmount(() => {
           />
         </div>
         <div class="flex flex-col gap-4 pb-8">
-          <p class="font-mono text-base font-bold text-white">Langage</p>
+          <p class="font-mono text-base font-bold text-ink">Langage</p>
           <div v-if="!languagesReady" class="flex flex-col gap-3">
             <div v-for="n in 4" :key="n" class="flex items-center gap-2">
               <USkeleton class="size-4 rounded-xs" />
@@ -66,7 +66,7 @@ onBeforeUnmount(() => {
           <UCheckboxGroup v-else v-model="languages" :items="languageItems" />
         </div>
         <div class="flex flex-col gap-4 pb-8">
-          <p class="font-mono text-base font-bold text-white">Recherche</p>
+          <p class="font-mono text-base font-bold text-ink">Recherche</p>
           <UInput
             v-model="search"
             icon="lucide:search"
@@ -75,7 +75,7 @@ onBeforeUnmount(() => {
           />
         </div>
         <div class="flex flex-col gap-4 pb-8">
-          <p class="font-mono text-base font-bold text-white">Popularité</p>
+          <p class="font-mono text-base font-bold text-ink">Popularité</p>
           <USelect v-model="sort" :items="itemsStarSort" icon="lucide:star" class="w-full" />
         </div>
       </div>
