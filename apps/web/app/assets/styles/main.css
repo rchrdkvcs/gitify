@@ -205,6 +205,10 @@
   margin: 0;
 }
 
+.readme-body :where(img:not([width])) {
+  width: auto;
+}
+
 .readme-body :where(table) {
   display: block;
   overflow-x: auto;
