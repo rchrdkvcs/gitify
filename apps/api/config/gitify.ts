@@ -21,7 +21,7 @@ const gitifyConfig = {
     fetchThreshold: 25,
     perLanguageLimit: 60,
     totalLimit: 60,
-    likedPageLimit: 20,
+    favoritePageLimit: 20,
   },
   showcase: {
     languages: [

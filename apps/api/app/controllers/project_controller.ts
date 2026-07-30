@@ -1,9 +1,9 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import {
   BadRequestResponseDto,
+  FavoriteResponseDto,
+  FavoriteProjectsResponseDto,
   FeedResponseDto,
-  InteractionResponseDto,
-  LikedProjectsResponseDto,
   NotFoundResponseDto,
   ShowcaseResponseDto,
   ShowProjectResponseDto,
@@ -50,7 +50,11 @@ export default class ProjectController {
   async show({ auth, response, request }: HttpContext) {
     const { params } = await request.validateUsing(projectIdValidator);
     const user = auth.getUserOrFail();
-    const project = await ProjectFeedService.getProject(params.id, user.githubAccessToken!);
+    const project = await ProjectFeedService.getProject(
+      params.id,
+      user.id,
+      user.githubAccessToken!,
+    );
 
     if (!project) {
       return response.notFound({ error: "Project not found" });
@@ -62,7 +66,7 @@ export default class ProjectController {
   @ApiOperation({
     summary: "Fil de projets",
     description:
-      "Retourne une liste personnalisée de projets non vus en fonction des préférences de difficulté et de langages. Les préférences doivent être configurées au préalable (`PUT /auth/preferences`).",
+      "Retourne une liste personnalisée de projets en fonction des préférences de difficulté et de langages. Les préférences doivent être configurées au préalable (`PUT /auth/preferences`).",
   })
   @ApiCookieAuth()
   @ApiResponse({
@@ -93,8 +97,8 @@ export default class ProjectController {
   }
 
   @ApiOperation({
-    summary: "Projets aimés",
-    description: "Retourne une liste paginée des projets que l'utilisateur authentifié a aimés.",
+    summary: "Projets favoris",
+    description: "Retourne une liste paginée des projets favoris de l'utilisateur authentifié.",
   })
   @ApiCookieAuth()
   @ApiQuery({
@@ -105,63 +109,61 @@ export default class ProjectController {
   })
   @ApiResponse({
     status: 200,
-    type: () => LikedProjectsResponseDto,
-    description: "Liste paginée des projets aimés",
+    type: () => FavoriteProjectsResponseDto,
+    description: "Liste paginée des projets favoris",
   })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
-  async liked({ auth, request, response }: HttpContext) {
+  async favorites({ auth, request, response }: HttpContext) {
     const page = Math.max(1, Number(request.qs().page ?? 1));
-    const interactions = await ProjectFeedService.getLikedProjects(auth.user!.id, page);
+    const favorites = await ProjectFeedService.getFavoriteProjects(auth.user!.id, page);
 
     return response.ok({
-      projects: interactions.all().map((i) => i.project),
-      meta: interactions.getMeta(),
+      projects: favorites.all().map((favorite) => favorite.project),
+      meta: favorites.getMeta(),
     });
   }
 
   @ApiOperation({
-    summary: "Aimer un projet",
-    description:
-      "Enregistre une interaction 'aimé' pour le projet donné. Remplace toute interaction 'ignoré' précédente.",
+    summary: "Ajouter un projet aux favoris",
+    description: "Ajoute le projet donné aux favoris de l'utilisateur authentifié.",
   })
   @ApiCookieAuth()
   @ApiResponse({
     status: 200,
-    type: () => InteractionResponseDto,
-    description: "Interaction enregistrée",
+    type: () => FavoriteResponseDto,
+    description: "Favori enregistré",
   })
   @ApiResponse({ status: 404, type: () => NotFoundResponseDto, description: "Projet introuvable" })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
-  async like({ auth, request, response }: HttpContext) {
+  async addFavorite({ auth, request, response }: HttpContext) {
     const { params } = await request.validateUsing(projectIdValidator);
-    const project = await ProjectFeedService.recordInteraction(auth.user!.id, params.id, "liked");
+    const project = await ProjectFeedService.addFavorite(auth.user!.id, params.id);
 
     if (!project) {
       return response.notFound({ error: "Project not found" });
     }
-    return response.ok({ type: "liked" });
+    return response.ok({ isFavorite: true });
   }
 
   @ApiOperation({
-    summary: "Ignorer un projet",
-    description:
-      "Enregistre une interaction 'ignoré' pour le projet donné. Remplace toute interaction 'aimé' précédente.",
+    summary: "Retirer un projet des favoris",
+    description: "Retire le projet donné des favoris de l'utilisateur authentifié.",
   })
   @ApiCookieAuth()
   @ApiResponse({
     status: 200,
-    type: () => InteractionResponseDto,
-    description: "Interaction enregistrée",
+    type: () => FavoriteResponseDto,
+    description: "Favori supprimé",
   })
   @ApiResponse({ status: 404, type: () => NotFoundResponseDto, description: "Projet introuvable" })
   @ApiResponse({ status: 401, type: () => UnauthorizedResponseDto, description: "Non authentifié" })
-  async pass({ auth, request, response }: HttpContext) {
+  async removeFavorite({ auth, request, response }: HttpContext) {
     const { params } = await request.validateUsing(projectIdValidator);
-    const project = await ProjectFeedService.recordInteraction(auth.user!.id, params.id, "passed");
+    const project = await ProjectFeedService.removeFavorite(auth.user!.id, params.id);
 
     if (!project) {
       return response.notFound({ error: "Project not found" });
     }
-    return response.ok({ type: "passed" });
+    return response.ok({ isFavorite: false });
   }
 }

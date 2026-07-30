@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import type { Project } from "@gitify/types";
 
-defineProps<{
+const { projects } = defineProps<{
   projects: Project[];
   loading: boolean;
 }>();
+
+function handleFavoriteChange(projectId: string, isFavorite: boolean) {
+  const project = projects.find((item) => item.id === projectId);
+  if (project) {
+    project.isFavorite = isFavorite;
+  }
+}
 </script>
 
 <template>
@@ -19,6 +26,7 @@ defineProps<{
           :key="project.id"
           :project="project"
           class="h-full"
+          @favorite-change="handleFavoriteChange"
         />
       </template>
     </div>

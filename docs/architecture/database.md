@@ -66,18 +66,17 @@ PostgreSQL 15. Tous les modèles utilisent des **ULID** comme clé primaire (gé
 
 ---
 
-### `user_project_interactions`
+### `user_project_favorites`
 
-Enregistre chaque like ou pass d'un utilisateur sur un projet. La contrainte d'unicité est sur `(user_id, project_id)` — une interaction par couple, mise à jour via `updateOrCreate`.
+Enregistre les projets favoris de chaque utilisateur. La contrainte d'unicité sur `(user_id, project_id)` empêche les doublons.
 
-| Colonne      | Type                | Description             |
-| ------------ | ------------------- | ----------------------- |
-| `id`         | `string` (ULID, PK) |                         |
-| `user_id`    | `string` (FK)       | Référence `users.id`    |
-| `project_id` | `string` (FK)       | Référence `projects.id` |
-| `type`       | `string`            | `liked` ou `passed`     |
-| `created_at` | `timestamp`         |                         |
-| `updated_at` | `timestamp`         |                         |
+| Colonne      | Type                | Description                                  |
+| ------------ | ------------------- | -------------------------------------------- |
+| `id`         | `string` (ULID, PK) |                                              |
+| `user_id`    | `string` (FK)       | Référence `users.id`, suppression cascade    |
+| `project_id` | `string` (FK)       | Référence `projects.id`, suppression cascade |
+| `created_at` | `timestamp`         | Date d'ajout aux favoris                     |
+| `updated_at` | `timestamp`         |                                              |
 
 ---
 

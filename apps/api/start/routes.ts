@@ -29,10 +29,10 @@ router.get("/projects/showcase", [controllers.Project, "showcase"]);
 router
   .group(() => {
     router.get("/feed", [controllers.Project, "feed"]);
-    router.get("/liked", [controllers.Project, "liked"]);
+    router.get("/favorites", [controllers.Project, "favorites"]);
     router.get("/:id", [controllers.Project, "show"]);
-    router.post("/:id/like", [controllers.Project, "like"]);
-    router.post("/:id/pass", [controllers.Project, "pass"]);
+    router.post("/:id/favorite", [controllers.Project, "addFavorite"]);
+    router.delete("/:id/favorite", [controllers.Project, "removeFavorite"]);
   })
   .prefix("/projects")
   .use(middleware.auth());

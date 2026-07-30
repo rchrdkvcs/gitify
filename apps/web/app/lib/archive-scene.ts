@@ -597,7 +597,7 @@ export async function createArchiveScene(
   const keys = new Set<string>();
   let yaw = rand() * Math.PI * 2;
   let pitch = 0;
-  let hoverId: number | null = null;
+  let hoverId: string | null = null;
   let disposed = false;
   let pointerLocked = false;
   let bobPhase = 0;
@@ -615,7 +615,7 @@ export async function createArchiveScene(
     let cur: THREE.Object3D | null = object;
     while (cur) {
       if (cur.userData?.projectId != null) {
-        const id = cur.userData.projectId as number;
+        const id = cur.userData.projectId as string;
         return cabinetHits.find((c) => c.project.id === id) ?? null;
       }
       cur = cur.parent;

@@ -1,18 +1,15 @@
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
-import { UserProjectInteractionSchema } from "#database/schema";
+import { UserProjectFavoriteSchema } from "#database/schema";
 import Project from "#models/project";
 import User from "#models/user";
-import { beforeCreate, belongsTo, column } from "@adonisjs/lucid/orm";
+import { beforeCreate, belongsTo } from "@adonisjs/lucid/orm";
 import { ulid } from "ulid";
 
-export default class UserProjectInteraction extends UserProjectInteractionSchema {
+export default class UserProjectFavorite extends UserProjectFavoriteSchema {
   @beforeCreate()
-  static generateId(model: UserProjectInteractionSchema) {
+  static generateId(model: UserProjectFavoriteSchema) {
     model.id = ulid();
   }
-
-  @column()
-  declare type: "liked" | "passed";
 
   @belongsTo(() => User)
   declare user: BelongsTo<typeof User>;

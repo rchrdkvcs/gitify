@@ -88,6 +88,9 @@ export class ProjectDto {
   @ApiProperty({ description: "Identifiant ULID", example: "01ARZ3NDEKTSV4RRFFQ69G5FAV" })
   declare id: string;
 
+  @ApiProperty({ description: "Le projet est dans les favoris de l'utilisateur", example: false })
+  declare isFavorite: boolean;
+
   @ApiProperty({ description: "Nom du dépôt", example: "core" })
   declare name: string;
 
@@ -249,13 +252,13 @@ export class FeedResponseDto {
   declare projects: ProjectDto[];
 
   @ApiProperty({
-    description: "Nombre de projets non vus correspondant aux préférences",
+    description: "Nombre de projets correspondant aux préférences",
     example: 243,
   })
   declare available: number;
 }
 
-export class LikedProjectsResponseDto {
+export class FavoriteProjectsResponseDto {
   @ApiProperty({ type: () => [ProjectDto] })
   declare projects: ProjectDto[];
 
@@ -263,13 +266,9 @@ export class LikedProjectsResponseDto {
   declare meta: PaginationMetaDto;
 }
 
-export class InteractionResponseDto {
-  @ApiProperty({
-    enum: ["liked", "passed"],
-    description: "Type d'interaction enregistré",
-    example: "liked",
-  })
-  declare type: string;
+export class FavoriteResponseDto {
+  @ApiProperty({ description: "État du favori après l'opération", example: true })
+  declare isFavorite: boolean;
 }
 
 export class NotFoundResponseDto {

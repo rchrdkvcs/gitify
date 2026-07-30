@@ -8,6 +8,8 @@ const props = defineProps<{
 const difficultyLabel = computed(() =>
   props.project.difficulty === "beginner" ? "Beginner Friendly" : "Expert",
 );
+
+const { isFavorite, pending, toggleFavorite } = useFavorite(() => props.project);
 </script>
 
 <template>
@@ -75,9 +77,18 @@ const difficultyLabel = computed(() =>
 
       <div class="flex flex-col gap-3 sm:flex-row">
         <UButton
+          :icon="isFavorite ? 'tabler:heart-filled' : 'tabler:heart'"
+          :label="isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+          :loading="pending"
+          color="brand"
+          size="lg"
+          class="justify-center font-bold sm:min-w-48"
+          @click="toggleFavorite"
+        />
+        <UButton
           icon="tabler:star-filled"
           label="Star"
-          color="brand"
+          color="secondary"
           size="lg"
           :to="project.repositoryUrl"
           target="_blank"

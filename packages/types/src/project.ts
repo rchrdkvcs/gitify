@@ -27,7 +27,7 @@ export interface ShowcaseLanguageResult {
 }
 
 export interface Project {
-  id: number;
+  id: string;
   name: string;
   ownerName: string;
   description: string | null;
@@ -37,6 +37,9 @@ export interface Project {
   topics: string[] | null;
   openIssuesCount: number;
   difficulty: Difficulty;
+  isFavorite: boolean;
+  latestRelease: string | null;
+  updatedAt: string | null;
 }
 
 export interface ProjectDetailContributor {
