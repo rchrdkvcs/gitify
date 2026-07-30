@@ -7,11 +7,11 @@ defineProps<{
 
 <template>
   <div
-    class="flex flex-col items-start gap-4 rounded-lg border border-secondary bg-card/20 p-5 sm:flex-row sm:items-center sm:justify-between"
+    class="flex flex-col items-start gap-4 rounded-lg border border-border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between"
   >
-    <p class="text-sm text-lightgray">
+    <p class="text-sm text-muted">
       Ce repository compte
-      <span class="font-jetbrains font-bold text-white">{{ openIssuesCount }}</span>
+      <span class="font-jetbrains font-bold text-ink">{{ openIssuesCount }}</span>
       issues ouvertes qui n’attendent que toi.
       <span class="text-primary">(Good First Issues)</span>
     </p>

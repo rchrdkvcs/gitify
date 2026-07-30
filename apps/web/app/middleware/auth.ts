@@ -9,7 +9,7 @@ export default defineNuxtRouteMiddleware(() => {
       icon: "i-heroicons-exclamation-circle-20-solid",
       color: "warning",
       ui: {
-        root: "bg-dark border border-light/5",
+        root: "bg-canvas border border-border",
       },
     });
     return navigateTo("/");

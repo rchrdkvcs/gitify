@@ -33,10 +33,10 @@ const items = computed<TabsItem[]>(() => [
     default-value="readme"
     variant="link"
     :ui="{
-      list: 'gap-2 border-secondary',
+      list: 'gap-2 border-border',
       indicator: 'h-0.5 bg-primary',
       trigger:
-        'px-3 py-2.5 font-grotesk text-sm font-bold tracking-widest uppercase data-[state=inactive]:text-lightgray hover:data-[state=inactive]:text-lightgreen data-[state=active]:text-white',
+        'px-3 py-2.5 font-grotesk text-sm font-bold tracking-widest uppercase data-[state=inactive]:text-muted hover:data-[state=inactive]:text-brand-green data-[state=active]:text-ink',
       content: 'pt-6',
     }"
   >

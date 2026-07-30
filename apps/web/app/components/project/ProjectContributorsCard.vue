@@ -9,9 +9,9 @@ defineProps<{
 <template>
   <div
     v-if="contributors.length"
-    class="rounded-lg border border-secondary bg-linear-to-r from-dark to-card p-5"
+    class="rounded-lg border border-border bg-linear-to-r from-canvas to-surface p-5"
   >
-    <h2 class="pb-4 font-jetbrains text-lg font-bold text-white">Contributeurs</h2>
+    <h2 class="pb-4 font-jetbrains text-lg font-bold text-ink">Contributeurs</h2>
     <div class="grid grid-cols-3 gap-4">
       <a
         v-for="contributor in contributors.slice(0, 6)"
@@ -25,9 +25,9 @@ defineProps<{
           :src="contributor.avatarUrl"
           :alt="contributor.login"
           size="2xl"
-          class="ring-2 ring-secondary transition group-hover:ring-lightgreen"
+          class="ring-2 ring-border transition group-hover:ring-brand-green"
         />
-        <span class="w-full truncate text-center text-xs text-lightgreen">
+        <span class="w-full truncate text-center text-xs text-brand-green">
           @{{ contributor.login }}
         </span>
       </a>

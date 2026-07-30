@@ -32,7 +32,7 @@ defineProps<{
               class="absolute inset-0 rotate-6 rounded-2xl border border-primary/40 bg-primary/10"
             />
             <div
-              class="absolute inset-2 -rotate-6 rounded-xl border border-green-500/30 bg-card/70"
+              class="absolute inset-2 -rotate-6 rounded-xl border border-green-500/30 bg-surface"
             />
             <UIcon :name="icon" class="relative size-10 text-primary" />
           </div>
@@ -47,7 +47,7 @@ defineProps<{
           <span class="text-primary">{{ highlightedTitle }}</span>
         </h1>
 
-        <p class="mx-auto mt-6 max-w-2xl text-base leading-7 text-lightgray sm:text-lg">
+        <p class="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted sm:text-lg">
           {{ description }}
         </p>
 
@@ -72,18 +72,18 @@ defineProps<{
           <article
             v-for="item in previewItems"
             :key="item.title"
-            class="group rounded-lg border border-lightgreen/10 bg-card/20 p-5 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-lightgreen/25 hover:bg-card/30"
+            class="group rounded-lg border border-border bg-surface p-5 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-brand-green/40 hover:bg-surface"
           >
             <UIcon
               :name="item.icon"
               class="mb-4 size-6 text-green-500 transition-transform duration-300 group-hover:scale-110"
             />
-            <h2 class="font-jetbrains font-semibold text-light">{{ item.title }}</h2>
-            <p class="mt-2 text-sm leading-6 text-lightgray">{{ item.description }}</p>
+            <h2 class="font-jetbrains font-semibold text-ink">{{ item.title }}</h2>
+            <p class="mt-2 text-sm leading-6 text-muted">{{ item.description }}</p>
           </article>
         </div>
 
-        <div class="mt-12 flex items-center justify-center gap-3 text-sm text-lightgray">
+        <div class="mt-12 flex items-center justify-center gap-3 text-sm text-muted">
           <span class="relative flex size-2">
             <span
               class="absolute inline-flex size-full animate-ping rounded-full bg-green-500 opacity-75"

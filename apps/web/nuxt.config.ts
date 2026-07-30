@@ -3,6 +3,16 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
 
+  app: {
+    head: {
+      meta: [{ name: "theme-color", content: "#ffffff" }],
+    },
+  },
+
+  ui: {
+    colorMode: false,
+  },
+
   modules: [
     "@nuxt/ui",
     "@nuxt/image",

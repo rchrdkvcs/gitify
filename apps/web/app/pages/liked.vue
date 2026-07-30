@@ -32,23 +32,23 @@ onMounted(fetchLiked);
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 p-8 text-white">
+  <div class="min-h-screen bg-canvas p-8 text-ink">
     <div class="mx-auto max-w-2xl">
       <div class="mb-8 flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-blue-400">Mes favoris ♥</h1>
+        <h1 class="text-3xl font-bold text-primary">Mes favoris ♥</h1>
         <NuxtLink
           to="/swipe"
-          class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold transition hover:bg-blue-700"
+          class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/80"
         >
           ← Retour au swipe
         </NuxtLink>
       </div>
 
-      <div v-if="loading" class="animate-pulse text-center text-gray-400">Chargement...</div>
+      <div v-if="loading" class="animate-pulse text-center text-muted">Chargement...</div>
 
-      <div v-else-if="error" class="text-center text-red-400">{{ error }}</div>
+      <div v-else-if="error" class="text-center text-red-700">{{ error }}</div>
 
-      <div v-else-if="projects.length === 0" class="text-center text-gray-400">
+      <div v-else-if="projects.length === 0" class="text-center text-muted">
         <p class="text-xl">Aucun favori pour le moment.</p>
         <p class="mt-2 text-sm">Swipe à droite sur un projet pour le sauvegarder ici !</p>
       </div>
@@ -58,17 +58,17 @@ onMounted(fetchLiked);
           <div
             v-for="project in projects"
             :key="project.id"
-            class="rounded-xl border border-gray-700 bg-gray-800 p-5 shadow-lg"
+            class="rounded-xl border border-border bg-surface p-5 shadow-lg"
           >
             <div class="mb-2 flex items-start justify-between">
               <div>
-                <h2 class="text-lg font-bold text-white">{{ project.name }}</h2>
-                <p class="text-sm text-gray-400">by {{ project.ownerName }}</p>
+                <h2 class="text-lg font-bold text-ink">{{ project.name }}</h2>
+                <p class="text-sm text-muted">by {{ project.ownerName }}</p>
               </div>
               <div class="flex items-center gap-2">
                 <NuxtLink
                   :to="`/projects/${project.id}`"
-                  class="rounded-lg border border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-400 transition hover:border-blue-500 hover:text-blue-400"
+                  class="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition hover:border-blue-500 hover:text-blue-700"
                 >
                   Détails
                 </NuxtLink>
@@ -76,7 +76,7 @@ onMounted(fetchLiked);
                   :href="project.repositoryUrl"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="rounded-lg border border-gray-600 p-2 transition hover:border-blue-500 hover:text-blue-400"
+                  class="rounded-lg border border-border p-2 transition hover:border-blue-500 hover:text-blue-700"
                 >
                   <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                     <path
@@ -92,23 +92,19 @@ onMounted(fetchLiked);
             <div class="mb-3 flex flex-wrap gap-2">
               <span
                 v-if="project.language"
-                class="rounded-full bg-blue-900/50 px-3 py-1 text-xs font-medium text-blue-300"
+                class="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
               >
                 {{ project.language }}
               </span>
-              <span
-                class="rounded-full bg-yellow-900/50 px-3 py-1 text-xs font-medium text-yellow-300"
-              >
+              <span class="rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-700">
                 ⭐ {{ project.stars.toLocaleString() }}
               </span>
-              <span
-                class="rounded-full bg-green-900/50 px-3 py-1 text-xs font-medium text-green-300"
-              >
+              <span class="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
                 🐛 {{ project.openIssuesCount }} issues
               </span>
             </div>
 
-            <p class="text-sm text-gray-300">
+            <p class="text-sm text-muted">
               {{ project.description ?? "Aucune description disponible." }}
             </p>
 
@@ -116,7 +112,7 @@ onMounted(fetchLiked);
               <span
                 v-for="topic in project.topics.slice(0, 4)"
                 :key="topic"
-                class="rounded-full border border-gray-600 px-2 py-0.5 text-xs text-gray-500"
+                class="rounded-full border border-border px-2 py-0.5 text-xs text-gray-500"
               >
                 {{ topic }}
               </span>
@@ -127,15 +123,15 @@ onMounted(fetchLiked);
         <div v-if="meta && meta.lastPage > 1" class="mt-8 flex items-center justify-center gap-4">
           <button
             :disabled="meta.currentPage === 1"
-            class="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-400 transition hover:border-blue-500 hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-40"
+            class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted transition hover:border-blue-500 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
             @click="goToPage(meta!.currentPage - 1)"
           >
             ← Précédent
           </button>
-          <span class="text-sm text-gray-400"> {{ meta.currentPage }} / {{ meta.lastPage }} </span>
+          <span class="text-sm text-muted"> {{ meta.currentPage }} / {{ meta.lastPage }} </span>
           <button
             :disabled="meta.currentPage === meta.lastPage"
-            class="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-400 transition hover:border-blue-500 hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-40"
+            class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted transition hover:border-blue-500 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
             @click="goToPage(meta!.currentPage + 1)"
           >
             Suivant →

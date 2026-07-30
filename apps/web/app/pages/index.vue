@@ -123,7 +123,7 @@ onMounted(() => {
     title="Prêt à te démarquer ?"
     description="Connecte ton compte GitHub dès aujourd'hui et commence à bâtir ton portfolio de développeur avec des contributions concrètes."
     :ui="{
-      root: 'bg-linear-to-t from-[#1F4F41]/20 to-transparent',
+      root: 'bg-linear-to-t from-[#E9F5F0] to-transparent',
       header: 'flex flex-col items-center',
       title: 'font-jetbrains',
       description: 'w-auto lg:w-1/2',

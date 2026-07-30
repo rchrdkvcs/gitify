@@ -23,7 +23,7 @@ onMounted(fetchProject);
 
     <div v-else-if="error" class="flex flex-col items-center gap-6 py-24 text-center">
       <UIcon name="lucide:git-pull-request-closed" class="size-12 text-primary" />
-      <p class="font-jetbrains text-lg text-lightgray">{{ error }}</p>
+      <p class="font-jetbrains text-lg text-muted">{{ error }}</p>
       <UButton label="Retour à l’exploration" color="secondary" to="/explore" />
     </div>
 

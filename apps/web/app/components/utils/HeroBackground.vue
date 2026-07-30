@@ -16,8 +16,8 @@
           width="500"
           height="500"
           rx="250"
-          fill="#1F4F41"
-          fill-opacity="0.2"
+          fill="#BFE8D8"
+          fill-opacity="0.55"
         />
       </g>
       <defs>

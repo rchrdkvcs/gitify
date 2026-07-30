@@ -18,17 +18,17 @@ async function copyCloneCommand() {
 <template>
   <section class="flex flex-col gap-4">
     <h2
-      class="flex items-center gap-2 font-grotesk text-sm font-bold tracking-widest text-lightgreen/40 uppercase"
+      class="flex items-center gap-2 font-grotesk text-sm font-bold tracking-widest text-brand-green/70 uppercase"
     >
       <UIcon name="lucide:book-open" class="size-4" />
       Getting Started
     </h2>
-    <div class="rounded-lg border border-secondary bg-card/20 p-5">
-      <p class="pb-3 font-grotesk font-bold text-white">Cloner le repository</p>
+    <div class="rounded-lg border border-border bg-surface p-5">
+      <p class="pb-3 font-grotesk font-bold text-ink">Cloner le repository</p>
       <div
-        class="flex items-center justify-between gap-3 rounded-lg bg-dark px-4 py-3 ring-1 ring-white/5"
+        class="flex items-center justify-between gap-3 rounded-lg bg-canvas px-4 py-3 ring-1 ring-border"
       >
-        <code class="truncate font-jetbrains text-sm text-lightgreen">{{ cloneCommand }}</code>
+        <code class="truncate font-jetbrains text-sm text-brand-green">{{ cloneCommand }}</code>
         <UTooltip :text="copied ? 'Copié !' : 'Copier la commande'">
           <UButton
             :icon="copied ? 'lucide:check' : 'lucide:copy'"

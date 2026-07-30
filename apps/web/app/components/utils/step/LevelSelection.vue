@@ -18,7 +18,7 @@ const handleSelection = (label: string | undefined) => {
       v-for="item in items"
       :key="item.title"
       @click="handleSelection(item.label)"
-      class="preferences-card hover:bg-card/30!"
+      class="preferences-card hover:bg-surface!"
       :class="{ 'preferences-card-active': model === item.label }"
     >
       <UIcon v-if="model === item.label" name="lets-icons:check-fill" class="check-icon" />
@@ -32,7 +32,7 @@ const handleSelection = (label: string | undefined) => {
       </div>
       <div class="flex flex-col space-y-3">
         <h3 class="text-lg font-semibold md:text-2xl">{{ item.title }}</h3>
-        <p class="text-sm text-lightgray md:text-base">{{ item.description }}</p>
+        <p class="text-sm text-muted md:text-base">{{ item.description }}</p>
       </div>
     </article>
   </div>
