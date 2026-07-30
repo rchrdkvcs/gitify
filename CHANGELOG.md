@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0](https://github.com/rchrdkvcs/gitify/compare/v1.0.2...v1.1.0) (2026-07-30)
+
+
+### Nouveautés
+
+* **web:** add 3D archive room easter egg ([a23e4d5](https://github.com/rchrdkvcs/gitify/commit/a23e4d5fc251a6c4dad7717e8ef6a794affeaa72))
+* **web:** add coming-soon pages for community and resources ([e96c8b6](https://github.com/rchrdkvcs/gitify/commit/e96c8b6edf8f869bba3cffa3e93080d269db85ae))
+* **web:** add some secret things ([11d1086](https://github.com/rchrdkvcs/gitify/commit/11d1086425f41c244e971831df6999dc9b376d26))
+* **web:** render project READMEs with Comark markdown ([7115fa0](https://github.com/rchrdkvcs/gitify/commit/7115fa06d5e7ccd339c45a7fd919121b27d8f7ec))
+
+
+### Corrections
+
+* **api:** configure CORS from frontend environment URL ([098c4d9](https://github.com/rchrdkvcs/gitify/commit/098c4d9ebb9933eb409c1fb556b59b6ecba4abf3))
+* **web:** preserve intrinsic width for README images ([1ddc7b0](https://github.com/rchrdkvcs/gitify/commit/1ddc7b04c3b51b93dae0e0158b2c9e38d1d0d1f2))
+
+
+### Maintenance
+
+* **docker:** optimize production builds and set web port ([c924580](https://github.com/rchrdkvcs/gitify/commit/c9245804ceb5e32f1c83692de054432eb05dd49a))
+
 ## [1.0.2](https://github.com/rchrdkvcs/gitify/compare/v1.0.1...v1.0.2) (2026-05-21)
 
 
