@@ -24,7 +24,7 @@ export default defineConfig({
     tags: [
       { name: "Auth", description: "Authentification et gestion de session via GitHub OAuth" },
       { name: "Preferences", description: "Préférences du fil utilisateur (difficulté, langages)" },
-      { name: "Projects", description: "Découverte de projets, fil et interactions" },
+      { name: "Projects", description: "Découverte de projets, fil et favoris" },
     ],
   },
 });

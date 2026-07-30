@@ -117,11 +117,6 @@ export const feedQuery = defineQueryOptions(() => ({
   key: ["projects", "feed"],
   query: () => useApi("/projects/feed"),
 }));
-
-export const favoritesQuery = defineQueryOptions(() => ({
-  key: ["projects", "favorites"],
-  query: () => useApi("/projects/favorites"),
-}));
 ```
 
 Pinia Colada gère la mise en cache, la déduplication des requêtes en vol et l'état `pending` / `error`.

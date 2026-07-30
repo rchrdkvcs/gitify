@@ -252,7 +252,7 @@ export class FeedResponseDto {
   declare projects: ProjectDto[];
 
   @ApiProperty({
-    description: "Nombre de projets non vus correspondant aux préférences",
+    description: "Nombre de projets correspondant aux préférences",
     example: 243,
   })
   declare available: number;

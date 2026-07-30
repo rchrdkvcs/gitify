@@ -35,7 +35,7 @@ export class ContributorSchema extends BaseModel {
   @column()
   declare profileUrl: string;
   @column()
-  declare projectId: string;
+  declare projectId: string | null;
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null;
 }
@@ -138,7 +138,7 @@ export class UserProjectFavoriteSchema extends BaseModel {
   @column({ isPrimary: true })
   declare id: string;
   @column()
-  declare projectId: string | null;
+  declare projectId: string;
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null;
   @column()

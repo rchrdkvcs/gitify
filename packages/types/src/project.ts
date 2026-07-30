@@ -43,7 +43,7 @@ export interface Project {
 }
 
 export interface ProjectDetailContributor {
-  id: string;
+  id: number;
   login: string;
   avatarUrl: string;
   profileUrl: string;

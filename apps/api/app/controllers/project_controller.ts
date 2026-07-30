@@ -66,7 +66,7 @@ export default class ProjectController {
   @ApiOperation({
     summary: "Fil de projets",
     description:
-      "Retourne une liste personnalisée de projets non vus en fonction des préférences de difficulté et de langages. Les préférences doivent être configurées au préalable (`PUT /auth/preferences`).",
+      "Retourne une liste personnalisée de projets en fonction des préférences de difficulté et de langages. Les préférences doivent être configurées au préalable (`PUT /auth/preferences`).",
   })
   @ApiCookieAuth()
   @ApiResponse({
