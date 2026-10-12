@@ -199,12 +199,168 @@
     fill: color-mix(in oklab, var(--ui-primary) 12%, transparent);
   }
 
+  /*
+   * One-shot reveal for landing illustrations (see useIllustrationReveal).
+   * Markup is the final state; each `ill-m-*` element animates *from* its
+   * "before" state once the svg gets `data-state="play"`. Without JavaScript
+   * or under reduced motion nothing animates and the final state shows.
+   */
+  .ill .ill-m-ring {
+    opacity: 0;
+  }
+
+  .ill :is(.ill-m-pop, .ill-m-ring, .ill-m-sweep, .ill-m-move, .ill-m-rise) {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .ill .ill-m-sweep {
+    transform-origin: left center;
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+    .ill-motion
+      :is(
+        .ill-m-fade,
+        .ill-m-pop,
+        .ill-m-ring,
+        .ill-m-sweep,
+        .ill-m-draw,
+        .ill-m-move,
+        .ill-m-rise
+      ) {
+      animation-duration: var(--ill-t, 450ms);
+      animation-delay: var(--ill-d, 0ms);
+      animation-timing-function: var(--ill-ease, cubic-bezier(0.22, 1, 0.36, 1));
+      animation-fill-mode: both;
+      animation-play-state: paused;
+    }
+
+    .ill-motion[data-state="play"]
+      :is(
+        .ill-m-fade,
+        .ill-m-pop,
+        .ill-m-ring,
+        .ill-m-sweep,
+        .ill-m-draw,
+        .ill-m-move,
+        .ill-m-rise
+      ) {
+      animation-play-state: running;
+    }
+
+    .ill-motion[data-state="static"]
+      :is(
+        .ill-m-fade,
+        .ill-m-pop,
+        .ill-m-ring,
+        .ill-m-sweep,
+        .ill-m-draw,
+        .ill-m-move,
+        .ill-m-rise
+      ) {
+      animation: none;
+    }
+
+    .ill-motion .ill-m-fade {
+      animation-name: ill-fade;
+    }
+
+    .ill-motion .ill-m-pop {
+      animation-name: ill-pop;
+    }
+
+    .ill-motion .ill-m-ring {
+      --ill-t: 700ms;
+      --ill-ease: cubic-bezier(0.25, 1, 0.5, 1);
+      animation-name: ill-ring;
+    }
+
+    .ill-motion .ill-m-sweep {
+      animation-name: ill-sweep;
+    }
+
+    .ill-motion .ill-m-draw {
+      --ill-ease: linear;
+      stroke-dasharray: 1;
+      animation-name: ill-draw;
+    }
+
+    .ill-motion .ill-m-move {
+      --ill-t: 650ms;
+      --ill-ease: cubic-bezier(0.65, 0, 0.35, 1);
+      animation-name: ill-move;
+    }
+
+    .ill-motion .ill-m-rise {
+      animation-name: ill-rise;
+    }
+  }
+
   /* Faint square grid, used sparingly behind illustrations. */
   .bg-grid {
     background-image:
       linear-gradient(to right, var(--ui-border) 1px, transparent 1px),
       linear-gradient(to bottom, var(--ui-border) 1px, transparent 1px);
     background-size: 32px 32px;
+  }
+}
+
+@keyframes ill-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ill-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+/* Same square ring as the hero's merge commit flash. */
+@keyframes ill-ring {
+  from {
+    opacity: 0;
+    transform: scale(1);
+  }
+  12% {
+    opacity: 0.9;
+    transform: scale(1.2);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@keyframes ill-sweep {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+@keyframes ill-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ill-move {
+  from {
+    transform: translate(var(--ill-from-x, 0), var(--ill-from-y, 0));
+  }
+}
+
+@keyframes ill-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
 }
 
