@@ -48,41 +48,34 @@ const stats = computed(() => [
       </p>
 
       <div class="mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row [&>*]:justify-center">
-        <template v-if="!authStore.isAuthenticated">
-          <UButton
-            icon="lucide:github"
-            label="Se connecter avec GitHub"
-            size="lg"
-            :loading="isLoading"
-            @click="handleLogin"
-          />
-          <UButton
-            to="#comment-ca-marche"
-            label="Comment ça marche"
-            color="neutral"
-            variant="outline"
-            size="lg"
-          />
-        </template>
-        <template v-else>
-          <UButton
-            to="/explore"
-            trailing-icon="lucide:arrow-right"
-            label="Explorer les projets"
-            size="lg"
-          />
-          <UButton
-            to="/favorites"
-            label="Mes favoris"
-            color="neutral"
-            variant="outline"
-            size="lg"
-          />
-        </template>
+        <UButton
+          to="/explore"
+          trailing-icon="lucide:arrow-right"
+          label="Explorer les projets"
+          size="lg"
+        />
+        <UButton
+          v-if="!authStore.isAuthenticated"
+          icon="lucide:github"
+          label="Se connecter avec GitHub"
+          color="neutral"
+          variant="outline"
+          size="lg"
+          :loading="isLoading"
+          @click="handleLogin"
+        />
+        <UButton
+          v-else
+          to="/favorites"
+          label="Mes favoris"
+          color="neutral"
+          variant="outline"
+          size="lg"
+        />
       </div>
 
       <p v-if="!authStore.isAuthenticated" class="mt-6 font-mono text-xs text-dimmed">
-        Connexion via GitHub · aucun mot de passe
+        Sans compte pour explorer · connexion GitHub pour garder tes favoris
       </p>
     </HeroCommitGraph>
   </FrameSection>

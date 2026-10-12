@@ -4,7 +4,7 @@ import { GitHubApiClient } from "#services/github/github_api_client";
 const endpoints = [
   "/readme",
   "/languages",
-  "/contributors?per_page=10",
+  "/contributors?per_page=30",
   "/releases/latest",
   "/contributors?per_page=1&anon=false",
 ];

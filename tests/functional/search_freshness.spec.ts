@@ -6,6 +6,7 @@ import GithubFetchCache from "#models/github_fetch_cache";
 import { GitHubSyncService } from "#services/github/github_sync_service";
 import { ProjectFeedService } from "#services/project_feed_service";
 import { FakeGitHubAdapter, githubRepo } from "#tests/helpers/fake_github_adapter";
+import { feedFor } from "#tests/helpers/feed";
 
 const token = "test-token";
 const now = DateTime.fromISO("2026-10-12T12:00:00Z");
@@ -53,7 +54,8 @@ test.group("Search freshness", (group) => {
     await sync.fetchAndStore("typescript", "expert", token);
     clock = now.plus({ hours: 24 });
     github.repos = [githubRepo({ id: 8100, name: "new-snapshot" })];
-    const feed = await new ProjectFeedService(sync).getFeed(
+    const feed = await feedFor(
+      new ProjectFeedService(sync),
       "no-user",
       {
         difficulty: "expert",
@@ -95,13 +97,14 @@ test.group("Search freshness", (group) => {
     }
     const feed = new ProjectFeedService(sync);
     await feed.getShowcase(token);
-    const result = await feed.getFeed(
+    const result = await feedFor(
+      feed,
       "no-user",
       { languages: ["typescript"], difficulty: "expert" },
       token,
     );
     assert.equal(result.available, 100);
-    assert.lengthOf(result.projects, 60);
+    assert.lengthOf(result.projects, gitifyConfig.feed.pageSize);
     assert.deepEqual(
       github.searchCalls.map((call) => call.perPage),
       [100],
@@ -122,7 +125,7 @@ test.group("Search freshness", (group) => {
     clock = now.plus({ hours: 24 });
     github.searchError = new Error("GitHub403");
     for (let index = 0; index < 2; index++) {
-      const result = await feed.getFeed("no-user", preferences, token);
+      const result = await feedFor(feed, "no-user", preferences, token);
       assert.equal(result.refreshState, "degraded");
       assert.equal(result.projects[0].name, "previous-search");
     }
@@ -140,7 +143,7 @@ test.group("Search freshness", (group) => {
     clock = clock.plus({ seconds: 60 });
     github.searchError = undefined;
     github.repos = [githubRepo({ id: 9501, name: "recovered-search" })];
-    const recovered = await feed.getFeed("no-user", preferences, token);
+    const recovered = await feedFor(feed, "no-user", preferences, token);
     assert.equal(recovered.refreshState, "ready");
     assert.equal(recovered.projects[0].name, "recovered-search");
     await cache.refresh();
@@ -156,18 +159,18 @@ test.group("Search freshness", (group) => {
     github.searchError = new Error("GitHub403");
     const first = new ProjectFeedService(new GitHubSyncService(github, () => clock));
     const preferences = { languages: ["rust"], difficulty: "expert" as const };
-    const firstResult = await first.getFeed("no-user", preferences, token);
+    const firstResult = await feedFor(first, "no-user", preferences, token);
     assert.equal(firstResult.refreshState, "unavailable");
     const otherGithub = new FakeGitHubAdapter();
     const second = new ProjectFeedService(new GitHubSyncService(otherGithub, () => clock));
-    const deferred = await second.getFeed("no-user", preferences, token);
+    const deferred = await feedFor(second, "no-user", preferences, token);
     assert.equal(deferred.refreshState, "unavailable");
     assert.lengthOf(github.searchCalls, 1);
     assert.isEmpty(otherGithub.searchCalls);
     const cache = await GithubFetchCache.findByOrFail("language", "rust");
     assert.isNull(cache.fetchedAt);
     clock = clock.plus({ seconds: 60 });
-    const retried = await second.getFeed("no-user", preferences, token);
+    const retried = await feedFor(second, "no-user", preferences, token);
     assert.equal(retried.refreshState, "ready");
     assert.lengthOf(otherGithub.searchCalls, 1);
   });

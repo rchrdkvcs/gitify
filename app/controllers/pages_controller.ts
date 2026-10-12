@@ -1,7 +1,18 @@
 import type { HttpContext } from "@adonisjs/core/http";
+import type User from "#models/user";
 import ProjectFeedService from "#services/project_feed_service";
+import { languageCatalog } from "#shared/preferences";
 import env from "#start/env";
-import { projectIdValidator } from "#validators/project_id_validator";
+import { parseExploreFilters } from "#validators/explore_filters";
+import { projectSlugValidator } from "#validators/project_id_validator";
+
+/** Guests browse with the server token; signed-in readers spend their own quota. */
+function readerOf(user: User | undefined) {
+  return {
+    userId: user?.id ?? null,
+    token: user?.githubAccessToken ?? env.get("GITHUB_SERVER_TOKEN") ?? null,
+  };
+}
 
 export default class PagesController {
   async home({ inertia }: HttpContext) {
@@ -9,17 +20,33 @@ export default class PagesController {
     return inertia.render("index", { languages });
   }
 
-  async explore({ auth, inertia, response }: HttpContext) {
-    const user = auth.getUserOrFail();
-    if (!user.preferences) {
-      return response.redirect("/preferences");
-    }
-    const { projects, refreshState } = await ProjectFeedService.getFeed(
-      user.id,
-      user.preferences,
-      user.githubAccessToken!,
-    );
-    return inertia.render("explore", { projects, refreshState });
+  async explore({ auth, request, inertia }: HttpContext) {
+    const filters = parseExploreFilters(request.qs(), auth.user?.preferences ?? null);
+    const [result, topicOptions] = await Promise.all([
+      ProjectFeedService.explore(filters, request.input("page", 1), readerOf(auth.user)),
+      ProjectFeedService.popularTopics(filters),
+    ]);
+    return inertia.render("explore", {
+      projects: inertia.scroll(
+        () => ({ data: result.projects, meta: result.meta }),
+        (value) => ({
+          pageName: "page",
+          currentPage: value.meta.currentPage,
+          nextPage:
+            value.meta.currentPage < value.meta.lastPage ? value.meta.currentPage + 1 : null,
+          previousPage: value.meta.currentPage > 1 ? value.meta.currentPage - 1 : null,
+        }),
+      ),
+      total: result.meta.total,
+      filters,
+      topicOptions,
+      languageOptions: languageCatalog.map(({ id, name, icon }) => ({
+        value: id,
+        label: name,
+        icon,
+      })),
+      refreshState: result.refreshState,
+    });
   }
 
   async favorites({ auth, request, inertia }: HttpContext) {
@@ -32,16 +59,15 @@ export default class PagesController {
   }
 
   async project({ auth, request, inertia, response }: HttpContext) {
-    const { params } = await request.validateUsing(projectIdValidator);
-    const user = auth.getUserOrFail();
+    const { params } = await request.validateUsing(projectSlugValidator);
     const project = await ProjectFeedService.getProject(
-      params.id,
-      user.id,
-      user.githubAccessToken!,
+      params.owner,
+      params.name,
+      readerOf(auth.user),
     );
     if (!project) {
       return response.notFound("Projet introuvable");
     }
-    return inertia.render("projects/show", { project: project });
+    return inertia.render("projects/show", { project });
   }
 }

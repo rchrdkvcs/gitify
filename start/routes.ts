@@ -2,17 +2,16 @@ import router from "@adonisjs/core/services/router";
 import { controllers } from "#generated/controllers";
 import { middleware } from "#start/kernel";
 
+// Public catalogue: browsing never requires an account.
 router.get("/", [controllers.Pages, "home"]);
-router.on("/community").renderInertia("community", {});
-router.on("/ressources").renderInertia("ressources", {});
+router.get("/explore", [controllers.Pages, "explore"]);
+router.get("/projects/:owner/:name", [controllers.Pages, "project"]);
 router.get("/auth/github/redirect", [controllers.Auth, "redirect"]);
 router.get("/auth/github/callback", [controllers.Auth, "callback"]);
 
 router
   .group(() => {
-    router.get("/explore", [controllers.Pages, "explore"]);
     router.get("/favorites", [controllers.Pages, "favorites"]);
-    router.get("/projects/:id", [controllers.Pages, "project"]);
     router.on("/profil").renderInertia("profil", {});
     router.on("/preferences").renderInertia("preferences", {});
     router.delete("/auth/logout", [controllers.Auth, "logout"]);

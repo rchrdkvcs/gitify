@@ -8,6 +8,7 @@ export function useFavorite(
   onChange?: (isFavorite: boolean) => void,
 ) {
   const { http } = useHttp();
+  const authStore = useAuth();
   const toast = useToast();
   const isFavorite = ref(project().isFavorite);
   const pending = ref(false);
@@ -21,6 +22,11 @@ export function useFavorite(
 
   async function toggleFavorite() {
     if (pending.value) {
+      return;
+    }
+    // Browsing is public; keeping a project is what requires an account.
+    if (!authStore.isAuthenticated) {
+      window.location.href = authStore.authenticate();
       return;
     }
 

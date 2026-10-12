@@ -21,7 +21,9 @@ function project(id: string): Project {
     openIssuesCount: 0,
     topics: [],
     latestRelease: null,
-    updatedAt: null,
+    pushedAt: null,
+    ownerAvatarUrl: "https://github.com/owner.png",
+    forksCount: 0,
     isFavorite: true,
   };
 }

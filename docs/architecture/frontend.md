@@ -10,7 +10,7 @@ La vitrine, le fil, les favoris et le détail de projet sont chargés par `Pages
 
 Les formulaires de préférences et de déconnexion utilisent le routeur Inertia. Le serveur valide les données puis redirige vers une page. Les liens Nuxt UI utilisent son intégration Inertia.
 
-`useProjects` filtre, trie et révèle progressivement les projets reçus. La pagination des favoris effectue une visite Inertia. `useFavorite` utilise les endpoints JSON `/api/projects/:id/favorite` ; `useHttp` envoie le cookie CSRF et les cookies de session sur la même origine.
+Le catalogue filtre et trie côté serveur ; `explore.vue` pousse les filtres dans l'URL et charge les pages suivantes avec `<InfiniteScroll>` d'Inertia (prop `inertia.scroll`). La pagination des favoris effectue une visite Inertia. `useFavorite` utilise les endpoints JSON `/api/projects/:id/favorite` ; `useHttp` envoie le cookie CSRF et les cookies de session sur la même origine.
 
 ## Composants et styles
 

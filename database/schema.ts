@@ -85,19 +85,26 @@ export class ProjectSearchMembershipSchema extends BaseModel {
 
 export class ProjectSchema extends BaseModel {
   static $columns = [
+    "contributing",
     "createdAt",
     "description",
     "detailsFetchedAt",
     "difficulty",
     "forksCount",
+    "githubCreatedAt",
     "githubRepoId",
+    "homepageUrl",
     "id",
+    "insights",
     "language",
     "languages",
     "latestRelease",
+    "license",
     "name",
     "openIssuesCount",
+    "ownerAvatarUrl",
     "ownerName",
+    "pushedAt",
     "readme",
     "repositoryUrl",
     "stars",
@@ -106,6 +113,8 @@ export class ProjectSchema extends BaseModel {
     "updatedAt",
   ] as const;
   $columns = ProjectSchema.$columns;
+  @column()
+  declare contributing: string | null;
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime | null;
   @column()
@@ -116,10 +125,16 @@ export class ProjectSchema extends BaseModel {
   declare difficulty: string;
   @column()
   declare forksCount: number;
+  @column.dateTime()
+  declare githubCreatedAt: DateTime | null;
   @column()
   declare githubRepoId: bigint | number;
+  @column()
+  declare homepageUrl: string | null;
   @column({ isPrimary: true })
   declare id: string;
+  @column()
+  declare insights: any | null;
   @column()
   declare language: string | null;
   @column()
@@ -127,11 +142,17 @@ export class ProjectSchema extends BaseModel {
   @column()
   declare latestRelease: string | null;
   @column()
+  declare license: string | null;
+  @column()
   declare name: string;
   @column()
   declare openIssuesCount: number;
   @column()
+  declare ownerAvatarUrl: string | null;
+  @column()
   declare ownerName: string;
+  @column.dateTime()
+  declare pushedAt: DateTime | null;
   @column()
   declare readme: string | null;
   @column()

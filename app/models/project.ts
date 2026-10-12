@@ -1,7 +1,7 @@
 import type { HasMany } from "@adonisjs/lucid/types/relations";
 import { beforeCreate, column, hasMany } from "@adonisjs/lucid/orm";
 import { ulid } from "ulid";
-import type { Difficulty } from "#shared/types/index";
+import type { Difficulty, RepositoryInsights } from "#shared/types/index";
 import { ProjectSchema } from "#database/schema";
 import Contributor from "#models/contributor";
 
@@ -23,6 +23,16 @@ export default class Project extends ProjectSchema {
     prepare: (value: Record<string, number> | null) => (value ? JSON.stringify(value) : null),
   })
   declare languages: Record<string, number> | null;
+
+  @column({
+    prepare: (value: RepositoryInsights | null) => (value ? JSON.stringify(value) : null),
+  })
+  declare insights: RepositoryInsights | null;
+
+  /** GitHub serves its own avatar URL; owners imported before it was stored use the public alias. */
+  get avatarUrl(): string {
+    return this.ownerAvatarUrl ?? `https://github.com/${this.ownerName}.png?size=96`;
+  }
 
   @hasMany(() => Contributor)
   declare contributors: HasMany<typeof Contributor>;

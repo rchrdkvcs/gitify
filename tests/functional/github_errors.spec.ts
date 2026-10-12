@@ -5,6 +5,7 @@ import Contributor from "#models/contributor";
 import Project from "#models/project";
 import { GitHubApiClient } from "#services/github/github_api_client";
 import { GitHubSyncService } from "#services/github/github_sync_service";
+import { graphqlRepository } from "#tests/helpers/fake_github_adapter";
 
 test.group("GitHub details cache failure", (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction());
@@ -67,6 +68,9 @@ test.group("GitHub details cache failure", (group) => {
       const url = String(input);
       if (url.endsWith("/readme") || url.endsWith("/releases/latest")) {
         return new Response(null, { status: 404 });
+      }
+      if (url.endsWith("/graphql")) {
+        return Response.json(graphqlRepository());
       }
       return Response.json(url.endsWith("/languages") ? {} : []);
     };

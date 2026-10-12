@@ -7,10 +7,13 @@ export default class ProjectDetailTransformer extends ProjectTransformer {
     return {
       ...super.toObject(),
       readme: project.readme,
-      languages: project.languages,
-      forksCount: project.forksCount,
+      contributing: project.contributing,
+      homepageUrl: project.homepageUrl,
+      license: project.license,
       totalContributorsCount: project.totalContributorsCount,
-      createdAt: project.createdAt?.toISO() ?? null,
+      githubCreatedAt: project.githubCreatedAt?.toISO() ?? null,
+      detailsFetchedAt: project.detailsFetchedAt?.toISO() ?? null,
+      insights: project.insights,
       contributors: project.contributors.map((contributor) => ({
         id: contributor.id,
         login: contributor.login,

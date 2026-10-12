@@ -6,6 +6,7 @@ import User from "#models/user";
 import { GitHubSyncService } from "#services/github/github_sync_service";
 import { ProjectFeedService } from "#services/project_feed_service";
 import { FakeGitHubAdapter, githubRepo } from "#tests/helpers/fake_github_adapter";
+import { feedFor } from "#tests/helpers/feed";
 
 const now = DateTime.fromISO("2026-10-12T12:00:00Z");
 const token = "private-feed-test-token";
@@ -25,7 +26,7 @@ test.group("Degraded project feed", (group) => {
     clock = now.plus({ days: 2 });
     github.searchError = new Error(`Remote outage: ${token}`);
 
-    const result = await feed.getFeed(user.id, preferences, token);
+    const result = await feedFor(feed, user.id, preferences, token);
 
     assert.deepEqual(
       result.projects.map((project) => project.name),
@@ -63,7 +64,8 @@ test.group("Degraded project feed", (group) => {
     mixed.repos = github.repos;
     const feed = new ProjectFeedService(new GitHubSyncService(mixed, () => clock));
 
-    const result = await feed.getFeed(
+    const result = await feedFor(
+      feed,
       user.id,
       {
         difficulty: "beginner",
@@ -90,14 +92,14 @@ test.group("Degraded project feed", (group) => {
     const feed = new ProjectFeedService(new GitHubSyncService(github, () => clock));
     const preferences = { difficulty: "beginner" as const, languages: ["typescript"] };
 
-    const unavailable = await feed.getFeed(user.id, preferences, token);
+    const unavailable = await feedFor(feed, user.id, preferences, token);
     assert.deepEqual(unavailable.projects, []);
     assert.equal(unavailable.available, 0);
     assert.equal(unavailable.refreshState, "unavailable");
 
     github.searchError = undefined;
     clock = clock.plus({ seconds: 60 });
-    const empty = await feed.getFeed(user.id, preferences, token);
+    const empty = await feedFor(feed, user.id, preferences, token);
     assert.deepEqual(empty.projects, []);
     assert.equal(empty.available, 0);
     assert.equal(empty.refreshState, "ready");
@@ -113,8 +115,9 @@ test("feed reports an ongoing refresh without calling GitHub again", async ({ as
     ]);
     const github = new FakeGitHubAdapter();
     const feed = new ProjectFeedService(new GitHubSyncService(github, () => now));
-    const result = await feed.getFeed(
-      "no-user",
+    const result = await feedFor(
+      feed,
+      null as unknown as string,
       {
         difficulty: "beginner",
         languages: ["rust"],

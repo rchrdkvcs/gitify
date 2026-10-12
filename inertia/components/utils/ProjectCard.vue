@@ -9,19 +9,21 @@ const emit = defineEmits<{
   favoriteChange: [projectId: string, isFavorite: boolean];
 }>();
 
-const authStore = useAuth();
-
-const canFavorite = computed(() => "isFavorite" in props.project);
 const difficulty = computed(() =>
   "difficulty" in props.project ? props.project.difficulty : null,
 );
 
-// Guests can't open the detail page (it requires a session), so their card
-// leads straight to the repository on GitHub instead.
-const opensDetails = computed(() => authStore.isAuthenticated);
-const href = computed(() =>
-  opensDetails.value ? `/projects/${props.project.id}` : props.project.repositoryUrl,
-);
+const stats = computed(() => {
+  const project = props.project;
+  return [
+    { label: "Étoiles", value: formatNumber(project.stars) },
+    "openIssuesCount" in project
+      ? { label: "Issues ouvertes", value: formatNumber(project.openIssuesCount) }
+      : null,
+    "forksCount" in project ? { label: "Forks", value: formatNumber(project.forksCount) } : null,
+    project.pushedAt ? { label: "Dernier commit", value: timeSince(project.pushedAt) } : null,
+  ].filter((stat) => stat !== null);
+});
 
 const { isFavorite, pending, toggleFavorite } = useFavorite(
   () => ({
@@ -36,34 +38,30 @@ const { isFavorite, pending, toggleFavorite } = useFavorite(
   <article
     class="group relative flex h-full flex-col gap-5 bg-default p-5 transition-colors duration-150 hover:bg-muted sm:p-6"
   >
-    <header class="flex items-start gap-3">
-      <div
-        class="flex size-10 shrink-0 items-center justify-center border border-default bg-elevated font-mono text-base text-highlighted"
-        aria-hidden="true"
-      >
-        {{ project.name.charAt(0).toUpperCase() }}
-      </div>
+    <header class="flex items-start gap-3.5">
+      <img
+        :src="avatarUrl(project.ownerAvatarUrl, 96)"
+        alt=""
+        width="48"
+        height="48"
+        loading="lazy"
+        class="size-12 shrink-0 border border-default bg-elevated object-cover"
+      />
 
       <div class="min-w-0 flex-1">
         <h3 class="font-mono text-[15px] leading-snug text-highlighted">
           <ULink
-            :to="href"
-            :target="opensDetails ? undefined : '_blank'"
+            :to="projectPath(project)"
             class="block truncate outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-primary"
             :title="`${project.ownerName}/${project.name}`"
           >
-            <span class="text-muted">{{ project.ownerName }}/</span>{{ project.name }}
+            {{ project.name }}
           </ULink>
         </h3>
-        <p v-if="project.updatedAt" class="mt-1 truncate font-mono text-xs text-dimmed">
-          Mis à jour {{ timeAgo(project.updatedAt) }}
-        </p>
+        <p class="mt-0.5 truncate font-mono text-xs text-dimmed">{{ project.ownerName }}</p>
       </div>
 
-      <UTooltip
-        v-if="canFavorite"
-        :text="isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
-      >
+      <UTooltip :text="isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'">
         <UButton
           :icon="isFavorite ? 'tabler:heart-filled' : 'tabler:heart'"
           :aria-label="isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
@@ -85,41 +83,32 @@ const { isFavorite, pending, toggleFavorite } = useFavorite(
       {{ project.description || "Pas de description pour ce projet." }}
     </p>
 
-    <div v-if="project.topics?.length" class="flex flex-wrap gap-1.5">
+    <div class="flex flex-wrap gap-1.5 font-mono text-[11px]">
       <span
-        v-for="topic in project.topics.slice(0, 3)"
+        v-if="project.language"
+        class="inline-flex items-center gap-1.5 border border-accented px-1.5 py-0.5 text-toned"
+      >
+        <span class="size-1.5 bg-current" aria-hidden="true" />
+        {{ formatLanguage(project.language) }}
+      </span>
+      <span v-if="difficulty" class="border border-accented px-1.5 py-0.5 text-toned">
+        {{ difficulty === "beginner" ? "good first issue" : "help wanted" }}
+      </span>
+      <span
+        v-for="topic in (project.topics ?? []).slice(0, 2)"
         :key="topic"
-        class="border border-default px-1.5 py-0.5 font-mono text-[11px] whitespace-nowrap text-muted"
+        class="border border-default px-1.5 py-0.5 whitespace-nowrap text-muted"
       >
         {{ topic }}
       </span>
     </div>
 
-    <footer
-      class="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-default pt-4 font-mono text-xs text-muted"
-    >
-      <span v-if="project.language" class="inline-flex items-center gap-1.5">
-        <span class="size-1.5 bg-current" aria-hidden="true" />
-        {{ formatLanguage(project.language) }}
-      </span>
-      <span class="inline-flex items-center gap-1.5 tabular-nums">
-        <UIcon name="lucide:star" class="size-3.5" aria-hidden="true" />
-        {{ formatCompact(project.stars) }}
-        <span class="sr-only">étoiles</span>
-      </span>
-      <span v-if="project.latestRelease" class="truncate">{{ project.latestRelease }}</span>
-      <span
-        v-if="difficulty"
-        class="ms-auto border border-accented px-1.5 py-0.5 text-[11px] whitespace-nowrap text-toned"
-      >
-        {{ difficulty === "beginner" ? "good first issue" : "help wanted" }}
-      </span>
-      <UIcon
-        v-else
-        :name="opensDetails ? 'lucide:arrow-right' : 'lucide:arrow-up-right'"
-        class="ms-auto size-4 text-dimmed transition-[translate,color] duration-150 group-hover:translate-x-0.5 group-hover:text-highlighted"
-        aria-hidden="true"
-      />
-    </footer>
+    <dl class="mt-auto flex flex-col gap-1.5 border-t border-default pt-4 text-sm">
+      <div v-for="stat in stats" :key="stat.label" class="flex items-baseline gap-2">
+        <dt class="text-muted">{{ stat.label }}</dt>
+        <span class="flex-1 border-b border-dotted border-accented" aria-hidden="true" />
+        <dd class="font-mono text-xs text-highlighted tabular-nums">{{ stat.value }}</dd>
+      </div>
+    </dl>
   </article>
 </template>

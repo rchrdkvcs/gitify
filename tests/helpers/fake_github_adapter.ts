@@ -1,4 +1,9 @@
-import type { GitHubAdapter, GitHubRepo, ProjectDetails } from "#services/github/github_adapter";
+import type {
+  GitHubAdapter,
+  GitHubRepo,
+  ProjectDetails,
+  RepositoryInsightsResult,
+} from "#services/github/github_adapter";
 import type { Difficulty } from "#shared/types/index";
 
 export function githubRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
@@ -21,6 +26,7 @@ export function githubRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
 export class FakeGitHubAdapter implements GitHubAdapter {
   searchCalls: { language: string; difficulty: Difficulty; token: string; perPage?: number }[] = [];
   detailsCalls: { ownerName: string; repoName: string; token: string }[] = [];
+  insightsCalls: { ownerName: string; repoName: string; token: string }[] = [];
   repos: GitHubRepo[] = [];
   details: ProjectDetails = {
     readme: null,
@@ -28,6 +34,40 @@ export class FakeGitHubAdapter implements GitHubAdapter {
     contributors: [],
     latestRelease: null,
     totalContributorsCount: 0,
+  };
+  insights: RepositoryInsightsResult = {
+    contributing: null,
+    metadata: {
+      ownerAvatarUrl: "https://avatars.githubusercontent.com/u/1",
+      homepageUrl: null,
+      license: "MIT",
+      pushedAt: "2026-10-01T00:00:00Z",
+      createdAt: "2020-01-01T00:00:00Z",
+      stars: 5,
+      forksCount: 1,
+    },
+    insights: {
+      watchers: 1,
+      openIssues: 1,
+      closedIssues: 0,
+      openPullRequests: 0,
+      mergedPullRequests: 0,
+      goodFirstIssues: 0,
+      helpWantedIssues: 0,
+      commits: 10,
+      releases: 0,
+      latestReleaseAt: null,
+      diskUsageKb: 100,
+      defaultBranch: "main",
+      isArchived: false,
+      lastCommitAt: "2026-10-01T00:00:00Z",
+      languages: [],
+      weeklyCommits: null,
+      health: null,
+      issues: [],
+      beginnerIssues: [],
+      pullRequests: [],
+    },
   };
   searchError?: Error;
   detailsError?: Error;
@@ -52,4 +92,47 @@ export class FakeGitHubAdapter implements GitHubAdapter {
     }
     return this.details;
   }
+
+  async getRepositoryInsights(ownerName: string, repoName: string, token: string) {
+    this.insightsCalls.push({ ownerName, repoName, token });
+    if (this.detailsError) {
+      throw this.detailsError;
+    }
+    return this.insights;
+  }
+}
+
+const emptyConnection = { totalCount: 0 };
+
+/** Minimal GraphQL `repository` payload accepted by the HTTP adapter. */
+export function graphqlRepository() {
+  return {
+    data: {
+      repository: {
+        createdAt: "2020-01-01T00:00:00Z",
+        pushedAt: null,
+        homepageUrl: null,
+        isArchived: false,
+        diskUsage: 1,
+        stargazerCount: 0,
+        forkCount: 0,
+        owner: { avatarUrl: "https://avatars.githubusercontent.com/u/1" },
+        licenseInfo: null,
+        watchers: emptyConnection,
+        openIssues: emptyConnection,
+        closedIssues: emptyConnection,
+        openPullRequests: emptyConnection,
+        mergedPullRequests: emptyConnection,
+        goodFirstIssues: emptyConnection,
+        helpWantedIssues: emptyConnection,
+        releases: emptyConnection,
+        latestRelease: null,
+        languages: { edges: [] },
+        defaultBranchRef: null,
+        recentIssues: { nodes: [] },
+        beginnerIssues: { nodes: [] },
+        recentPullRequests: { nodes: [] },
+      },
+    },
+  };
 }

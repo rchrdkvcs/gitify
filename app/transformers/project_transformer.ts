@@ -18,16 +18,18 @@ export default class ProjectTransformer extends BaseTransformer<Project> {
       id: project.id,
       name: project.name,
       ownerName: project.ownerName,
+      ownerAvatarUrl: project.avatarUrl,
       description: project.description,
       repositoryUrl: project.repositoryUrl,
       stars: project.stars,
+      forksCount: project.forksCount,
       language: project.language,
       topics: project.topics,
       openIssuesCount: project.openIssuesCount,
       difficulty: this.reader.difficulty,
       isFavorite: this.reader.isFavorite,
       latestRelease: project.latestRelease,
-      updatedAt: project.updatedAt?.toISO() ?? null,
+      pushedAt: project.pushedAt?.toISO() ?? null,
     };
   }
 }
