@@ -2,33 +2,92 @@
   "name": "gitify",
   "version": "1.0.2",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "license": "UNLICENSED",
   "type": "module",
+  "imports": {
+    "#controllers/*": "./app/controllers/*.js",
+    "#services/*": "./app/services/*.js",
+    "#models/*": "./app/models/*.js",
+    "#exceptions/*": "./app/exceptions/*.js",
+    "#validators/*": "./app/validators/*.js",
+    "#database/*": "./database/*.js",
+    "#start/*": "./start/*.js",
+    "#tests/*": "./tests/*.js",
+    "#config/*": "./config/*.js",
+    "#generated/*": "./.adonisjs/server/*.js",
+    "#transformers/*": "./app/transformers/*.js",
+    "#shared/*": "./shared/*.js",
+    "#middleware/*": "./app/middleware/*.js"
+  },
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "dev:api": "turbo run dev --filter=@gitify/api",
-    "dev:web": "turbo run dev --filter=@gitify/web",
-    "docker:clean": "docker compose -f compose.dev.yaml down -v",
+    "build": "node ace build",
+    "dev": "node ace serve --hmr",
     "docker:down": "docker compose -f compose.dev.yaml down",
     "docker:logs": "docker compose -f compose.dev.yaml logs -f",
-    "docker:logs:api": "docker compose -f compose.dev.yaml logs -f api",
-    "docker:logs:db": "docker compose -f compose.dev.yaml logs -f database",
-    "docker:logs:web": "docker compose -f compose.dev.yaml logs -f web",
-    "docker:restart": "docker compose -f compose.dev.yaml restart",
     "docker:up": "docker compose -f compose.dev.yaml up --build -d",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix"
+    "lint:fix": "oxlint --fix",
+    "start": "node bin/server.js",
+    "test": "node ace test",
+    "typecheck": "tsc --noEmit && vue-tsc --noEmit -p inertia/tsconfig.json"
+  },
+  "dependencies": {
+    "@adonisjs/ally": "^6.3.2",
+    "@adonisjs/auth": "^10.1.0",
+    "@adonisjs/core": "^7.6.0",
+    "@adonisjs/inertia": "^5.0.1",
+    "@adonisjs/lucid": "^22.4.2",
+    "@adonisjs/session": "^8.1.0",
+    "@adonisjs/shield": "^9.0.0",
+    "@adonisjs/static": "^2.0.1",
+    "@adonisjs/vite": "^6.0.3",
+    "@comark/vue": "^0.7.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "@fontsource/antic": "^5.3.0",
+    "@inertiajs/vue3": "^3.9.1",
+    "@nuxt/ui": "4.11.3",
+    "@vinejs/vine": "^4.4.0",
+    "edge.js": "^6.5.1",
+    "luxon": "^3.7.2",
+    "pg": "^8.23.1",
+    "reflect-metadata": "^0.2.2",
+    "tailwindcss": "^4.3.3",
+    "three": "^0.186.1",
+    "ulid": "^3.0.2",
+    "vue": "^3.5.43"
   },
   "devDependencies": {
-    "oxfmt": "^0.42.0",
-    "oxlint": "^1.62.0",
-    "turbo": "^2.9.6"
+    "@adonisjs/assembler": "^8.5.2",
+    "@adonisjs/tsconfig": "^2.0.0",
+    "@japa/api-client": "^3.2.1",
+    "@japa/assert": "^4.2.0",
+    "@japa/plugin-adonisjs": "^5.2.0",
+    "@japa/runner": "^5.4.0",
+    "@poppinss/ts-exec": "^1.5.0",
+    "@types/luxon": "^3.7.6",
+    "@types/node": "^26.6.5",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "hot-hook": "^1.0.0",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0",
+    "pino-pretty": "^13.2.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.4",
+    "vue-tsc": "^3.3.13",
+    "youch": "^4.1.1"
   },
-  "packageManager": "pnpm@10.33.2"
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "packageManager": "pnpm@12.11.2",
+  "hotHook": {
+    "boundaries": [
+      "./app/controllers/**/*.ts",
+      "./app/middleware/**/*.ts"
+    ]
+  }
 }

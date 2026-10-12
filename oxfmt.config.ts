@@ -14,11 +14,18 @@ export default defineConfig({
     ],
   },
   sortTailwindcss: {
-    stylesheet: "./apps/web/app/assets/styles/main.css",
+    stylesheet: "./inertia/assets/styles/main.css",
     preserveWhitespace: true,
   },
   sortPackageJson: {
     sortScripts: true,
   },
-  ignorePatterns: ["CHANGELOG.md"],
+  ignorePatterns: [
+    "CHANGELOG.md",
+    ".adonisjs/**",
+    "public/assets/**",
+    "build/**",
+    "inertia/auto-imports.d.ts",
+    "inertia/components.d.ts",
+  ],
 });

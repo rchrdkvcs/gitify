@@ -1,18 +1,8 @@
-FROM node:25-alpine AS base
-RUN npm install -g pnpm turbo
-
-FROM base AS builder
+FROM node:24-alpine
+RUN corepack enable
 WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
-RUN turbo prune @gitify/api @gitify/web --docker
-
-FROM base AS dev
-WORKDIR /app
-
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=builder /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
-RUN pnpm install
-
-RUN mkdir -p /app/apps/web/.nuxt /app/apps/web/node_modules/.cache \
-    && chown -R node:node /app/apps/web/.nuxt /app/apps/web/node_modules/.cache
+EXPOSE 3333 5173
+CMD ["pnpm", "dev"]

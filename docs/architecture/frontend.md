@@ -1,133 +1,19 @@
-# Architecture frontend
+# Frontend
 
-## Stack
+Les pages Vue vivent dans `inertia/pages/`. Le premier chargement reçoit le document Edge et les props Inertia ; les navigations suivantes échangent des pages Inertia avec AdonisJS. Le SSR Vue est désactivé.
 
-- **Nuxt 4** — framework SSR/SPA hybride, Vue 3
-- **Pinia** — state management
-- **@pinia/colada** — couche de query caching sur Pinia (équivalent TanStack Query)
-- **@nuxt/ui** + **Tailwind CSS v4** — composants UI et styles
-- **Tuyau** — client API type-safe généré depuis les routes AdonisJS
-- **marked** + **dompurify** — rendu sécurisé du README Markdown
+`inertia/app.ts` initialise Vue et Inertia, installe Nuxt UI via son plugin Vue et applique le layout commun. La page de préférences garde son layout autonome. Nuxt UI fonctionne ici comme bibliothèque de composants Vite ; le framework Nuxt n'est pas utilisé.
 
----
+## Données et session
 
-## Initialisation de l'authentification
+La vitrine, le fil, les favoris et le détail de projet sont chargés par `PagesController`. Le middleware Inertia partage le profil public de l'utilisateur et les erreurs de validation. `useAuth` expose ces props de façon réactive ; aucune requête `/auth/me` ni store Pinia n'est nécessaire.
 
-### `plugins/auth.ts`
+Les formulaires de préférences et de déconnexion utilisent le routeur Inertia. Le serveur valide les données puis redirige vers une page. Les liens Nuxt UI utilisent son intégration Inertia.
 
-Plugin **universel** (s'exécute côté serveur ET côté client). Point d'entrée de l'état auth.
+`useProjects` filtre, trie et révèle progressivement les projets reçus. La pagination des favoris effectue une visite Inertia. `useFavorite` utilise les endpoints JSON `/api/projects/:id/favorite` ; `useHttp` envoie le cookie CSRF et les cookies de session sur la même origine.
 
-```
-SSR (première requête)
-  plugins/auth.ts
-    ├─ authStore.user existe déjà ? → return (déjà hydraté, cas client)
-    └─ authStore.me()
-         → $fetch("/auth/me", { headers: useRequestHeaders(["cookie"]) })
-              ├─ 200 → authStore.user = userData
-              └─ 401 → authStore.user = null (catch silencieux)
+## Composants et styles
 
-  @pinia/nuxt sérialise l'état Pinia dans le payload Nuxt (HTML)
+Les composants applicatifs, les composables Vue et les utilitaires sont importés automatiquement par le plugin Vite de Nuxt UI. La configuration visuelle réside dans `inertia/app.config.ts`, et les styles Tailwind dans `inertia/assets/styles/main.css`. Les README sont rendus avec le composant Markdown de Comark pour Vue.
 
-Hydratation client
-  Pinia restaure l'état depuis le payload → user déjà disponible
-  plugins/auth.ts → if (authStore.user) return → aucun appel réseau
-
-Navigation SPA
-  Pinia en mémoire → middlewares lisent isAuthenticated directement
-```
-
-**Forwarding de cookies en SSR** : `useRequestHeaders(["cookie"])` est passé à `$fetch` pour que AdonisJS puisse identifier la session lors du rendu côté serveur. Côté client, `credentials: "include"` suffit — le navigateur envoie le cookie automatiquement.
-
----
-
-## `stores/auth.ts` — Pinia store
-
-Source de vérité unique pour l'état d'authentification.
-
-```typescript
-user: Ref<Data.User | null>; // null = anonyme
-isAuthenticated: ComputedRef; // true si user !== null
-me(); // $fetch GET /auth/me → user.value = data
-authenticate(); // retourne l'URL de redirect OAuth
-logout(); // DELETE /auth/logout + user.value = null
-```
-
-`Data.User` est le type inféré depuis `UserTransformer` via la génération Tuyau — `@gitify/api/data`.
-
----
-
-## Middlewares de navigation
-
-### `middlewares/auth.ts`
-
-Vérifie `authStore.isAuthenticated`. Si `false`, redirige vers `/`.  
-Appliqué sur les pages `explore.vue`, `favorites.vue` et `projects/[id].vue`.
-
-### `middlewares/guest.ts`
-
-Redirige vers `/` si l'utilisateur est déjà authentifié.
-
----
-
-## Composables
-
-### `useHttp`
-
-Wrapper minimal autour de `$fetch` qui préfixe l'URL avec `NUXT_PUBLIC_API_BASE_URL` et ajoute `credentials: "include"`.
-
-```typescript
-const { http } = useHttp();
-const data = await http<{ projects: Project[] }>("/projects/feed");
-```
-
-### `useFavorite`
-
-Gère l'ajout et le retrait optimistes d'un favori depuis les cartes et le détail d'un projet. Le bouton est bloqué pendant la requête et revient à son état précédent avec un toast si l'appel échoue.
-
-### `usePreferences`
-
-Gère le formulaire de modification des préférences.
-
-- Initialise les champs depuis `authStore.user.preferences` à l'ouverture
-- **`savePreferences()`** — `PUT /auth/preferences`, met à jour `authStore.user` avec la réponse
-- `availableLanguages` — liste fixe des 11 langages supportés
-- `toggleLanguage(lang)` — ajoute ou retire un langage de la sélection
-
----
-
-## `plugins/tuyau.ts` — client typé
-
-```typescript
-const tuyau = createTuyau({
-  baseUrl: config.public.apiBaseUrl || "http://localhost:3333",
-  registry, // @gitify/api/registry
-  credentials: "include",
-  headers: useRequestHeaders(["cookie"]), // forwarding SSR
-});
-```
-
-L'instance est injectée via `provide` sous la clé `tuyau` et accessible dans toute l'application avec `useNuxtApp().$tuyau`.
-
----
-
-## Queries Pinia Colada (`queries/projects.ts`)
-
-```typescript
-export const feedQuery = defineQueryOptions(() => ({
-  key: ["projects", "feed"],
-  query: () => useApi("/projects/feed"),
-}));
-```
-
-Pinia Colada gère la mise en cache, la déduplication des requêtes en vol et l'état `pending` / `error`.
-
----
-
-## Pages
-
-| Page                | Route           | Auth | Description                                                 |
-| ------------------- | --------------- | ---- | ----------------------------------------------------------- |
-| `index.vue`         | `/`             | Non  | Page d'accueil, vitrine publique (`GET /projects/showcase`) |
-| `explore.vue`       | `/explore`      | Oui  | Fil personnalisé avec ajout et retrait des favoris          |
-| `favorites.vue`     | `/favorites`    | Oui  | Liste paginée des projets favoris                           |
-| `projects/[id].vue` | `/projects/:id` | Oui  | Détail d'un projet (README, langages, contributeurs)        |
+Les modèles 3D restent dans `public/models/`. La séquence clavier GITIFY ouvre les archives pour les utilisateurs connectés sur ordinateur. Three.js est chargé à la demande ; le raccourci et l'overlay sont initialisés depuis l'entrée Vue.

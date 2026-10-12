@@ -1,0 +1,48 @@
+import type { HttpContext } from "@adonisjs/core/http";
+import ProjectFeedService from "#services/project_feed_service";
+import env from "#start/env";
+import ProjectTransformer from "#transformers/project_transformer";
+import { projectIdValidator } from "#validators/project_id_validator";
+
+export default class PagesController {
+  async home({ inertia }: HttpContext) {
+    const languages = await ProjectFeedService.getShowcase(env.get("GITHUB_SERVER_TOKEN"));
+    return inertia.render("index", { languages });
+  }
+
+  async explore({ auth, inertia, response }: HttpContext) {
+    const user = auth.getUserOrFail();
+    if (!user.preferences) {
+      return response.redirect("/preferences");
+    }
+    const { projects } = await ProjectFeedService.getFeed(
+      user.id,
+      user.preferences,
+      user.githubAccessToken!,
+    );
+    return inertia.render("explore", { projects: ProjectTransformer.transform(projects) });
+  }
+
+  async favorites({ auth, request, inertia }: HttpContext) {
+    const page = Math.max(1, Math.floor(Number(request.input("page", 1))) || 1);
+    const favorites = await ProjectFeedService.getFavoriteProjects(auth.getUserOrFail().id, page);
+    return inertia.render("favorites", {
+      projects: ProjectTransformer.transform(favorites.all().map((favorite) => favorite.project)),
+      meta: favorites.getMeta(),
+    });
+  }
+
+  async project({ auth, request, inertia, response }: HttpContext) {
+    const { params } = await request.validateUsing(projectIdValidator);
+    const user = auth.getUserOrFail();
+    const project = await ProjectFeedService.getProject(
+      params.id,
+      user.id,
+      user.githubAccessToken!,
+    );
+    if (!project) {
+      return response.notFound("Projet introuvable");
+    }
+    return inertia.render("projects/show", { project: ProjectTransformer.transform(project) });
+  }
+}
