@@ -69,12 +69,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="relative isolate">
+  <div>
     <canvas
       v-if="showConfetti"
       ref="canvas"
       aria-hidden="true"
-      class="pointer-events-none absolute inset-0 -z-10 size-full"
+      class="pointer-events-none fixed inset-0 z-50 size-full"
     />
 
     <div class="mx-auto flex max-w-xl flex-col items-center gap-8 text-center">
@@ -118,7 +118,7 @@ onBeforeUnmount(() => {
           :ui="{
             trailingIcon: 'transition-transform duration-150 group-hover:translate-x-0.5',
           }"
-          class="group"
+          class="group justify-center"
         />
         <UButton
           to="/preferences"

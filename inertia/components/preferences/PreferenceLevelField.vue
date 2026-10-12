@@ -17,7 +17,7 @@ const model = defineModel<ExperienceLevel | null>({ required: true });
     >
       <input v-model="model" type="radio" name="level" :value="item.id" class="peer sr-only" />
       <span
-        class="absolute inset-0 border border-transparent transition-colors duration-150 peer-checked:border-primary"
+        class="pointer-events-none absolute inset-0 border border-transparent transition-colors duration-150 peer-checked:border-primary"
         aria-hidden="true"
       />
       <span

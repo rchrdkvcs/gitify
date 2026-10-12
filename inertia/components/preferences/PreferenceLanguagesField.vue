@@ -47,7 +47,7 @@ const isSelected = (id: string) => props.selected.includes(id);
           @change="emit('toggle', item.id)"
         />
         <span
-          class="absolute -inset-px border border-transparent transition-colors duration-150 peer-checked:border-primary"
+          class="pointer-events-none absolute -inset-px border border-transparent transition-colors duration-150 peer-checked:border-primary"
           aria-hidden="true"
         />
         <UIcon

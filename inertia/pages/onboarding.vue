@@ -200,13 +200,13 @@ const focusHeading = () => heading.value?.focus();
         <OnboardingStepper :steps="steps" :current="step" :reached="reached" @select="goTo" />
       </FrameSection>
 
-      <FrameSection class="flex-1" inner-class="h-full">
+      <FrameSection class="flex flex-1 flex-col" inner-class="flex flex-1 flex-col">
         <Transition :name="`step-${direction}`" mode="out-in" @after-enter="focusHeading">
           <div v-if="step === FINISH" key="finish" class="px-4 py-12 sm:px-8 sm:py-16">
             <OnboardingFinish :preferences="{ ...answers, level: answers.level! }" />
           </div>
 
-          <div v-else :key="step" class="grid h-full lg:grid-cols-[1fr_24rem]">
+          <div v-else :key="step" class="grid flex-1 lg:grid-cols-[1fr_24rem]">
             <div class="flex flex-col gap-8 px-4 py-10 sm:px-8 sm:py-14">
               <div class="flex flex-col gap-3">
                 <p class="eyebrow">

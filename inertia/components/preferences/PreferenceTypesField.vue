@@ -24,7 +24,7 @@ const isSelected = (type: ContributionType) => props.selected.includes(type);
           @change="emit('toggle', item.id)"
         />
         <span
-          class="absolute -inset-px border border-transparent transition-colors duration-150 peer-checked:border-primary"
+          class="pointer-events-none absolute -inset-px border border-transparent transition-colors duration-150 peer-checked:border-primary"
           aria-hidden="true"
         />
         <span

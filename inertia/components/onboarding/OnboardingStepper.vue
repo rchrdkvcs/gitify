@@ -17,7 +17,8 @@ const state = (step: number) =>
       <li
         v-for="(step, index) in steps"
         :key="step.label"
-        class="flex min-w-0 flex-1 items-center border-default not-last:border-e"
+        class="flex min-w-0 items-center border-default not-last:border-e"
+        :class="index + 1 === current ? 'flex-1' : 'max-md:flex-none md:flex-1'"
       >
         <button
           type="button"
