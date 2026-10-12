@@ -2,7 +2,7 @@
 
 ## Routes et rendu
 
-`PagesController` charge les données métier et rend les pages Inertia. `/`, `/explore` et `/projects/:owner/:name` sont publiques : les visiteurs utilisent le token serveur, les utilisateurs connectés leur propre token. `/favorites`, `/profil` et `/preferences` exigent une session ; les visiteurs sont redirigés vers `/`.
+`PagesController` charge les données métier et rend les pages Inertia. `/`, `/explore`, `/issues` et `/projects/:owner/:name` sont publiques : les visiteurs utilisent le token serveur, les utilisateurs connectés leur propre token. `/favorites`, `/profil` et `/preferences` exigent une session ; les visiteurs sont redirigés vers `/`.
 
 Seule la route `/api/projects/:id/favorite` (ajout et retrait d'un favori) répond en JSON ; le fil et les favoris sont des pages Inertia (`/explore`, `/favorites`). Elles utilisent la même session et la même protection CSRF que les pages. Il n'y a plus de configuration CORS ni de documentation OpenAPI pour une API séparée.
 
@@ -21,6 +21,12 @@ Seule la route `/api/projects/:id/favorite` (ajout et retrait d'un favori) répo
 La vitrine utilise la même politique de fraîcheur quand un jeton serveur existe. Elle conserve les données en cache lors d'un échec distant et limite l'enrichissement des détails à deux dépôts par requête. Chaque carte reçoit ses deux principaux contributeurs, avec un ordre déterministe.
 
 `GitHubApiClient` appelle GitHub avec un délai borné couvrant la requête et le corps de réponse. Les absences attendues de README ou de release sont distinguées des erreurs ; une réponse 204 des contributeurs représente une liste vide. `GitHubSyncService` accepte un adapter GitHub et une horloge ; les tests fournissent un adapter contrôlé et une base PostgreSQL dédiée. `ensureSearchFresh` vérifie le TTL sous un verrou transactionnel PostgreSQL pour coordonner plusieurs processus. Deux recherches au maximum par processus réservent une connexion pour un appel distant ; les autres servent le résultat en cache avec un état d'actualisation différée. Les échecs reportent la prochaine tentative de 60 secondes, avec une trace partagée en base. Toutes les recherches importent jusqu'à 100 dépôts, y compris celles lancées par la vitrine et le seeder ; les limites de présentation n'altèrent pas le stock du fil. Un import réussi remplace les appartenances du critère ; l'enrichissement remplace les contributeurs et les métadonnées atomiquement. Les limites et durées de cache restent dans `config/gitify.ts`.
+
+## Fil d'issues
+
+`IssueFeedService` sert `/issues`. `parseIssueFilters` (`app/validators/issue_filters.ts`) applique la même règle que le catalogue : des paramètres explicites remplacent les préférences du lecteur. Le catalogue `shared/issues.ts` définit les types d'issue (`good-first-issue`, `help-wanted`, `documentation`), le label GitHub recherché pour chacun et la lecture des signaux depuis les labels. Les langages viennent de `shared/preferences.ts`.
+
+`GitHubIssueSyncService` reprend la politique de fraîcheur des recherches de dépôts pour chaque couple `(language, kind)` : TTL de 6 heures (`cache.issueFetchTtlHours`), verrou consultatif PostgreSQL, budget de recherches distantes partagé avec `GitHubSyncService` (`tryAcquireSearchPermit`) et report de 60 secondes après un échec. L'adapter appelle `searchIssues`, une recherche GraphQL qui renvoie l'issue et son dépôt. L'import écarte les dépôts archivés ou privés et les issues fermées par une pull request ouverte (`closedByPullRequestsReferences`), enregistre ou met à jour le dépôt sous le même verrou d'identité que les recherches de dépôts, puis remplace les appartenances du critère. Les issues qu'aucune recherche ne liste plus sont supprimées ; les verrous par issue empêchent un autre critère de les rattacher pendant ce nettoyage. Seule la première page déclenche ces actualisations ; `refreshState` a la même signification que pour le catalogue. `IssueTransformer` définit la carte transmise au navigateur.
 
 La pagination des favoris normalise et ramène les pages à la dernière page disponible, avec un ordre stable par date puis identifiant. Après suppression, le navigateur relit la page canonique.
 

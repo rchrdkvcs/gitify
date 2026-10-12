@@ -6,6 +6,7 @@ export type ScannedRoutes = {
   ALL: {
     'pages.home': { paramsTuple?: []; params?: {} }
     'pages.explore': { paramsTuple?: []; params?: {} }
+    'pages.issues': { paramsTuple?: []; params?: {} }
     'pages.project': { paramsTuple: [ParamValue,ParamValue]; params: {'owner': ParamValue,'name': ParamValue} }
     'auth.redirect': { paramsTuple?: []; params?: {} }
     'auth.callback': { paramsTuple?: []; params?: {} }
@@ -18,6 +19,7 @@ export type ScannedRoutes = {
   GET: {
     'pages.home': { paramsTuple?: []; params?: {} }
     'pages.explore': { paramsTuple?: []; params?: {} }
+    'pages.issues': { paramsTuple?: []; params?: {} }
     'pages.project': { paramsTuple: [ParamValue,ParamValue]; params: {'owner': ParamValue,'name': ParamValue} }
     'auth.redirect': { paramsTuple?: []; params?: {} }
     'auth.callback': { paramsTuple?: []; params?: {} }
@@ -26,6 +28,7 @@ export type ScannedRoutes = {
   HEAD: {
     'pages.home': { paramsTuple?: []; params?: {} }
     'pages.explore': { paramsTuple?: []; params?: {} }
+    'pages.issues': { paramsTuple?: []; params?: {} }
     'pages.project': { paramsTuple: [ParamValue,ParamValue]; params: {'owner': ParamValue,'name': ParamValue} }
     'auth.redirect': { paramsTuple?: []; params?: {} }
     'auth.callback': { paramsTuple?: []; params?: {} }

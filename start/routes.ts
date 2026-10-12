@@ -5,6 +5,7 @@ import { middleware } from "#start/kernel";
 // Public catalogue: browsing never requires an account.
 router.get("/", [controllers.Pages, "home"]);
 router.get("/explore", [controllers.Pages, "explore"]);
+router.get("/issues", [controllers.Pages, "issues"]);
 router.get("/projects/:owner/:name", [controllers.Pages, "project"]);
 router.get("/auth/github/redirect", [controllers.Auth, "redirect"]);
 router.get("/auth/github/callback", [controllers.Auth, "callback"]);
