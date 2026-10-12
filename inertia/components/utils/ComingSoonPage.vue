@@ -2,9 +2,7 @@
 defineProps<{
   eyebrow: string;
   title: string;
-  highlightedTitle: string;
   description: string;
-  icon: string;
   previewItems: Array<{
     icon: string;
     title: string;
@@ -14,107 +12,46 @@ defineProps<{
 </script>
 
 <template>
-  <main class="relative isolate overflow-hidden">
-    <div
-      aria-hidden="true"
-      class="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_50%_20%,rgba(78,222,163,0.12),transparent_35%),linear-gradient(to_bottom,transparent,rgba(20,53,43,0.18))]"
-    />
-    <div
-      aria-hidden="true"
-      class="absolute inset-0 -z-10 [background-image:linear-gradient(rgba(166,240,211,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(166,240,211,0.08)_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black,transparent_75%)] [background-size:48px_48px] opacity-20"
-    />
+  <FrameSection inner-class="px-4 py-16 sm:px-8 sm:py-24">
+    <div class="flex flex-col items-start gap-6">
+      <p
+        class="inline-flex items-center gap-2 border border-default px-3 py-1.5 font-mono text-xs text-muted"
+      >
+        <span class="size-1.5 border border-accented" aria-hidden="true" />
+        {{ eyebrow }}
+      </p>
+      <h1 class="display max-w-3xl">{{ title }}</h1>
+      <p class="max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
+        {{ description }}
+      </p>
+      <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+        <UButton
+          to="/explore"
+          label="Explorer les projets"
+          trailing-icon="lucide:arrow-right"
+          size="lg"
+        />
+        <UButton to="/" label="Retour à l’accueil" color="neutral" variant="outline" size="lg" />
+      </div>
+    </div>
+  </FrameSection>
 
-    <UContainer class="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center py-16">
-      <section class="w-full max-w-5xl text-center">
-        <div class="mb-8 flex justify-center">
-          <div class="coming-soon-icon relative flex size-24 items-center justify-center">
-            <div
-              class="absolute inset-0 rotate-6 rounded-2xl border border-primary/40 bg-primary/10"
-            />
-            <div
-              class="absolute inset-2 -rotate-6 rounded-xl border border-green-500/30 bg-surface"
-            />
-            <UIcon :name="icon" class="relative size-10 text-primary" />
-          </div>
+  <FrameSection>
+    <div class="border-b border-default px-4 py-4 sm:px-8">
+      <h2 class="eyebrow">Ce qui arrive</h2>
+    </div>
+    <ul class="grid gap-px bg-(--ui-border) sm:grid-cols-3">
+      <li
+        v-for="item in previewItems"
+        :key="item.title"
+        class="flex flex-col gap-3 bg-default p-6 sm:p-8"
+      >
+        <div class="flex items-center gap-2.5">
+          <UIcon :name="item.icon" class="size-4.5 text-muted" aria-hidden="true" />
+          <h3 class="font-medium text-highlighted">{{ item.title }}</h3>
         </div>
-
-        <UBadge color="primary" variant="subtle" class="mb-6 uppercase">
-          {{ eyebrow }}
-        </UBadge>
-
-        <h1 class="title mx-auto max-w-4xl text-4xl sm:text-5xl lg:text-7xl">
-          {{ title }}
-          <span class="text-primary">{{ highlightedTitle }}</span>
-        </h1>
-
-        <p class="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted sm:text-lg">
-          {{ description }}
-        </p>
-
-        <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <UButton
-            to="/explore"
-            color="primary"
-            icon="lucide:rocket"
-            label="Explorer les projets"
-            size="lg"
-          />
-          <UButton
-            to="/"
-            color="secondary"
-            icon="lucide:arrow-left"
-            label="Retour à l'accueil"
-            size="lg"
-          />
-        </div>
-
-        <div class="mt-16 grid gap-3 text-left sm:grid-cols-3">
-          <article
-            v-for="item in previewItems"
-            :key="item.title"
-            class="group rounded-lg border border-border bg-surface p-5 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-brand-green/40 hover:bg-surface"
-          >
-            <UIcon
-              :name="item.icon"
-              class="mb-4 size-6 text-green-500 transition-transform duration-300 group-hover:scale-110"
-            />
-            <h2 class="font-jetbrains font-semibold text-ink">{{ item.title }}</h2>
-            <p class="mt-2 text-sm leading-6 text-muted">{{ item.description }}</p>
-          </article>
-        </div>
-
-        <div class="mt-12 flex items-center justify-center gap-3 text-sm text-muted">
-          <span class="relative flex size-2">
-            <span
-              class="absolute inline-flex size-full animate-ping rounded-full bg-green-500 opacity-75"
-            />
-            <span class="relative inline-flex size-2 rounded-full bg-green-500" />
-          </span>
-          <span class="font-jetbrains">En cours de construction</span>
-        </div>
-      </section>
-    </UContainer>
-  </main>
+        <p class="text-sm leading-relaxed text-muted">{{ item.description }}</p>
+      </li>
+    </ul>
+  </FrameSection>
 </template>
-
-<style scoped>
-.coming-soon-icon {
-  animation: float 4s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .coming-soon-icon {
-    animation: none;
-  }
-}
-</style>

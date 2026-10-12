@@ -1,6 +1,7 @@
 import type { Project } from "@shared/types/index";
 
-const BATCH_COUNT = 4;
+// Multiple of 2 and 3 so every grid layout closes on a full row.
+const BATCH_COUNT = 12;
 
 export type StarSort = "default" | "most-starred" | "least-starred";
 
@@ -46,12 +47,22 @@ export function useProjects(source: () => Project[]) {
     visibleCount.value = BATCH_COUNT;
   });
 
+  const total = computed(() => filteredPool.value.length);
+
+  function resetFilters(languages: string[] = []) {
+    languageFilter.value = [...languages];
+    searchQuery.value = "";
+    starSort.value = "default";
+  }
+
   return {
     projects,
+    total,
     hasMore,
     languageFilter,
     searchQuery,
     starSort,
     loadMore,
+    resetFilters,
   };
 }

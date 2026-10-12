@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { PaginationMeta, Project } from "@shared/types/index";
-import { router } from "@inertiajs/vue3";
+import { Head, router } from "@inertiajs/vue3";
+
 const props = defineProps<{ projects: Project[]; meta: PaginationMeta }>();
 const projects = ref([...props.projects]);
 const meta = ref({ ...props.meta });
+
 watch(
   () => props.meta,
   (value) => {
@@ -16,11 +18,10 @@ watch(
     projects.value = [...value];
   },
 );
+
 const loading = ref(false);
 const error = ref<string | null>(null);
-function fetchFavorites() {
-  goToPage(meta.value.currentPage);
-}
+
 function goToPage(page: number) {
   router.get(
     "/favorites",
@@ -36,80 +37,110 @@ function goToPage(page: number) {
         loading.value = false;
       },
       onError: () => {
-        error.value = "Impossible de charger vos favoris.";
+        error.value = "Impossible de charger tes favoris. Vérifie ta connexion et réessaie.";
       },
     },
   );
 }
 
 function handleFavoriteChange(projectId: string, isFavorite: boolean) {
-  if (isFavorite) {
-    return;
-  }
-
+  if (isFavorite) return;
   projects.value = projects.value.filter((project) => project.id !== projectId);
-  if (meta.value) {
-    meta.value.total = Math.max(0, meta.value.total - 1);
-  }
+  meta.value.total = Math.max(0, meta.value.total - 1);
 }
+
+const countLabel = computed(() =>
+  meta.value.total === 1 ? "1 projet gardé" : `${meta.value.total} projets gardés`,
+);
 </script>
 
 <template>
-  <div class="min-h-screen bg-canvas px-4 py-8 text-ink sm:px-6 lg:px-8">
-    <div class="mx-auto max-w-7xl">
-      <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 class="font-jetbrains text-3xl font-bold text-ink">Mes favoris</h1>
-          <p class="mt-2 text-muted">Retrouvez rapidement les repositories que vous avez gardés.</p>
-        </div>
-        <UButton label="Explorer les projets" icon="lucide:search" color="primary" to="/explore" />
-      </div>
+  <Head title="Favoris" />
 
-      <div v-if="loading" class="grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3">
-        <ProjectCardSkeleton v-for="n in 6" :key="n" />
-      </div>
+  <PageHeader
+    eyebrow="Favoris"
+    title="Tes projets gardés"
+    description="Les projets que tu as mis de côté pendant ton exploration."
+  >
+    <template v-if="projects.length" #actions>
+      <UButton
+        to="/explore"
+        label="Explorer les projets"
+        trailing-icon="lucide:arrow-right"
+        color="neutral"
+        variant="outline"
+      />
+    </template>
+  </PageHeader>
 
-      <div v-else-if="error" class="py-16 text-center">
-        <p class="text-red-700">{{ error }}</p>
-        <UButton class="mt-4" label="Réessayer" color="secondary" @click="fetchFavorites" />
-      </div>
-
-      <div v-else-if="projects.length === 0" class="py-16 text-center text-muted">
-        <UIcon name="tabler:heart" class="mx-auto mb-4 size-12 text-primary" />
-        <p class="text-xl font-semibold text-ink">Aucun favori pour le moment.</p>
-        <p class="mt-2 text-sm">Ajoutez un projet depuis l’exploration pour le retrouver ici.</p>
-        <UButton class="mt-6" label="Découvrir les projets" color="primary" to="/explore" />
-      </div>
-
-      <template v-else>
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 2xl:grid-cols-3">
-          <ProjectCard
-            v-for="project in projects"
-            :key="project.id"
-            :project="project"
-            class="h-full"
-            @favorite-change="handleFavoriteChange"
-          />
-        </div>
-
-        <div v-if="meta && meta.lastPage > 1" class="mt-8 flex items-center justify-center gap-4">
-          <UButton
-            icon="lucide:arrow-left"
-            label="Précédent"
-            color="secondary"
-            :disabled="meta.currentPage === 1"
-            @click="goToPage(meta.currentPage - 1)"
-          />
-          <span class="text-sm text-muted">{{ meta.currentPage }} / {{ meta.lastPage }}</span>
-          <UButton
-            trailing-icon="lucide:arrow-right"
-            label="Suivant"
-            color="secondary"
-            :disabled="meta.currentPage === meta.lastPage"
-            @click="goToPage(meta.currentPage + 1)"
-          />
-        </div>
-      </template>
+  <FrameSection>
+    <div
+      v-if="projects.length || loading"
+      class="flex items-center justify-between border-b border-default px-4 py-3 font-mono text-xs text-muted sm:px-5"
+    >
+      <p role="status">{{ countLabel }}</p>
+      <p v-if="meta.lastPage > 1" class="tabular-nums">
+        Page {{ meta.currentPage }} sur {{ meta.lastPage }}
+      </p>
     </div>
-  </div>
+
+    <ProjectGrid v-if="loading">
+      <ProjectGridItem v-for="n in 6" :key="n">
+        <ProjectCardSkeleton />
+      </ProjectGridItem>
+    </ProjectGrid>
+
+    <EmptyState
+      v-else-if="error"
+      icon="lucide:wifi-off"
+      title="Chargement impossible"
+      :description="error"
+    >
+      <UButton
+        label="Réessayer"
+        color="neutral"
+        variant="outline"
+        @click="goToPage(meta.currentPage)"
+      />
+    </EmptyState>
+
+    <EmptyState
+      v-else-if="projects.length === 0"
+      icon="lucide:heart"
+      title="Aucun favori pour l’instant"
+      description="Touche le cœur d’un projet pendant ton exploration pour le retrouver ici."
+    >
+      <UButton to="/explore" label="Explorer les projets" trailing-icon="lucide:arrow-right" />
+    </EmptyState>
+
+    <template v-else>
+      <ProjectGrid>
+        <ProjectGridItem v-for="project in projects" :key="project.id">
+          <ProjectCard :project="project" @favorite-change="handleFavoriteChange" />
+        </ProjectGridItem>
+      </ProjectGrid>
+    </template>
+  </FrameSection>
+
+  <FrameSection
+    v-if="meta.lastPage > 1 && !error"
+    inner-class="flex justify-between px-4 py-4 sm:px-5"
+  >
+    <UButton
+      icon="lucide:arrow-left"
+      label="Précédent"
+      color="neutral"
+      variant="outline"
+      :disabled="meta.currentPage === 1 || loading"
+      @click="goToPage(meta.currentPage - 1)"
+    />
+    <UButton
+      trailing-icon="lucide:arrow-right"
+      label="Suivant"
+      color="neutral"
+      variant="outline"
+      :disabled="meta.currentPage === meta.lastPage || loading"
+      @click="goToPage(meta.currentPage + 1)"
+    />
+  </FrameSection>
 </template>

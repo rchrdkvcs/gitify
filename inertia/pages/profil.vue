@@ -1,130 +1,104 @@
 <script setup lang="ts">
+import { Head } from "@inertiajs/vue3";
+
 const authStore = useAuth();
 const user = computed(() => authStore.user);
-const hasPreferences = computed(() => !!user.value?.preferences);
-const visibleLanguages = computed(() => user.value?.preferences?.languages?.slice(0, 2) || []);
-const hiddenLanguages = computed(() => user.value?.preferences?.languages?.slice(2) || []);
+const preferences = computed(() => user.value?.preferences ?? null);
 
-const handleLogout = async () => {
-  await authStore.logout();
-};
-
-const profileStatus = computed(() => {
-  return hasPreferences.value
-    ? {
-        wrapper: "bg-green-500/5 border-green-500",
-        iconBg: "bg-green-500/10 border-green-500/30",
-        icon: "lets-icons:check-fill",
-        textColor: "text-green-500",
-        subTextColor: "text-green-500/80",
-        title: "Profil Complet",
-        description: "Vos préférences de recherche sont configurées.",
-      }
-    : {
-        wrapper: "bg-yellow-500/5 border-yellow-500",
-        iconBg: "bg-yellow-500/10 border-yellow-500/30",
-        icon: "carbon:warning-filled",
-        textColor: "text-yellow-500",
-        subTextColor: "text-yellow-500/80",
-        title: "Profil Incomplet",
-        description: "Veuillez renseigner vos critères de recherche.",
-      };
+const levelLabel = computed(() => {
+  if (!preferences.value) return null;
+  return preferences.value.difficulty === "expert" ? "Confirmé" : "Débutant";
 });
+
+const levelHint = computed(() =>
+  preferences.value?.difficulty === "expert"
+    ? "Projets populaires qui cherchent de l’aide (help wanted)."
+    : "Projets avec des issues pensées pour débuter (good first issue).",
+);
 </script>
+
 <template>
-  <div class="px-4 sm:px-6 md:px-8 lg:px-10 xl:px-20">
-    <section class="my-5 flex flex-col items-center gap-6 md:my-12 md:flex-row md:justify-between">
-      <div class="flex flex-col items-center md:flex md:flex-row md:gap-6">
-        <UUser
-          :ui="{ avatar: 'size-40 border border-border', root: 'w-min' }"
-          :avatar="{ src: user?.avatarUrl ?? undefined, alt: user?.name ?? undefined }"
-        />
-        <div class="mt-3 flex flex-col items-center gap-3 md:items-start md:justify-center">
-          <span class="font-jetbrains text-sm text-brand-green uppercase"
-            >Connecté en tant que</span
-          >
-          <div class="flex items-center justify-center gap-2">
-            <UIcon class="size-6 md:size-9" name="ix:user-profile" />
-            <p class="font-jetbrains text-2xl md:text-3xl">{{ user?.name }}</p>
+  <Head title="Profil" />
+
+  <PageHeader
+    eyebrow="Profil"
+    :title="user?.name ?? 'Mon profil'"
+    :description="user?.email ?? undefined"
+  >
+    <template #leading>
+      <UAvatar
+        :src="user?.avatarUrl ?? undefined"
+        alt=""
+        class="mb-3 size-16 border border-default text-2xl"
+      />
+    </template>
+    <template #actions>
+      <UButton
+        icon="lucide:log-out"
+        label="Se déconnecter"
+        color="neutral"
+        variant="ghost"
+        @click="authStore.logout()"
+      />
+    </template>
+  </PageHeader>
+
+  <FrameSection>
+    <div class="grid lg:grid-cols-[16rem_1fr]">
+      <div class="border-b border-default p-5 sm:p-8 lg:border-e lg:border-b-0">
+        <h2 class="font-medium text-highlighted">Préférences</h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted">
+          Elles décident des projets proposés dans ton fil.
+        </p>
+      </div>
+
+      <div v-if="preferences" class="flex flex-col">
+        <dl class="grid gap-px bg-(--ui-border) sm:grid-cols-2">
+          <div class="flex flex-col gap-2 bg-default p-5 sm:p-8">
+            <dt class="eyebrow">Niveau</dt>
+            <dd class="text-lg text-highlighted">{{ levelLabel }}</dd>
+            <dd class="text-sm text-muted">{{ levelHint }}</dd>
           </div>
-          <p class="text-md text-muted">{{ user?.email }}</p>
+          <div class="flex flex-col gap-3 bg-default p-5 sm:p-8">
+            <dt class="eyebrow">Langages</dt>
+            <dd class="flex flex-wrap gap-1.5">
+              <span
+                v-for="lang in preferences.languages"
+                :key="lang"
+                class="border border-accented px-2 py-1 font-mono text-xs text-toned"
+              >
+                {{ formatLanguage(lang) }}
+              </span>
+            </dd>
+          </div>
+        </dl>
+        <div class="border-t border-default p-5 sm:px-8">
+          <UButton
+            to="/preferences"
+            icon="lucide:sliders-horizontal"
+            label="Modifier mes préférences"
+            color="neutral"
+            variant="outline"
+          />
         </div>
       </div>
 
-      <div class="mt-8 flex w-full flex-wrap justify-center gap-3 md:mt-0 md:w-auto md:flex-col">
+      <div v-else class="flex flex-col items-start gap-4 p-5 sm:p-8">
+        <div class="flex items-start gap-3">
+          <UIcon name="lucide:circle-alert" class="mt-0.5 size-5 shrink-0 text-toned" />
+          <div>
+            <p class="font-medium text-highlighted">Préférences à compléter</p>
+            <p class="mt-1 text-sm text-muted">
+              Indique ton niveau et tes langages pour débloquer ton fil de projets.
+            </p>
+          </div>
+        </div>
         <UButton
-          icon="lucide:log-out"
-          label="Se déconnecter"
-          color="primary"
-          @click="handleLogout"
-          class="w-auto"
-        />
-        <UButton
-          v-if="hasPreferences"
-          icon="mdi:pencil"
-          label="Éditer le profil"
-          color="secondary"
-          variant="ghost"
           to="/preferences"
-          class="w-auto"
-          block
+          label="Compléter mes préférences"
+          trailing-icon="lucide:arrow-right"
         />
       </div>
-    </section>
-
-    <USeparator />
-
-    <section
-      class="my-5 flex flex-col items-center gap-6 rounded-md border p-6 md:my-12 md:flex-row md:justify-between"
-      :class="profileStatus.wrapper"
-    >
-      <div class="flex flex-col items-center gap-6 md:flex-row md:items-center md:gap-4">
-        <div
-          class="flex size-12 items-center justify-center rounded-full border"
-          :class="profileStatus.iconBg"
-        >
-          <UIcon class="size-6" :name="profileStatus.icon" :class="profileStatus.textColor" />
-        </div>
-
-        <div class="flex flex-1 flex-col gap-1 text-center md:text-left">
-          <h3 class="font-grotesk text-xl font-bold md:text-2xl" :class="profileStatus.textColor">
-            {{ profileStatus.title }}
-          </h3>
-          <p :class="profileStatus.subTextColor">
-            {{ profileStatus.description }}
-          </p>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center justify-center gap-2">
-        <template v-if="hasPreferences">
-          <UBadge color="secondary">
-            <UIcon name="material-symbols:check" class="size-4 text-green-500" />
-            Niveau: {{ user?.preferences?.difficulty }}
-          </UBadge>
-
-          <UBadge v-for="lang in visibleLanguages" :key="lang" color="secondary">
-            <UIcon name="material-symbols:check" class="size-4 text-green-500" />
-            {{ lang }}
-          </UBadge>
-
-          <UTooltip arrow v-if="hiddenLanguages.length > 0" :text="hiddenLanguages.join(', ')">
-            <UBadge color="secondary">
-              <UIcon name="material-symbols:check" class="size-4 text-green-500" />
-              +{{ hiddenLanguages.length }}
-            </UBadge>
-          </UTooltip>
-        </template>
-
-        <UButton
-          v-else
-          icon="mdi:pencil"
-          label="Éditer le profil"
-          color="warning"
-          to="/preferences"
-          class="w-auto"
-        />
-      </div>
-    </section>
-  </div>
+    </div>
+  </FrameSection>
 </template>

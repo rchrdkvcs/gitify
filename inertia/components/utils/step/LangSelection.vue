@@ -10,37 +10,43 @@ const emit = defineEmits<{
   (e: "toggle", title: string): void;
 }>();
 
-const isSelected = (title: string) => {
-  return props.languages.includes(title.toLowerCase());
-};
-
-const handleToggle = (title: string) => {
-  emit("toggle", title.toLowerCase());
-};
+const isSelected = (title: string) => props.languages.includes(title.toLowerCase());
 </script>
 
 <template>
-  <div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-    <UCard
-      v-for="item in items"
-      :key="item.title"
-      @click="handleToggle(item.title)"
-      class="preferences-card block hover:bg-surface! md:p-4"
-      :class="{ 'preferences-card-active': isSelected(item.title) }"
-      :ui="{ body: 'items-center gap-6' }"
-    >
-      <UIcon v-if="isSelected(item.title)" name="lets-icons:check-fill" class="check-icon" />
-      <div class="container-icon size-12" :class="{ 'bg-primary/20': isSelected(item.title) }">
+  <fieldset>
+    <legend class="sr-only">Langages</legend>
+    <div class="grid grid-cols-2 border-s border-t border-default sm:grid-cols-3 md:grid-cols-4">
+      <label
+        v-for="item in items"
+        :key="item.title"
+        class="group relative flex cursor-pointer items-center gap-3 border-e border-b border-default bg-default p-4 transition-colors duration-150 hover:bg-muted has-checked:bg-muted has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-primary"
+      >
+        <input
+          type="checkbox"
+          class="peer sr-only"
+          :checked="isSelected(item.title)"
+          @change="emit('toggle', item.title.toLowerCase())"
+        />
         <span
-          class="font-jetbrains text-xl font-bold text-muted"
-          :class="{ 'text-primary': isSelected(item.title) }"
+          class="absolute -inset-px border border-transparent peer-checked:border-primary"
+          aria-hidden="true"
+        />
+        <span
+          class="flex size-9 shrink-0 items-center justify-center border border-default font-mono text-xs text-muted group-has-checked:border-primary/50 group-has-checked:text-primary"
+          aria-hidden="true"
         >
           {{ item.label || item.title }}
         </span>
-      </div>
-      <p class="font-medium text-muted" :class="{ 'text-ink': isSelected(item.title) }">
-        {{ item.title }}
-      </p>
-    </UCard>
-  </div>
+        <span class="min-w-0 flex-1 truncate text-sm text-toned group-has-checked:text-highlighted">
+          {{ item.title }}
+        </span>
+        <UIcon
+          name="lucide:check"
+          class="size-4 text-primary opacity-0 group-has-checked:opacity-100"
+          aria-hidden="true"
+        />
+      </label>
+    </div>
+  </fieldset>
 </template>

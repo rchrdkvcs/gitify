@@ -1,77 +1,91 @@
 <script setup lang="ts">
-import type { DropdownMenuItem } from "@nuxt/ui";
+import type { DropdownMenuItem, NavigationMenuItem } from "@nuxt/ui";
 
 const authStore = useAuth();
 const isLoading = ref(false);
 
-const navigationItems = ref([
+const navigationItems: NavigationMenuItem[] = [
   { label: "Explorer", to: "/explore" },
+  { label: "Favoris", to: "/favorites" },
   { label: "Communauté", to: "/community" },
   { label: "Ressources", to: "/ressources" },
-]);
+];
 
 const handleLogin = () => {
   isLoading.value = true;
   window.location.href = authStore.authenticate();
 };
 
-const handleLogout = async () => {
-  await authStore.logout();
-};
-
-const dropdownItems = [
+const dropdownItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
-      label: "Profil",
-      icon: "ix:user-profile-filled",
-      to: "/profil",
-    },
-    {
-      label: "Mes favoris",
-      icon: "tabler:heart-filled",
-      to: "/favorites",
-    },
-    {
-      label: "Déconnexion",
-      color: "error",
-      icon: "lucide:log-out",
-      onSelect: handleLogout,
+      type: "label",
+      label: authStore.user?.name ?? "Mon compte",
     },
   ],
-] satisfies DropdownMenuItem[][];
+  [
+    { label: "Profil", icon: "lucide:user", to: "/profil" },
+    { label: "Favoris", icon: "lucide:heart", to: "/favorites" },
+    { label: "Préférences", icon: "lucide:sliders-horizontal", to: "/preferences" },
+  ],
+  [
+    {
+      label: "Se déconnecter",
+      icon: "lucide:log-out",
+      onSelect: () => authStore.logout(),
+    },
+  ],
+]);
 </script>
 
 <template>
-  <UHeader class="border-b border-border bg-canvas">
+  <UHeader
+    :ui="{
+      container: 'sm:border-x sm:border-default',
+      center: 'lg:flex',
+    }"
+  >
     <template #left>
-      <ULink to="/">
-        <AppLogo />
+      <ULink to="/" aria-label="Gitify, accueil" class="text-highlighted">
+        <AppLogo class="h-6 w-auto" />
       </ULink>
     </template>
 
-    <UNavigationMenu :items="navigationItems" />
+    <UNavigationMenu
+      :items="navigationItems"
+      :ui="{ link: 'text-sm px-3 py-1.5', linkLabel: 'font-normal' }"
+    />
 
     <template #body>
-      <UNavigationMenu :items="navigationItems" />
+      <UNavigationMenu :items="navigationItems" orientation="vertical" class="-mx-2.5" />
     </template>
 
     <template #right>
       <UButton
         v-if="!authStore.isAuthenticated"
-        icon="lucide:log-in"
+        icon="lucide:github"
         label="Se connecter"
-        color="primary"
+        color="neutral"
+        size="md"
         :loading="isLoading"
         @click="handleLogin"
       />
 
-      <UDropdownMenu v-else arrow :items="dropdownItems" class="cursor-pointer">
-        <UUser
-          :avatar="{
-            src: authStore.user?.avatarUrl!,
-            alt: authStore.user?.name!,
-          }"
-        />
+      <UDropdownMenu
+        v-else
+        :items="dropdownItems"
+        :content="{ align: 'end' }"
+        :ui="{ content: 'w-56' }"
+      >
+        <UButton
+          color="neutral"
+          variant="ghost"
+          class="gap-2 px-1.5"
+          :aria-label="`Menu du compte ${authStore.user?.name ?? ''}`"
+          trailing-icon="lucide:chevron-down"
+        >
+          <UAvatar :src="authStore.user?.avatarUrl ?? undefined" alt="" size="xs" />
+        </UButton>
       </UDropdownMenu>
     </template>
   </UHeader>

@@ -1,127 +1,109 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { Head } from "@inertiajs/vue3";
 import type { ProjectGroup } from "~/types/projects";
 
 const props = defineProps<{ languages: ProjectGroup[] }>();
 
-const selectedLanguage = ref("Tous les langages");
-const filteredShowcaseData = ref<ProjectGroup[]>([]);
+const authStore = useAuth();
+const isLoading = ref(false);
 
-const availableLanguages = computed(() => {
-  if (!props.languages) return ["Tous les langages"];
-  return ["Tous les langages", ...props.languages.map((group) => group.language)];
-});
-
-const updateShowcaseData = () => {
-  if (!props.languages) return;
-
-  if (selectedLanguage.value === "Tous les langages") {
-    const allProjects = props.languages.flatMap((group) => group.projects);
-
-    const shuffled = [...allProjects];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    filteredShowcaseData.value = [
-      { language: "Tous les langages", projects: shuffled.slice(0, 6) },
-    ];
-  } else {
-    filteredShowcaseData.value = props.languages.filter(
-      (group) => group.language.toLowerCase() === selectedLanguage.value.toLowerCase(),
-    );
-  }
+const handleLogin = () => {
+  isLoading.value = true;
+  window.location.href = authStore.authenticate();
 };
 
-watch(selectedLanguage, updateShowcaseData);
-watch(() => props.languages, updateShowcaseData, { immediate: true });
-
-onMounted(() => {
-  if (selectedLanguage.value === "Tous les langages") updateShowcaseData();
-});
+const stats = computed(() => [
+  {
+    value: String(props.languages?.reduce((sum, group) => sum + group.projects.length, 0) ?? 0),
+    label: "projets en vitrine",
+  },
+  { value: String(props.languages?.length ?? 0), label: "langages suivis" },
+  { value: "2", label: "niveaux : débutant et confirmé" },
+  { value: "24 h", label: "entre deux synchronisations GitHub" },
+]);
 </script>
 
 <template>
-  <UPageHero
-    class="py-32"
-    description="Le tremplin des développeurs juniors. Trouvez des Good First Issues, fusionnez votre première PR et faites décoller votre carrière aux côtés d'une communauté de passionnés."
-    :links="[
-      { label: 'Commencer à contribuer', to: '/explore', color: 'primary', icon: 'lucide:rocket' },
-      { label: 'En savoir plus', to: '/ressources', color: 'secondary', icon: 'lucide:book-open' },
-    ]"
-  >
-    <template #top>
-      <HeroBackground />
-    </template>
-
-    <template #title>
-      <h1 class="title text-5xl">Coder, Collaborer, <span class="text-primary">Conquérir</span></h1>
-    </template>
-  </UPageHero>
-
-  <UContainer class="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2 lg:grid-cols-3">
-    <UPageCard
-      v-for="feature in featuresItems"
-      :key="feature.title"
-      :title="feature.title"
-      :description="feature.description"
-      :icon="feature.icon"
-      :ui="{
-        container: feature.bgClass,
-        leading: feature.wrapperClass,
-        leadingIcon: feature.iconColorClass,
-      }"
+  <Head title="Trouve ta première contribution open source">
+    <meta
+      name="description"
+      content="Gitify trouve des projets GitHub adaptés à ton niveau et à tes langages, avec des issues prêtes à être prises."
     />
-  </UContainer>
+  </Head>
 
-  <UContainer class="flex flex-col gap-8 py-8 lg:gap-8 lg:py-16 xl:gap-16 xl:py-20">
-    <div class="flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h3 class="text-xl font-semibold lg:text-2xl xl:text-4xl">Repositories à la une</h3>
-        <p class="text-muted xl:text-lg">
-          Découvrez des projets qui ont besoin de votre aide dès maintenant.
-        </p>
+  <FrameSection>
+    <HeroCommitGraph class="min-h-[min(46rem,calc(100dvh-var(--ui-header-height)))]">
+      <p
+        class="mb-8 inline-flex items-center gap-2 border border-default bg-default px-3 py-1.5 font-mono text-xs text-muted"
+      >
+        <span class="size-1.5 bg-primary" aria-hidden="true" />
+        Open source · premières contributions
+      </p>
+
+      <h1 class="display">Ta première contribution open source commence ici.</h1>
+
+      <p class="mt-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
+        Gitify trouve des projets GitHub adaptés à ton niveau et à tes langages, avec des issues
+        prêtes à être prises. Choisis, clone, ouvre ta pull request.
+      </p>
+
+      <div class="mt-10 flex w-full flex-col gap-3 sm:w-auto sm:flex-row [&>*]:justify-center">
+        <template v-if="!authStore.isAuthenticated">
+          <UButton
+            icon="lucide:github"
+            label="Se connecter avec GitHub"
+            size="lg"
+            :loading="isLoading"
+            @click="handleLogin"
+          />
+          <UButton
+            to="#comment-ca-marche"
+            label="Comment ça marche"
+            color="neutral"
+            variant="outline"
+            size="lg"
+          />
+        </template>
+        <template v-else>
+          <UButton
+            to="/explore"
+            trailing-icon="lucide:arrow-right"
+            label="Explorer les projets"
+            size="lg"
+          />
+          <UButton
+            to="/favorites"
+            label="Mes favoris"
+            color="neutral"
+            variant="outline"
+            size="lg"
+          />
+        </template>
       </div>
 
-      <div class="w-full shrink-0 sm:w-72">
-        <USelectMenu
-          v-model="selectedLanguage"
-          :items="availableLanguages"
-          icon="lucide:code"
-          size="lg"
-          class="w-full capitalize"
-        />
+      <p v-if="!authStore.isAuthenticated" class="mt-6 font-mono text-xs text-dimmed">
+        Connexion via GitHub · aucun mot de passe
+      </p>
+    </HeroCommitGraph>
+  </FrameSection>
+
+  <FrameSection>
+    <dl class="grid grid-cols-2 gap-px bg-(--ui-border) lg:grid-cols-4">
+      <div
+        v-for="stat in stats"
+        :key="stat.label"
+        class="flex flex-col-reverse gap-1 bg-default px-4 py-6 sm:px-8 sm:py-8"
+      >
+        <dt class="text-sm text-muted">{{ stat.label }}</dt>
+        <dd class="font-mono text-2xl text-highlighted tabular-nums sm:text-3xl">
+          {{ stat.value }}
+        </dd>
       </div>
-    </div>
+    </dl>
+  </FrameSection>
 
-    <UPageGrid>
-      <template v-for="group in filteredShowcaseData" :key="group.language">
-        <ProjectCard v-for="project in group.projects" :key="project.id" :project="project" />
-      </template>
-    </UPageGrid>
-
-    <UButton
-      trailing-icon="lucide:arrow-right"
-      label="View All Repositories"
-      color="secondary"
-      variant="ghost"
-      to="/explore"
-      class="mx-auto w-fit"
-      block
-    />
-  </UContainer>
-
-  <UPageSection
-    title="Prêt à te démarquer ?"
-    description="Connecte ton compte GitHub dès aujourd'hui et commence à bâtir ton portfolio de développeur avec des contributions concrètes."
-    :ui="{
-      root: 'bg-linear-to-t from-[#E9F5F0] to-transparent',
-      header: 'flex flex-col items-center',
-      title: 'font-jetbrains',
-      description: 'w-auto lg:w-1/2',
-    }"
-    :links="[
-      { label: 'Start Contributing', to: '/explore', color: 'primary', icon: 'lucide:rocket' },
-    ]"
-  />
+  <HowItWorks />
+  <FeatureGrid />
+  <ShowcaseSection :languages="languages" />
+  <CtaSection />
 </template>

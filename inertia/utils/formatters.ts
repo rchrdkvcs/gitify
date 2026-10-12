@@ -10,25 +10,6 @@ export const timeAgo = (dateString: string | null) => {
   return rtf.format(diffInDays, "day");
 };
 
-const AVATAR_COLORS: Record<string, string> = {
-  typescript: "bg-linear-to-br from-[#3178C6] to-[#133051] text-white",
-  javascript: "bg-linear-to-br from-[#F7DF1E] to-[#7F6F0D] text-ink",
-  python: "bg-linear-to-br from-[#3776AB] to-[#163047] text-white",
-  rust: "bg-linear-to-br from-[#CE412B] to-[#691F15] text-white",
-  go: "bg-linear-to-br from-[#00ADD8] to-[#005870] text-white",
-  "c++": "bg-linear-to-br from-[#00599C] to-[#002C4E] text-white",
-  php: "bg-linear-to-br from-[#777BB4] to-[#3E3E5D] text-white",
-  java: "bg-linear-to-br from-[#ED8B00] to-[#794600] text-white",
-  kotlin: "bg-linear-to-br from-[#7F52FF] to-[#402980] text-white",
-  swift: "bg-linear-to-br from-[#F05138] to-[#7F291D] text-white",
-  dart: "bg-linear-to-br from-[#0175C2] to-[#013B63] text-white",
-  ruby: "bg-linear-to-br from-[#CC342D] to-[#671A17] text-white",
-};
-
-export const getAvatarColor = (language: string | null) => {
-  return AVATAR_COLORS[language?.toLowerCase() ?? ""] || "bg-gray-500/20 text-muted";
-};
-
 export const formatDate = (iso: string | null) => {
   if (!iso) return "";
   const d = new Date(iso);
@@ -39,4 +20,26 @@ export const formatDate = (iso: string | null) => {
 
 export const formatCompact = (n: number) => {
   return new Intl.NumberFormat("en", { notation: "compact" }).format(n).toLowerCase();
+};
+
+const LANGUAGE_NAMES: Record<string, string> = {
+  typescript: "TypeScript",
+  javascript: "JavaScript",
+  python: "Python",
+  rust: "Rust",
+  go: "Go",
+  "c++": "C++",
+  "c#": "C#",
+  php: "PHP",
+  java: "Java",
+  kotlin: "Kotlin",
+  swift: "Swift",
+  dart: "Dart",
+  ruby: "Ruby",
+};
+
+// Languages are stored lowercase; this restores their usual spelling.
+export const formatLanguage = (language: string | null) => {
+  if (!language) return "";
+  return LANGUAGE_NAMES[language.toLowerCase()] ?? language;
 };

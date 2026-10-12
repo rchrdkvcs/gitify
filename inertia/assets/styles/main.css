@@ -1,112 +1,231 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-:root {
-  color-scheme: light;
-  --ui-radius: 0.5rem;
-  --ui-container: 90rem;
-  --ui-bg: var(--color-canvas);
-  --ui-bg-muted: var(--color-surface);
-  --ui-bg-elevated: var(--color-canvas);
-  --ui-bg-accented: var(--color-surface-strong);
-  --ui-text: var(--color-ink);
-  --ui-text-muted: var(--color-muted);
-  --ui-text-highlighted: var(--color-ink);
-  --ui-border: var(--color-border);
-  --ui-border-accented: var(--color-control);
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
+/*
+ * Gitify design system
+ * - One theme (dark), one accent hue (mint), one neutral ramp.
+ * - Square corners everywhere: structure comes from hairlines, not radius.
+ * - No decorative gradients. Depth comes from surface steps and borders.
+ */
 
 @theme {
-  --color-primary: #d9341a;
-  --color-canvas: #ffffff;
-  --color-surface: #f5f7f6;
-  --color-surface-strong: #e9efec;
-  --color-border: #d7e0db;
-  --color-control: #87968e;
-  --color-ink: #14201b;
-  --color-muted: #5e6b65;
-  --color-brand-green: #176b4b;
-  --color-green-500: #187a54;
-  --color-yellow-500: #855b00;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+}
 
-  --font-grotesk: "Space Grotesk Variable", sans-serif;
-  --font-jetbrains: "JetBrains Mono Variable", monospace;
-  --font-antic: "Antic", serif;
+/* `static` keeps every step emitted: Nuxt UI reads them at runtime. */
+@theme static {
+  /* Accent ramp — the only hue in the product. */
+  --color-mint-50: oklch(0.98 0.022 166);
+  --color-mint-100: oklch(0.955 0.05 165);
+  --color-mint-200: oklch(0.915 0.09 165);
+  --color-mint-300: oklch(0.87 0.135 164);
+  --color-mint-400: oklch(0.83 0.16 163);
+  --color-mint-500: oklch(0.75 0.155 163);
+  --color-mint-600: oklch(0.63 0.13 163);
+  --color-mint-700: oklch(0.52 0.105 164);
+  --color-mint-800: oklch(0.43 0.085 165);
+  --color-mint-900: oklch(0.36 0.068 166);
+  --color-mint-950: oklch(0.26 0.048 167);
+
+  /* Neutral ramp — near-achromatic, a hint of the accent hue. */
+  --color-graphite-50: oklch(0.985 0.002 165);
+  --color-graphite-100: oklch(0.965 0.003 165);
+  --color-graphite-200: oklch(0.925 0.004 165);
+  --color-graphite-300: oklch(0.87 0.005 165);
+  --color-graphite-400: oklch(0.72 0.006 165);
+  --color-graphite-500: oklch(0.6 0.007 165);
+  --color-graphite-600: oklch(0.5 0.007 165);
+  --color-graphite-700: oklch(0.36 0.007 165);
+  --color-graphite-800: oklch(0.255 0.006 165);
+  --color-graphite-900: oklch(0.2 0.005 165);
+  --color-graphite-950: oklch(0.155 0.004 165);
+}
+
+:root {
+  --ui-radius: 0rem;
+  --ui-container: 76rem;
+  --ui-header-height: 3.75rem;
+}
+
+.dark {
+  color-scheme: dark;
+  --ui-bg: var(--ui-color-neutral-950);
+  --ui-bg-muted: var(--ui-color-neutral-900);
+  --ui-bg-elevated: var(--ui-color-neutral-900);
+  --ui-bg-accented: var(--ui-color-neutral-800);
+  --ui-border: var(--ui-color-neutral-800);
+  --ui-border-muted: var(--ui-color-neutral-900);
+  --ui-border-accented: var(--ui-color-neutral-600);
+  --ui-text-dimmed: var(--ui-color-neutral-500);
+  --ui-text-muted: var(--ui-color-neutral-400);
+  --ui-text-toned: var(--ui-color-neutral-300);
+  --ui-text: var(--ui-color-neutral-200);
+  --ui-text-highlighted: var(--ui-color-neutral-50);
 }
 
 @layer base {
-  *,
-  *::before,
-  *::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  html {
+    background-color: var(--ui-bg);
   }
 
   body {
-    background-color: var(--color-canvas);
-    color: var(--color-ink);
-    font-family: var(--font-grotesk), serif;
+    @apply bg-default font-sans text-default antialiased;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-jetbrains), monospace;
+  ::selection {
+    background-color: var(--ui-color-primary-400);
+    color: var(--ui-color-neutral-950);
+  }
+
+  :where(h1, h2, h3) {
+    text-wrap: balance;
+  }
+
+  :where(p) {
+    text-wrap: pretty;
   }
 }
 
 @layer components {
-  .title {
-    @apply font-jetbrains text-4xl font-bold tracking-tight text-pretty text-highlighted sm:text-6xl;
+  /* Section eyebrow: small mono label used above section titles. */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 font-mono text-xs tracking-wider text-muted uppercase;
   }
 
-  .preferences-card {
-    @apply flex cursor-pointer gap-4 rounded-sm border border-border bg-surface p-4 transition-all md:gap-8 md:p-8;
+  /* Large display title. */
+  .display {
+    @apply text-4xl font-semibold tracking-tight text-highlighted sm:text-5xl lg:text-6xl;
+    line-height: 1.05;
   }
 
-  .preferences-card-active {
-    @apply relative! ring-2! ring-primary!;
+  .section-title {
+    @apply text-3xl font-semibold tracking-tight text-highlighted sm:text-4xl;
+    line-height: 1.1;
   }
 
-  .container-icon {
-    @apply flex h-min w-min items-center justify-center rounded-sm bg-surface-strong p-2 md:p-3;
+  /* Crosshair marks on the four corners of a framed block. */
+  .frame-corners {
+    position: relative;
   }
 
-  .icon {
-    @apply h-7 w-7 text-muted md:h-10 md:w-10;
+  .frame-corners > .corner {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    pointer-events: none;
+    color: var(--ui-color-neutral-500);
   }
 
-  .check-icon {
-    @apply absolute top-4 right-4 size-7 text-primary;
+  .frame-corners > .corner::before,
+  .frame-corners > .corner::after {
+    content: "";
+    position: absolute;
+    background: currentColor;
+  }
+
+  .frame-corners > .corner::before {
+    left: 5px;
+    top: 0;
+    width: 1px;
+    height: 11px;
+  }
+
+  .frame-corners > .corner::after {
+    top: 5px;
+    left: 0;
+    width: 11px;
+    height: 1px;
+  }
+
+  .frame-corners > .corner-tl {
+    top: -6px;
+    left: -6px;
+  }
+
+  .frame-corners > .corner-tr {
+    top: -6px;
+    right: -6px;
+  }
+
+  .frame-corners > .corner-bl {
+    bottom: -6px;
+    left: -6px;
+  }
+
+  .frame-corners > .corner-br {
+    bottom: -6px;
+    right: -6px;
+  }
+
+  /* Inline SVG illustrations: shared palette, all from tokens. */
+  .ill {
+    font-family: var(--font-mono);
+  }
+
+  .ill .ill-line {
+    stroke: var(--ui-color-neutral-700);
+  }
+
+  .ill .ill-faint {
+    stroke: var(--ui-color-neutral-800);
+  }
+
+  .ill .ill-fill {
+    fill: var(--ui-color-neutral-900);
+  }
+
+  .ill .ill-block {
+    fill: var(--ui-color-neutral-800);
+  }
+
+  .ill .ill-text {
+    fill: var(--ui-color-neutral-400);
+  }
+
+  .ill .ill-text-strong {
+    fill: var(--ui-color-neutral-100);
+  }
+
+  .ill .ill-accent {
+    stroke: var(--ui-primary);
+  }
+
+  .ill .ill-accent-fill {
+    fill: var(--ui-primary);
+  }
+
+  .ill .ill-accent-soft {
+    fill: color-mix(in oklab, var(--ui-primary) 12%, transparent);
+  }
+
+  /* Faint square grid, used sparingly behind illustrations. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, var(--ui-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--ui-border) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
 }
 
 /* README markdown */
 .readme-body {
-  color: var(--color-muted);
-  font-size: 0.925rem;
+  color: var(--ui-text);
+  font-size: 0.9375rem;
   line-height: 1.7;
   overflow-wrap: break-word;
 }
 
+.readme-body > :where(*) {
+  max-width: 75ch;
+}
+
 .readme-body :where(h1, h2, h3, h4) {
-  color: var(--color-ink);
-  font-family: var(--font-jetbrains), monospace;
-  font-weight: 700;
-  margin: 1.5em 0 0.6em;
+  color: var(--ui-text-highlighted);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin: 1.75em 0 0.6em;
 }
 
 .readme-body :where(h1, h2):first-child {
@@ -119,12 +238,12 @@
 
 .readme-body :where(h2) {
   font-size: 1.25rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--ui-border);
   padding-bottom: 0.4em;
 }
 
 .readme-body :where(h3) {
-  font-size: 1.05rem;
+  font-size: 1.0625rem;
 }
 
 .readme-body :where(p, ul, ol, blockquote, table) {
@@ -132,8 +251,9 @@
 }
 
 .readme-body :where(a) {
-  color: var(--color-brand-green);
+  color: var(--ui-primary);
   text-decoration: underline;
+  text-decoration-thickness: from-font;
   text-underline-offset: 3px;
 }
 
@@ -148,54 +268,32 @@
 }
 
 .readme-body :where(code) {
-  font-family: var(--font-jetbrains), monospace;
+  font-family: var(--font-mono);
   font-size: 0.85em;
-  background: var(--color-surface-strong);
-  color: var(--color-brand-green);
-  border-radius: 4px;
+  background: var(--ui-bg-accented);
+  color: var(--ui-text-highlighted);
   padding: 0.15em 0.4em;
 }
 
 .readme-body :where(pre) {
-  background: var(--color-canvas);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  background: var(--ui-bg);
+  border: 1px solid var(--ui-border);
   padding: 1em;
   overflow-x: auto;
   margin-bottom: 1em;
-}
-
-/* ProsePre copy button — global UButton uses large !padding / !icon size */
-.readme-body :where(.group.relative > button) {
-  top: 0.5rem !important;
-  right: 0.5rem !important;
-  min-height: 0 !important;
-  min-width: 0 !important;
-  height: auto !important;
-  width: auto !important;
-  padding: 0.25rem !important;
-  font-size: 0.75rem !important;
-  line-height: 1 !important;
-  gap: 0 !important;
-}
-
-.readme-body :where(.group.relative > button span),
-.readme-body :where(.group.relative > button svg) {
-  width: 0.875rem !important;
-  height: 0.875rem !important;
+  max-width: none;
 }
 
 .readme-body :where(pre code) {
   background: transparent;
   padding: 0;
-  color: var(--color-brand-green);
+  color: var(--ui-text);
 }
 
 .readme-body :where(blockquote) {
-  border-left: 3px solid var(--color-border);
+  border-left: 2px solid var(--ui-border-accented);
   padding-left: 1em;
-  color: var(--color-muted);
-  font-style: italic;
+  color: var(--ui-text-muted);
 }
 
 .readme-body :where(img) {
@@ -213,14 +311,24 @@
   display: block;
   overflow-x: auto;
   border-collapse: collapse;
+  max-width: none;
 }
 
 .readme-body :where(th, td) {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--ui-border);
   padding: 0.4em 0.8em;
 }
 
 .readme-body :where(hr) {
-  border-color: var(--color-border);
+  border-color: var(--ui-border);
   margin: 1.5em 0;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

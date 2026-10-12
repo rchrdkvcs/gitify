@@ -10,43 +10,32 @@ defineProps<{
 </script>
 
 <template>
-  <article class="preferences-card mx-auto flex w-full max-w-2xl cursor-default flex-col">
-    <section class="flex items-center gap-6">
-      <UUser
-        :ui="{ avatar: 'size-20 border border-border' }"
-        :avatar="{ src: user?.avatarUrl ?? undefined, alt: user?.name ?? undefined }"
-      />
-      <div>
-        <span class="text-sm text-brand-green uppercase">Connecté en tant que</span>
-        <div class="flex items-center gap-2">
-          <UIcon class="size-6" name="ix:user-profile" />
-          <p class="text-lg">{{ user?.name }}</p>
-        </div>
+  <div class="border border-default">
+    <div class="flex items-center gap-4 border-b border-default p-5 sm:p-6">
+      <UAvatar :src="user?.avatarUrl ?? undefined" alt="" size="xl" class="border border-default" />
+      <div class="min-w-0">
+        <p class="eyebrow">Compte GitHub</p>
+        <p class="mt-1 truncate text-lg text-highlighted">{{ user?.name }}</p>
       </div>
-    </section>
+    </div>
 
-    <USeparator />
-
-    <section class="grid grid-cols-1 grid-rows-2 gap-4 md:grid-cols-2 md:grid-rows-1">
-      <div>
-        <div class="flex items-center gap-2">
-          <UIcon class="size-4 text-muted" name="mage:chart-fill" />
-          <p class="text-sm tracking-wide text-muted uppercase">Niveau d'expérience</p>
-        </div>
-        <p class="text-lg font-medium">{{ level }}</p>
+    <dl class="grid gap-px bg-(--ui-border) sm:grid-cols-2">
+      <div class="flex flex-col gap-2 bg-default p-5 sm:p-6">
+        <dt class="eyebrow">Niveau</dt>
+        <dd class="text-highlighted">{{ level === "expert" ? "Confirmé" : "Débutant" }}</dd>
       </div>
-
-      <div>
-        <div class="flex items-center gap-2">
-          <UIcon class="size-4 text-muted" name="material-symbols:code-rounded" />
-          <p class="text-sm tracking-wide text-muted uppercase">Langages favoris</p>
-        </div>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <UBadge v-for="lang in languages" :key="lang" color="primary" variant="subtle">
-            {{ lang }}
-          </UBadge>
-        </div>
+      <div class="flex flex-col gap-3 bg-default p-5 sm:p-6">
+        <dt class="eyebrow">Langages</dt>
+        <dd class="flex flex-wrap gap-1.5">
+          <span
+            v-for="lang in languages"
+            :key="lang"
+            class="border border-accented px-2 py-1 font-mono text-xs text-toned"
+          >
+            {{ formatLanguage(lang) }}
+          </span>
+        </dd>
       </div>
-    </section>
-  </article>
+    </dl>
+  </div>
 </template>

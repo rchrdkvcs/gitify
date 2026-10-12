@@ -14,6 +14,15 @@ Les formulaires de préférences et de déconnexion utilisent le routeur Inertia
 
 ## Composants et styles
 
-Les composants applicatifs, les composables Vue et les utilitaires sont importés automatiquement par le plugin Vite de Nuxt UI. La configuration visuelle réside dans `inertia/app.config.ts`, et les styles Tailwind dans `inertia/assets/styles/main.css`. Les README sont rendus avec le composant Markdown de Comark pour Vue.
+Les composants applicatifs, les composables Vue et les utilitaires sont importés automatiquement par le plugin Vite de Nuxt UI. La configuration visuelle réside dans `inertia/app.config.ts`, et les styles Tailwind dans `inertia/assets/styles/main.css`. Les README sont rendus avec le composant Markdown de Comark pour Vue ; son rendu est asynchrone et doit rester dans un `<Suspense>`.
+
+### Direction artistique
+
+- Un seul thème, sombre : la classe `dark` est posée sur `<html>` dans `resources/views/inertia_layout.edge`.
+- Une seule couleur d'accent, le vert menthe (`mint`), réservée aux éléments interactifs, à la sélection et à la marque. Les neutres viennent de la rampe `graphite`. Les deux rampes sont déclarées en `oklch()` dans un bloc `@theme static`, car Nuxt UI les lit au runtime.
+- Angles droits partout (`--ui-radius: 0`), aucun dégradé décoratif. La structure passe par des filets d'1px.
+- Polices : Geist pour le texte, Geist Mono pour les libellés techniques, chiffres et code.
+- Les pages s'empilent en bandes `FrameSection` : un filet horizontal entre chaque bande et deux rails verticaux qui bornent le conteneur. Les grilles de cartes (`ProjectGrid`) partagent leurs filets avec ces rails.
+- Le hero de l'accueil (`HeroCommitGraph`) dessine sur un canvas un graphe de commits Git qui défile lentement ; les branches menthe portent un numéro de PR. Il ne s'anime que lorsqu'il est visible et affiche une image fixe sous `prefers-reduced-motion`.
 
 Les modèles 3D restent dans `public/models/`. La séquence clavier GITIFY ouvre les archives pour les utilisateurs connectés sur ordinateur. Three.js est chargé à la demande ; le raccourci et l'overlay sont initialisés depuis l'entrée Vue.

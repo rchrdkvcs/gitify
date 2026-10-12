@@ -38,7 +38,7 @@ export function useFavorite(
       isFavorite.value = previousValue;
       toast.add({
         title: "Impossible de modifier ce favori",
-        description: "Veuillez réessayer dans quelques instants.",
+        description: "Réessaie dans quelques instants.",
         icon: "lucide:triangle-alert",
         color: "error",
       });
