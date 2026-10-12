@@ -7,7 +7,11 @@ import appConfig from "./inertia/app.config.js";
 export default defineConfig({
   plugins: [
     vue(),
-    adonisjs({ entryPoints: ["inertia/app.ts"], reload: ["resources/views/**/*.edge"] }),
+    adonisjs({
+      entryPoints: ["inertia/app.ts"],
+      serverEntryPoints: ["inertia/ssr.ts"],
+      reload: ["resources/views/**/*.edge"],
+    }),
     ui({
       router: "inertia",
       ui: appConfig.ui,

@@ -6,7 +6,7 @@ import { resolvePageComponent } from "@adonisjs/inertia/helpers";
 import { createInertiaApp } from "@inertiajs/vue3";
 import UApp from "@nuxt/ui/components/App.vue";
 import ui from "@nuxt/ui/vue-plugin";
-import { createApp, h } from "vue";
+import { createApp, createSSRApp, h } from "vue";
 import Layout from "./layouts/default.vue";
 
 createInertiaApp({
@@ -18,7 +18,8 @@ createInertiaApp({
       name === "preferences" ? undefined : Layout,
     ),
   setup({ el, App, props, plugin }) {
-    createApp({
+    // Server-rendered pages must hydrate the existing markup instead of replacing it.
+    (props.serverRendered ? createSSRApp : createApp)({
       render: () => h(UApp, {}, { default: () => h(App, props) }),
     })
       .use(plugin)

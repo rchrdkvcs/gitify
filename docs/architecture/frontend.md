@@ -1,6 +1,6 @@
 # Frontend
 
-Les pages Vue vivent dans `inertia/pages/`. Le premier chargement reçoit le document Edge et les props Inertia ; les navigations suivantes échangent des pages Inertia avec AdonisJS. Le SSR Vue est désactivé.
+Les pages Vue vivent dans `inertia/pages/`. Le premier chargement reçoit le document Edge et les props Inertia ; les navigations suivantes échangent des pages Inertia avec AdonisJS. Le premier chargement est rendu côté serveur par `inertia/ssr.ts`, puis `inertia/app.ts` hydrate le HTML reçu. Le code exécuté au rendu (setup des composants) ne doit donc pas lire `window` ni `document` : réserver ces accès à `onMounted` ou aux gestionnaires d’événements.
 
 `inertia/app.ts` initialise Vue et Inertia, installe Nuxt UI via son plugin Vue et applique le layout commun. La page de préférences garde son layout autonome. Nuxt UI fonctionne ici comme bibliothèque de composants Vite ; le framework Nuxt n'est pas utilisé.
 

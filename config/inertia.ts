@@ -2,7 +2,8 @@ import { defineConfig } from "@adonisjs/inertia";
 
 const inertiaConfig = defineConfig({
   ssr: {
-    enabled: false,
+    enabled: true,
+    entrypoint: "inertia/ssr.ts",
   },
 });
 
