@@ -1,3 +1,5 @@
+import type { PreferenceLanguage } from "#shared/preferences";
+
 const gitifyConfig = {
   github: {
     baseUrl: "https://api.github.com/search/repositories",
@@ -15,10 +17,11 @@ const gitifyConfig = {
   },
   cache: {
     fetchTtlHours: 24,
+    searchRetrySeconds: 60,
+    maxConcurrentSearches: 2,
     detailsCacheDays: 7,
   },
   feed: {
-    fetchThreshold: 25,
     perLanguageLimit: 60,
     totalLimit: 60,
     favoritePageLimit: 20,
@@ -37,10 +40,10 @@ const gitifyConfig = {
       "swift",
       "dart",
       "ruby",
-    ],
+    ] satisfies PreferenceLanguage[],
     pool: 30,
     perLanguage: 6,
-    minThreshold: 4,
+    detailsRefreshLimit: 2,
     topContributorsDisplay: 2,
     topicsDisplay: 2,
     seederDifficulty: "expert" as const,

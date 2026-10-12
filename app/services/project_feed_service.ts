@@ -1,50 +1,86 @@
-import type { UserPreferences, ShowcaseLanguageResult, ShowcaseProject } from "#shared/types/index";
+import type {
+  UserPreferences,
+  ShowcaseLanguageResult,
+  ShowcaseProject,
+  FeedRefreshState,
+  Project as ProjectList,
+  ProjectDetail,
+  Difficulty,
+  PaginationMeta,
+} from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
 import Project from "#models/project";
+import ProjectSearchMembership from "#models/project_search_membership";
 import UserProjectFavorite from "#models/user_project_favorite";
-import GitHubSyncService from "#services/github/github_sync_service";
+import githubSync, { type GitHubSyncService } from "#services/github/github_sync_service";
+import { normalizePage } from "#shared/pagination";
+import { normalizePreferenceLanguages } from "#shared/preferences";
+import ProjectDetailTransformer from "#transformers/project_detail_transformer";
+import ProjectTransformer from "#transformers/project_transformer";
 
-export default class ProjectFeedService {
-  static async getShowcase(serverToken?: string): Promise<ShowcaseLanguageResult[]> {
+export class ProjectFeedService {
+  constructor(private readonly sync: GitHubSyncService = githubSync) {}
+  async getShowcase(serverToken?: string): Promise<ShowcaseLanguageResult[]> {
+    const detailsReserved = new Set<string>();
     const languagesData = await Promise.all(
       gitifyConfig.showcase.languages.map(async (language) => {
-        const pool = await Project.query()
-          .where("language", language)
+        if (serverToken) {
+          await this.sync
+            .ensureSearchFresh({
+              language,
+              difficulty: gitifyConfig.showcase.seederDifficulty,
+              token: serverToken,
+            })
+            .catch((error) =>
+              console.error(`Showcase search refresh failed for ${language}:`, error),
+            );
+        }
+        const pool = await projectsForSearch([language])
           .orderBy("stars", "desc")
           .limit(gitifyConfig.showcase.pool)
-          .preload("contributors", (q) =>
-            q.orderBy("contributions", "desc").limit(gitifyConfig.showcase.topContributorsDisplay),
-          );
+          .preload("contributors", (q) => q.orderBy("contributions", "desc").orderBy("id", "asc"));
 
-        if (pool.length < gitifyConfig.showcase.minThreshold && serverToken) {
-          GitHubSyncService.fetchAndStore(
-            language,
-            gitifyConfig.showcase.seederDifficulty,
-            serverToken,
-            gitifyConfig.showcase.pool,
-          ).catch((err) => console.error(`Showcase prefetch failed for ${language}:`, err));
+        const selected = pickRandom(pool, gitifyConfig.showcase.perLanguage);
+        if (serverToken) {
+          for (const project of selected) {
+            if (detailsReserved.size >= gitifyConfig.showcase.detailsRefreshLimit) {
+              break;
+            }
+            if (detailsReserved.has(project.id) || !this.sync.needsDetailsFetch(project)) {
+              continue;
+            }
+            // Bound remote detail work for the whole home request, including shared repositories.
+            detailsReserved.add(project.id);
+            await this.sync
+              .fetchProjectDetails(project, serverToken)
+              .catch((error) =>
+                console.error(`Showcase details refresh failed for ${project.id}:`, error),
+              );
+            await project.load("contributors", (query) =>
+              query.orderBy("contributions", "desc").orderBy("id", "asc"),
+            );
+          }
         }
-
-        const projects: ShowcaseProject[] = pickRandom(pool, gitifyConfig.showcase.perLanguage).map(
-          (p) => ({
-            id: p.id,
-            name: p.name,
-            ownerName: p.ownerName,
-            repositoryUrl: p.repositoryUrl,
-            description: p.description,
-            language: p.language,
-            stars: p.stars,
-            latestRelease: p.latestRelease,
-            updatedAt: p.updatedAt?.toISO() ?? null,
-            topics: p.topics?.slice(0, gitifyConfig.showcase.topicsDisplay) ?? [],
-            totalContributorsCount: p.totalContributorsCount,
-            contributors: p.contributors.map((c) => ({
+        const projects: ShowcaseProject[] = selected.map((p) => ({
+          id: p.id,
+          name: p.name,
+          ownerName: p.ownerName,
+          repositoryUrl: p.repositoryUrl,
+          description: p.description,
+          language: p.language,
+          stars: p.stars,
+          latestRelease: p.latestRelease,
+          updatedAt: p.updatedAt?.toISO() ?? null,
+          topics: p.topics?.slice(0, gitifyConfig.showcase.topicsDisplay) ?? [],
+          totalContributorsCount: p.totalContributorsCount,
+          contributors: p.contributors
+            .slice(0, gitifyConfig.showcase.topContributorsDisplay)
+            .map((c) => ({
               login: c.login,
               avatarUrl: c.avatarUrl,
               profileUrl: c.profileUrl,
             })),
-          }),
-        );
+        }));
 
         return { language, projects };
       }),
@@ -53,52 +89,53 @@ export default class ProjectFeedService {
     return languagesData.filter((l) => l.projects.length > 0);
   }
 
-  static async getProject(id: string, userId: string, token: string): Promise<Project | null> {
+  async getProject(id: string, userId: string, token: string): Promise<ProjectDetail | null> {
     const project = await Project.find(id);
     if (!project) {
       return null;
     }
 
-    if (GitHubSyncService.needsDetailsFetch(project)) {
-      await GitHubSyncService.fetchProjectDetails(project, token).catch((err) =>
-        console.error(`Failed to fetch details for project ${project.id}:`, err),
-      );
+    if (this.sync.needsDetailsFetch(project)) {
+      await this.sync
+        .fetchProjectDetails(project, token)
+        .catch((err) => console.error(`Failed to fetch details for project ${project.id}:`, err));
     }
 
-    await project.load("contributors");
-    project.isFavorite = await UserProjectFavorite.query()
+    await project.load("contributors", (query) =>
+      query.orderBy("contributions", "desc").orderBy("id", "asc"),
+    );
+    const isFavorite = await UserProjectFavorite.query()
       .where("userId", userId)
       .where("projectId", project.id)
       .first()
       .then(Boolean);
-    return project;
+    const levels = await stableDifficulties([project]);
+    return new ProjectDetailTransformer(project, {
+      isFavorite,
+      difficulty: levels.get(project.id)!,
+    }).toObject();
   }
 
-  static async getFeed(
+  async getFeed(
     userId: string,
     preferences: UserPreferences,
     token: string,
-  ): Promise<{ projects: Project[]; available: number }> {
+  ): Promise<{ projects: ProjectList[]; available: number; refreshState: FeedRefreshState }> {
     const { difficulty } = preferences;
-    const languages = preferences.languages.map((l) => l.toLowerCase());
-
-    const available = await countAvailable(difficulty, languages);
-
-    if (available < gitifyConfig.feed.fetchThreshold) {
-      await Promise.all(
-        languages.map(async (language) => {
-          if (await GitHubSyncService.needsFetch(language, difficulty)) {
-            await GitHubSyncService.fetchAndStore(language, difficulty, token);
-          }
+    const languages = normalizePreferenceLanguages(preferences.languages);
+    const refreshes = await Promise.allSettled(
+      languages.map((language) =>
+        this.sync.ensureSearchFresh({
+          language,
+          difficulty,
+          token,
         }),
-      );
-    }
+      ),
+    );
 
     const projectsPerLanguage = await Promise.all(
       languages.map((language) => {
-        const query = Project.query()
-          .where("difficulty", difficulty)
-          .where("language", language)
+        const query = projectsForSearch([language], difficulty)
           .orderBy("stars", "desc")
           .limit(gitifyConfig.feed.perLanguageLimit);
 
@@ -107,51 +144,100 @@ export default class ProjectFeedService {
     );
 
     const projects = roundRobin(projectsPerLanguage, gitifyConfig.feed.totalLimit);
-    await setFavoriteState(projects, userId);
+    const favoriteIds = await favoriteProjectIds(projects, userId);
+
+    const failed = refreshes.some((refresh) => refresh.status === "rejected");
+    const refreshing = refreshes.some(
+      (refresh) => refresh.status === "fulfilled" && refresh.value.status === "pending",
+    );
+    const refreshState: FeedRefreshState = failed
+      ? projects.length > 0
+        ? "degraded"
+        : "unavailable"
+      : refreshing
+        ? "refreshing"
+        : "ready";
 
     return {
-      projects,
+      projects: projects.map((project) =>
+        new ProjectTransformer(project, {
+          isFavorite: favoriteIds.has(project.id),
+          difficulty,
+        }).toObject(),
+      ),
       available: await countAvailable(difficulty, languages),
+      refreshState,
     };
   }
 
-  static async getFavoriteProjects(userId: string, page: number) {
-    const favorites = await UserProjectFavorite.query()
-      .where("userId", userId)
-      .orderBy("createdAt", "desc")
-      .preload("project")
-      .paginate(page, gitifyConfig.feed.favoritePageLimit);
+  async getFavoriteProjects(
+    userId: string,
+    requestedPage: unknown,
+  ): Promise<{ projects: ProjectList[]; meta: PaginationMeta }> {
+    const total = await UserProjectFavorite.query().where("userId", userId).count("* as total");
+    const lastPage = Math.max(
+      1,
+      Math.ceil(Number(total[0]?.$extras.total ?? 0) / gitifyConfig.feed.favoritePageLimit),
+    );
+    const page = Math.min(normalizePage(requestedPage), lastPage);
+    const query = () =>
+      UserProjectFavorite.query()
+        .where("userId", userId)
+        .orderBy("createdAt", "desc")
+        .orderBy("id", "desc")
+        .preload("project");
+    let favorites = await query().paginate(page, gitifyConfig.feed.favoritePageLimit);
 
-    favorites.all().forEach((favorite) => {
-      favorite.project.isFavorite = true;
-    });
-
-    return favorites;
+    // A removal between the count and page query can retire the requested last page.
+    if (page > Math.max(1, favorites.lastPage)) {
+      favorites = await query().paginate(
+        Math.max(1, favorites.lastPage),
+        gitifyConfig.feed.favoritePageLimit,
+      );
+    }
+    const projects = favorites.all().map((favorite) => favorite.project);
+    const levels = await stableDifficulties(projects);
+    return {
+      projects: projects.map((project) =>
+        new ProjectTransformer(project, {
+          isFavorite: true,
+          difficulty: levels.get(project.id)!,
+        }).toObject(),
+      ),
+      meta: {
+        total: favorites.total,
+        perPage: favorites.perPage,
+        currentPage: favorites.currentPage,
+        lastPage: Math.max(1, favorites.lastPage),
+      },
+    };
   }
 
-  static async addFavorite(userId: string, projectId: string): Promise<Project | null> {
+  async addFavorite(userId: string, projectId: string): Promise<boolean> {
     const project = await Project.find(projectId);
     if (!project) {
-      return null;
+      return false;
     }
 
     await UserProjectFavorite.firstOrCreate({ userId, projectId: project.id });
-    return project;
+    return true;
   }
 
-  static async removeFavorite(userId: string, projectId: string): Promise<Project | null> {
+  async removeFavorite(userId: string, projectId: string): Promise<boolean> {
     const project = await Project.find(projectId);
     if (!project) {
-      return null;
+      return false;
     }
 
     await UserProjectFavorite.query()
       .where("userId", userId)
       .where("projectId", project.id)
       .delete();
-    return project;
+    return true;
   }
 }
+
+export default new ProjectFeedService();
 
 function pickRandom<T>(items: T[], count: number): T[] {
   return items
@@ -163,11 +249,13 @@ function pickRandom<T>(items: T[], count: number): T[] {
 
 function roundRobin(groups: Project[][], limit: number): Project[] {
   const result: Project[] = [];
+  const seen = new Set<string>();
   const maxLength = Math.max(...groups.map((g) => g.length));
 
   Array.from({ length: maxLength }).forEach((_, i) => {
     groups.forEach((group) => {
-      if (group[i] && result.length < limit) {
+      if (group[i] && !seen.has(group[i].id) && result.length < limit) {
+        seen.add(group[i].id);
         result.push(group[i]);
       }
     });
@@ -176,9 +264,9 @@ function roundRobin(groups: Project[][], limit: number): Project[] {
   return result;
 }
 
-async function setFavoriteState(projects: Project[], userId: string) {
+async function favoriteProjectIds(projects: Project[], userId: string) {
   if (projects.length === 0) {
-    return;
+    return new Set<string>();
   }
 
   const favorites = await UserProjectFavorite.query()
@@ -188,16 +276,56 @@ async function setFavoriteState(projects: Project[], userId: string) {
       projects.map((project) => project.id),
     )
     .select("projectId");
-  const favoriteIds = new Set(favorites.map((favorite) => favorite.projectId));
+  return new Set(favorites.map((favorite) => favorite.projectId));
+}
 
-  projects.forEach((project) => {
-    project.isFavorite = favoriteIds.has(project.id);
-  });
+/** Outside a selected feed, display beginner when eligible, otherwise expert.
+ * Repositories retired from every search retain their legacy level as fallback.
+ * This is a display rule: membership in both levels remains unchanged.
+ */
+async function stableDifficulties(projects: Project[]): Promise<Map<string, Difficulty>> {
+  const levels = new Map(projects.map((project) => [project.id, project.difficulty]));
+  if (!projects.length) {
+    return levels;
+  }
+  const memberships = await ProjectSearchMembership.query()
+    .whereIn(
+      "projectId",
+      projects.map((project) => project.id),
+    )
+    .select("projectId", "difficulty");
+  const current = new Map<string, Difficulty>();
+  for (const membership of memberships) {
+    if (current.get(membership.projectId) !== "beginner") {
+      current.set(membership.projectId, membership.difficulty);
+    }
+  }
+  for (const [id, difficulty] of current) {
+    levels.set(id, difficulty);
+  }
+  return levels;
 }
 
 async function countAvailable(difficulty: string, languages: string[]): Promise<number> {
-  const query = Project.query().where("difficulty", difficulty).whereIn("language", languages);
+  const query = projectsForSearch(languages, difficulty);
 
   const result = await query.count("* as total");
   return Number(result[0]?.$extras.total ?? 0);
+}
+
+/** Select each repository once using the criteria under which it was discovered. */
+export function projectsForSearch(languages: string[], difficulty?: string) {
+  return Project.query().whereExists((membership) => {
+    membership
+      .from("project_search_memberships")
+      .select("id")
+      .whereColumn("project_search_memberships.project_id", "projects.id")
+      .whereIn(
+        "project_search_memberships.language",
+        languages.map((language) => language.toLowerCase()),
+      );
+    if (difficulty) {
+      membership.where("project_search_memberships.difficulty", difficulty);
+    }
+  });
 }

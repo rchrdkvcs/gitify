@@ -6,7 +6,6 @@ export function usePreferences() {
   const toast = useToast();
 
   const submitting = ref(false);
-  const isEditingPreferences = ref(false);
   const formDifficulty = ref<"beginner" | "expert" | null>(null);
   const formLanguages = ref<string[]>([]);
 
@@ -25,7 +24,6 @@ export function usePreferences() {
     } else {
       formDifficulty.value = "beginner";
     }
-    isEditingPreferences.value = true;
   }
 
   async function savePreferences() {
@@ -46,7 +44,6 @@ export function usePreferences() {
       },
       {
         onSuccess: () => {
-          isEditingPreferences.value = false;
           toast.add({ title: "Préférences enregistrées.", icon: "lucide:check", color: "success" });
         },
         onError: () =>
@@ -65,7 +62,6 @@ export function usePreferences() {
   return {
     user,
     submitting,
-    isEditingPreferences,
     formDifficulty,
     formLanguages,
     toggleLanguage,

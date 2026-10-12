@@ -3,6 +3,7 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
+import ProjectSearchMembership from "#models/project_search_membership";
 import User from "#models/user";
 import UserProjectFavorite from "#models/user_project_favorite";
 
@@ -16,7 +17,7 @@ async function createUser(preferences = true) {
 }
 
 async function createProject() {
-  return Project.create({
+  const project = await Project.create({
     githubRepoId: 42,
     name: "test-project",
     ownerName: "gitify",
@@ -26,6 +27,12 @@ async function createProject() {
     detailsFetchedAt: DateTime.now(),
     readme: "# Test project",
   });
+  await ProjectSearchMembership.create({
+    projectId: project.id,
+    language: "typescript",
+    difficulty: "beginner",
+  });
+  return project;
 }
 
 test.group("Inertia application", (group) => {

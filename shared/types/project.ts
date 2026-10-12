@@ -1,5 +1,7 @@
 import type { Difficulty } from "./common.js";
 
+export type FeedRefreshState = "ready" | "refreshing" | "degraded" | "unavailable";
+
 export type ShowcaseContributor = {
   login: string;
   avatarUrl: string;

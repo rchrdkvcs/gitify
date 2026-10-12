@@ -1,38 +1,33 @@
 import { BaseTransformer } from "@adonisjs/core/transformers";
 import type Project from "#models/project";
-import type { ProjectDetail } from "#shared/types/index";
+import type { Difficulty, Project as ProjectList } from "#shared/types/index";
+
+export type ProjectReaderState = { isFavorite: boolean; difficulty: Difficulty };
 
 export default class ProjectTransformer extends BaseTransformer<Project> {
-  toObject(): ProjectDetail {
+  constructor(
+    project: Project,
+    private readonly reader: ProjectReaderState,
+  ) {
+    super(project);
+  }
+
+  toObject(): ProjectList {
     const project = this.resource;
     return {
-      ...this.pick(project, [
-        "id",
-        "name",
-        "ownerName",
-        "description",
-        "repositoryUrl",
-        "stars",
-        "language",
-        "topics",
-        "openIssuesCount",
-        "difficulty",
-        "readme",
-        "languages",
-        "forksCount",
-        "totalContributorsCount",
-        "latestRelease",
-      ]),
-      isFavorite: project.isFavorite ?? false,
-      createdAt: project.createdAt?.toISO() ?? null,
+      id: project.id,
+      name: project.name,
+      ownerName: project.ownerName,
+      description: project.description,
+      repositoryUrl: project.repositoryUrl,
+      stars: project.stars,
+      language: project.language,
+      topics: project.topics,
+      openIssuesCount: project.openIssuesCount,
+      difficulty: this.reader.difficulty,
+      isFavorite: this.reader.isFavorite,
+      latestRelease: project.latestRelease,
       updatedAt: project.updatedAt?.toISO() ?? null,
-      contributors: (project.contributors ?? []).map((contributor) => ({
-        id: contributor.id,
-        login: contributor.login,
-        avatarUrl: contributor.avatarUrl,
-        profileUrl: contributor.profileUrl,
-        contributions: contributor.contributions,
-      })),
     };
   }
 }

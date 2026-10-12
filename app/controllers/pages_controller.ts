@@ -1,7 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import ProjectFeedService from "#services/project_feed_service";
 import env from "#start/env";
-import ProjectTransformer from "#transformers/project_transformer";
 import { projectIdValidator } from "#validators/project_id_validator";
 
 export default class PagesController {
@@ -15,20 +14,20 @@ export default class PagesController {
     if (!user.preferences) {
       return response.redirect("/preferences");
     }
-    const { projects } = await ProjectFeedService.getFeed(
+    const { projects, refreshState } = await ProjectFeedService.getFeed(
       user.id,
       user.preferences,
       user.githubAccessToken!,
     );
-    return inertia.render("explore", { projects: ProjectTransformer.transform(projects) });
+    return inertia.render("explore", { projects, refreshState });
   }
 
   async favorites({ auth, request, inertia }: HttpContext) {
-    const page = Math.max(1, Math.floor(Number(request.input("page", 1))) || 1);
+    const page = request.input("page", 1);
     const favorites = await ProjectFeedService.getFavoriteProjects(auth.getUserOrFail().id, page);
     return inertia.render("favorites", {
-      projects: ProjectTransformer.transform(favorites.all().map((favorite) => favorite.project)),
-      meta: favorites.getMeta(),
+      projects: favorites.projects,
+      meta: favorites.meta,
     });
   }
 
@@ -43,6 +42,6 @@ export default class PagesController {
     if (!project) {
       return response.notFound("Projet introuvable");
     }
-    return inertia.render("projects/show", { project: ProjectTransformer.transform(project) });
+    return inertia.render("projects/show", { project: project });
   }
 }

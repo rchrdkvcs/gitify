@@ -10,43 +10,44 @@ PostgreSQL (17 dans Docker Compose). Tous les modèles utilisent des **ULID** co
 
 ### `users`
 
-| Colonne               | Type                | Description                                                 |
-| --------------------- | ------------------- | ----------------------------------------------------------- |
-| `id`                  | `string` (ULID, PK) | Identifiant interne                                         |
-| `email`               | `string`            | Adresse e-mail GitHub (unique, clé d'upsert OAuth)          |
-| `name`                | `string \| null`    | Nom d'affichage (login GitHub si absent)                    |
-| `avatar_url`          | `string \| null`    | URL de l'avatar GitHub                                      |
-| `github_access_token` | `string \| null`    | Token OAuth courant — **jamais exposé en réponse API**      |
-| `is_verified`         | `boolean \| null`   | État de vérification e-mail GitHub                          |
-| `preferences`         | `jsonb \| null`     | `{ difficulty: "beginner"\|"expert", languages: string[] }` |
-| `created_at`          | `timestamp`         |                                                             |
-| `updated_at`          | `timestamp`         |                                                             |
+| Colonne               | Type                | Description                                                                                            |
+| --------------------- | ------------------- | ------------------------------------------------------------------------------------------------------ |
+| `id`                  | `string` (ULID, PK) | Identifiant interne                                                                                    |
+| `email`               | `string`            | Adresse e-mail GitHub (unique) ; change seulement vers un email vérifié libre                          |
+| `github_user_id`      | `string \| null`    | Identité GitHub stable et unique ; null pour un compte historique jusqu'à sa liaison par email vérifié |
+| `name`                | `string \| null`    | Nom d'affichage (login GitHub si absent)                                                               |
+| `avatar_url`          | `string \| null`    | URL de l'avatar GitHub                                                                                 |
+| `github_access_token` | `string \| null`    | Token OAuth courant — **jamais exposé en réponse API**                                                 |
+| `is_verified`         | `boolean \| null`   | État de vérification e-mail GitHub                                                                     |
+| `preferences`         | `jsonb \| null`     | `{ difficulty: "beginner"\|"expert", languages: string[] }`                                            |
+| `created_at`          | `timestamp`         |                                                                                                        |
+| `updated_at`          | `timestamp`         |                                                                                                        |
 
 ---
 
 ### `projects`
 
-| Colonne                    | Type                | Description                                                 |
-| -------------------------- | ------------------- | ----------------------------------------------------------- |
-| `id`                       | `string` (ULID, PK) |                                                             |
-| `github_repo_id`           | `bigint`            | ID GitHub — **clé d'upsert** pour éviter les doublons       |
-| `name`                     | `string`            | Nom du dépôt                                                |
-| `owner_name`               | `string`            | Login du propriétaire GitHub                                |
-| `description`              | `string \| null`    |                                                             |
-| `repository_url`           | `string`            | URL GitHub du dépôt                                         |
-| `stars`                    | `integer`           | Nombre d'étoiles                                            |
-| `forks_count`              | `integer`           |                                                             |
-| `open_issues_count`        | `integer`           | Issues ouvertes (hors PRs, filtrées à l'ingestion)          |
-| `language`                 | `string \| null`    | Langage principal, normalisé en minuscules                  |
-| `topics`                   | `jsonb \| null`     | Tableau de sujets GitHub `["framework", "typescript"]`      |
-| `difficulty`               | `string`            | `beginner` ou `expert`                                      |
-| `readme`                   | `text \| null`      | README décodé en UTF-8 (chargé à la demande)                |
-| `languages`                | `jsonb \| null`     | Répartition en octets `{ TypeScript: 145000, ... }`         |
-| `latest_release`           | `string \| null`    | Tag de la dernière release GitHub (`v1.2.3`)                |
-| `total_contributors_count` | `integer \| null`   | Total inféré via le header `Link` de l'API GitHub           |
-| `details_fetched_at`       | `timestamp \| null` | Horodatage du dernier enrichissement — null = jamais chargé |
-| `created_at`               | `timestamp`         |                                                             |
-| `updated_at`               | `timestamp`         |                                                             |
+| Colonne                    | Type                | Description                                                                             |
+| -------------------------- | ------------------- | --------------------------------------------------------------------------------------- |
+| `id`                       | `string` (ULID, PK) |                                                                                         |
+| `github_repo_id`           | `bigint`            | ID GitHub — **clé d'upsert** pour éviter les doublons                                   |
+| `name`                     | `string`            | Nom du dépôt                                                                            |
+| `owner_name`               | `string`            | Login du propriétaire GitHub                                                            |
+| `description`              | `string \| null`    |                                                                                         |
+| `repository_url`           | `string`            | URL GitHub du dépôt                                                                     |
+| `stars`                    | `integer`           | Nombre d'étoiles                                                                        |
+| `forks_count`              | `integer`           |                                                                                         |
+| `open_issues_count`        | `integer`           | Compteur GitHub brut ; aucun décompte séparé des pull requests                          |
+| `language`                 | `string \| null`    | Langage principal, normalisé en minuscules                                              |
+| `topics`                   | `jsonb \| null`     | Tableau de sujets GitHub `["framework", "typescript"]`                                  |
+| `difficulty`               | `string`            | Niveau historique, conservé pour compatibilité ; la sélection utilise les appartenances |
+| `readme`                   | `text \| null`      | README décodé en UTF-8 (chargé à la demande)                                            |
+| `languages`                | `jsonb \| null`     | Répartition en octets `{ TypeScript: 145000, ... }`                                     |
+| `latest_release`           | `string \| null`    | Tag de la dernière release GitHub (`v1.2.3`)                                            |
+| `total_contributors_count` | `integer \| null`   | Total inféré via le header `Link` de l'API GitHub                                       |
+| `details_fetched_at`       | `timestamp \| null` | Horodatage du dernier enrichissement — null = jamais chargé                             |
+| `created_at`               | `timestamp`         |                                                                                         |
+| `updated_at`               | `timestamp`         |                                                                                         |
 
 ---
 
@@ -84,19 +85,36 @@ Enregistre les projets favoris de chaque utilisateur. La contrainte d'unicité s
 
 Trace les appels GitHub Search API par couple `(language, difficulty)` pour éviter de dépasser le rate limit et de refaire des appels inutiles.
 
-| Colonne        | Type                | Description                                       |
-| -------------- | ------------------- | ------------------------------------------------- |
-| `id`           | `string` (ULID, PK) |                                                   |
-| `language`     | `string`            | Langage en minuscules (`typescript`, `python`…)   |
-| `difficulty`   | `string`            | `beginner` ou `expert`                            |
-| `total_stored` | `integer`           | Nombre de projets stockés lors du dernier fetch   |
-| `fetched_at`   | `timestamp`         | Horodatage du dernier appel GitHub pour ce couple |
-| `created_at`   | `timestamp`         |                                                   |
-| `updated_at`   | `timestamp`         |                                                   |
+| Colonne        | Type                | Description                                                             |
+| -------------- | ------------------- | ----------------------------------------------------------------------- |
+| `id`           | `string` (ULID, PK) |                                                                         |
+| `language`     | `string`            | Langage en minuscules (`typescript`, `python`…)                         |
+| `difficulty`   | `string`            | `beginner` ou `expert`                                                  |
+| `total_stored` | `integer`           | Nombre de projets stockés lors du dernier fetch                         |
+| `fetched_at`   | `timestamp \| null` | Dernière recherche réussie ; null si aucune recherche n'a encore réussi |
+| `retry_after`  | `timestamp \| null` | Prochaine tentative autorisée après un échec distant                    |
+| `created_at`   | `timestamp`         |                                                                         |
+| `updated_at`   | `timestamp`         |                                                                         |
 
 ---
 
 ## Gestion des migrations
+
+### Appartenances aux recherches
+
+`project_search_memberships` associe un dépôt à un critère `(language, difficulty)`.
+Son identifiant ULID est unique, et `(language, difficulty, project_id)` possède
+une contrainte d'unicité. `project_id` référence `projects.id` avec suppression
+en cascade. Un même dépôt peut appartenir aux deux niveaux ou à plusieurs
+recherches sans dupliquer son identité ni ses favoris. Chaque recherche réussie
+remplace sa liste d'appartenances dans une transaction ; un échec conserve la
+liste précédente. La migration reprend les appartenances des projets historiques.
+
+Un index `(stars DESC)` permet un parcours trié compatible avec les recherches
+par appartenance, dont le langage peut différer du langage principal du dépôt.
+Sa mesure est décrite dans [le relevé PostgreSQL](project-index-measurement-2026-10-12.md).
+
+### Exécution
 
 Les migrations sont dans `database/migrations/`, ordonnées par timestamp. Ne jamais modifier une migration déjà appliquée — créer une nouvelle migration corrective à la place.
 

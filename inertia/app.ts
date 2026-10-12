@@ -7,8 +7,6 @@ import { createInertiaApp } from "@inertiajs/vue3";
 import UApp from "@nuxt/ui/components/App.vue";
 import ui from "@nuxt/ui/vue-plugin";
 import { createApp, h } from "vue";
-import ArchiveRoomOverlay from "./components/archive/ArchiveRoomOverlay.vue";
-import { useArchiveEasterEgg } from "./composables/useArchiveEasterEgg";
 import Layout from "./layouts/default.vue";
 
 createInertiaApp({
@@ -21,12 +19,7 @@ createInertiaApp({
     ),
   setup({ el, App, props, plugin }) {
     createApp({
-      setup() {
-        const { bind, unbind } = useArchiveEasterEgg();
-        onMounted(bind);
-        onBeforeUnmount(unbind);
-        return () => h(UApp, {}, { default: () => [h(App, props), h(ArchiveRoomOverlay)] });
-      },
+      render: () => h(UApp, {}, { default: () => h(App, props) }),
     })
       .use(plugin)
       .use(ui)

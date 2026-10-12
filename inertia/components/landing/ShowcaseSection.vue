@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { ShowcaseProject } from "@shared/types/index";
-import type { ProjectGroup } from "~/types/projects";
+import type { ShowcaseLanguageResult } from "@shared/types/index";
 
-const props = defineProps<{ languages: ProjectGroup[] }>();
+const props = defineProps<{ languages: ShowcaseLanguageResult[] }>();
 
 const ALL = "all";
 const selectedLanguage = ref<string>(ALL);

@@ -18,9 +18,7 @@ router
     router.delete("/auth/logout", [controllers.Auth, "logout"]);
     router.put("/auth/preferences", [controllers.Preferences, "update"]);
 
-    // JSON endpoints for client interactions and the archive overlay.
-    router.get("/api/projects/feed", [controllers.Project, "feed"]);
-    router.get("/api/projects/favorites", [controllers.Project, "favorites"]);
+    // JSON endpoints for client interactions.
     router.post("/api/projects/:id/favorite", [controllers.Project, "addFavorite"]);
     router.delete("/api/projects/:id/favorite", [controllers.Project, "removeFavorite"]);
   })

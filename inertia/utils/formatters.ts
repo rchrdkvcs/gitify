@@ -1,3 +1,4 @@
+import { formatLanguageName } from "@shared/preferences";
 const rtf = new Intl.RelativeTimeFormat("fr", { numeric: "auto" });
 
 export const timeAgo = (dateString: string | null) => {
@@ -22,24 +23,8 @@ export const formatCompact = (n: number) => {
   return new Intl.NumberFormat("en", { notation: "compact" }).format(n).toLowerCase();
 };
 
-const LANGUAGE_NAMES: Record<string, string> = {
-  typescript: "TypeScript",
-  javascript: "JavaScript",
-  python: "Python",
-  rust: "Rust",
-  go: "Go",
-  "c++": "C++",
-  "c#": "C#",
-  php: "PHP",
-  java: "Java",
-  kotlin: "Kotlin",
-  swift: "Swift",
-  dart: "Dart",
-  ruby: "Ruby",
-};
-
 // Languages are stored lowercase; this restores their usual spelling.
 export const formatLanguage = (language: string | null) => {
   if (!language) return "";
-  return LANGUAGE_NAMES[language.toLowerCase()] ?? language;
+  return formatLanguageName(language);
 };

@@ -1,53 +1,9 @@
 <script setup lang="ts">
 import type { PaginationMeta, Project } from "@shared/types/index";
-import { Head, router } from "@inertiajs/vue3";
+import { Head } from "@inertiajs/vue3";
 
 const props = defineProps<{ projects: Project[]; meta: PaginationMeta }>();
-const projects = ref([...props.projects]);
-const meta = ref({ ...props.meta });
-
-watch(
-  () => props.meta,
-  (value) => {
-    meta.value = { ...value };
-  },
-);
-watch(
-  () => props.projects,
-  (value) => {
-    projects.value = [...value];
-  },
-);
-
-const loading = ref(false);
-const error = ref<string | null>(null);
-
-function goToPage(page: number) {
-  router.get(
-    "/favorites",
-    { page },
-    {
-      preserveState: true,
-      preserveScroll: true,
-      onStart: () => {
-        loading.value = true;
-        error.value = null;
-      },
-      onFinish: () => {
-        loading.value = false;
-      },
-      onError: () => {
-        error.value = "Impossible de charger tes favoris. Vérifie ta connexion et réessaie.";
-      },
-    },
-  );
-}
-
-function handleFavoriteChange(projectId: string, isFavorite: boolean) {
-  if (isFavorite) return;
-  projects.value = projects.value.filter((project) => project.id !== projectId);
-  meta.value.total = Math.max(0, meta.value.total - 1);
-}
+const { projects, meta, loading, error, goToPage, handleFavoriteChange } = useFavoritePage(props);
 
 const countLabel = computed(() =>
   meta.value.total === 1 ? "1 projet gardé" : `${meta.value.total} projets gardés`,
@@ -84,7 +40,7 @@ const countLabel = computed(() =>
       </p>
     </div>
 
-    <ProjectGrid v-if="loading">
+    <ProjectGrid v-if="loading && projects.length === 0">
       <ProjectGridItem v-for="n in 6" :key="n">
         <ProjectCardSkeleton />
       </ProjectGridItem>

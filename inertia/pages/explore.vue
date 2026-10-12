@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import type { Project } from "@shared/types/index";
-import { Head } from "@inertiajs/vue3";
+import type { FeedRefreshState, Project } from "@shared/types/index";
+import { Head, router } from "@inertiajs/vue3";
+import { normalizePreferenceLanguages } from "@shared/preferences";
 
-const props = defineProps<{ projects: Project[] }>();
+const props = defineProps<{ projects: Project[]; refreshState: FeedRefreshState }>();
 const { projects, total, hasMore, languageFilter, searchQuery, starSort, loadMore, resetFilters } =
   useProjects(() => props.projects);
 
@@ -23,8 +24,8 @@ watch([languageFilter, searchQuery, starSort], () => {
 onMounted(() => {
   const languages = authStore.user?.preferences?.languages;
   if (languages) {
-    preferredLanguages.value = [...languages];
-    languageFilter.value = [...languages];
+    preferredLanguages.value = normalizePreferenceLanguages(languages);
+    languageFilter.value = [...preferredLanguages.value];
   }
   languagesReady.value = true;
   nextTick(reobserve);
@@ -96,6 +97,22 @@ const hasActiveFilters = computed(
           </p>
         </div>
 
+        <p
+          v-if="props.projects.length && props.refreshState === 'degraded'"
+          role="status"
+          class="border-b border-default px-4 py-3 text-sm text-muted sm:px-5"
+        >
+          Certains projets n’ont pas pu être actualisés. Tu peux explorer ceux déjà disponibles.
+        </p>
+
+        <p
+          v-if="props.projects.length && props.refreshState === 'refreshing'"
+          role="status"
+          class="border-b border-default px-4 py-3 text-sm text-muted sm:px-5"
+        >
+          Une partie du fil sera actualisée au prochain chargement.
+        </p>
+
         <ProjectGrid v-if="projects.length">
           <ProjectGridItem v-for="project in projects" :key="project.id">
             <ProjectCard
@@ -121,10 +138,38 @@ const hasActiveFilters = computed(
         </EmptyState>
 
         <EmptyState
-          v-else
+          v-else-if="props.refreshState === 'unavailable'"
+          icon="lucide:wifi-off"
+          title="Les projets sont momentanément indisponibles"
+          description="Impossible de récupérer les projets. Réessaie dans quelques instants."
+        >
+          <UButton
+            label="Réessayer"
+            color="neutral"
+            variant="outline"
+            @click="router.reload({ only: ['projects', 'refreshState'] })"
+          />
+        </EmptyState>
+
+        <EmptyState
+          v-else-if="props.refreshState === 'refreshing'"
           icon="lucide:folder-search"
           title="Ton fil se prépare"
           description="On récupère des projets depuis GitHub pour tes langages. Recharge la page dans quelques instants."
+        >
+          <UButton
+            to="/preferences"
+            label="Modifier mes préférences"
+            color="neutral"
+            variant="outline"
+          />
+        </EmptyState>
+
+        <EmptyState
+          v-else
+          icon="lucide:folder-search"
+          title="Aucun projet pour ces préférences"
+          description="Essaie d’autres langages ou un autre niveau pour découvrir des projets."
         >
           <UButton
             to="/preferences"

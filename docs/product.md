@@ -28,15 +28,15 @@ Les préférences sont sauvegardées en base (`users.preferences`) et peuvent ê
 
 Page d'accueil publique (aucune authentification requise). Affiche une sélection de 6 projets par langage parmi 12 langages configurés. Les projets sont piochés aléatoirement dans un pool local pour varier les affichages. Si le pool est insuffisant, un fetch GitHub est déclenché en arrière-plan avec le token serveur.
 
-### Fil personnalisé (`GET /projects/feed`)
+### Fil personnalisé (`GET /explore`)
 
 Retourne jusqu'à 60 projets correspondant aux préférences de l'utilisateur. Les projets sont distribués en round-robin entre les langages sélectionnés pour éviter qu'un seul langage monopolise le fil. Si moins de 25 projets sont disponibles, un fetch GitHub est déclenché automatiquement avant la réponse. Chaque projet expose son état `isFavorite`.
 
 ### Favoris
 
-- **Ajouter** (`POST /projects/:id/favorite`) — ajoute un projet aux favoris
-- **Retirer** (`DELETE /projects/:id/favorite`) — retire un projet des favoris
-- **Lister** (`GET /projects/favorites`) — retourne les favoris paginés, du plus récent au plus ancien
+- **Ajouter** (`POST /api/projects/:id/favorite`) — ajoute un projet aux favoris
+- **Retirer** (`DELETE /api/projects/:id/favorite`) — retire un projet des favoris
+- **Lister** (page `GET /favorites`) — affiche les favoris paginés, du plus récent au plus ancien
 
 Ces actions sont idempotentes et s'appuient sur la table `user_project_favorites`. Ajouter un favori ne retire pas le projet du fil d'exploration.
 
