@@ -31,11 +31,8 @@ export function usePreferences() {
   async function savePreferences() {
     if (formLanguages.value.length === 0) {
       toast.add({
-        title: "Veuillez sélectionner au moins un langage.",
-        icon: "i-heroicons-exclamation-circle-20-solid",
-        ui: {
-          root: "bg-canvas border border-border",
-        },
+        title: "Choisis au moins un langage pour continuer.",
+        icon: "lucide:circle-alert",
       });
       return;
     }
@@ -50,10 +47,14 @@ export function usePreferences() {
       {
         onSuccess: () => {
           isEditingPreferences.value = false;
-          toast.add({ title: "Vos préférences ont été mises à jour.", color: "success" });
+          toast.add({ title: "Préférences enregistrées.", icon: "lucide:check", color: "success" });
         },
         onError: () =>
-          toast.add({ title: "Impossible de sauvegarder vos préférences.", color: "error" }),
+          toast.add({
+            title: "Impossible d’enregistrer tes préférences.",
+            description: "Vérifie ta connexion et réessaie.",
+            color: "error",
+          }),
         onFinish: () => {
           submitting.value = false;
         },

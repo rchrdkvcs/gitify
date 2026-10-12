@@ -11,6 +11,7 @@ export default defineConfig({
     ui({
       router: "inertia",
       ui: appConfig.ui,
+      theme: { colors: ["primary", "success", "neutral", "error"] },
       colorMode: false,
       autoImport: {
         imports: ["vue"],

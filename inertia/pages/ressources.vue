@@ -1,10 +1,5 @@
 <script setup lang="ts">
 import { Head } from "@inertiajs/vue3";
-const metadata = {
-  title: "Ressources — Bientôt disponible",
-  description:
-    "Les ressources Gitify arrivent bientôt : guides, outils et parcours pour contribuer à l’open source.",
-};
 
 const previewItems = [
   {
@@ -26,13 +21,16 @@ const previewItems = [
 </script>
 
 <template>
-  <Head :title="metadata.title"><meta name="description" :content="metadata.description" /></Head>
+  <Head title="Ressources">
+    <meta
+      name="description"
+      content="Les ressources Gitify arrivent bientôt : guides, outils et parcours pour contribuer à l’open source."
+    />
+  </Head>
   <ComingSoonPage
     eyebrow="Bientôt disponible"
-    title="De quoi aller "
-    highlighted-title="plus loin."
-    description="Nous rassemblons des guides concrets, des outils utiles et des parcours accessibles pour t’aider à contribuer avec confiance."
-    icon="lucide:library-big"
+    title="Des ressources pour aller plus loin."
+    description="Des guides concrets, des outils utiles et des parcours pas à pas pour contribuer avec confiance. On les rassemble."
     :preview-items="previewItems"
   />
 </template>

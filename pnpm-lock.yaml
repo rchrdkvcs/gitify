@@ -196,13 +196,10 @@ importers:
       '@comark/vue':
         specifier: ^0.7.0
         version: 0.7.0(vue@3.5.43(typescript@6.0.3))
-      '@fontsource-variable/jetbrains-mono':
+      '@fontsource-variable/geist':
         specifier: ^5.3.0
         version: 5.3.0
-      '@fontsource-variable/space-grotesk':
-        specifier: ^5.3.0
-        version: 5.3.0
-      '@fontsource/antic':
+      '@fontsource-variable/geist-mono':
         specifier: ^5.3.0
         version: 5.3.0
       '@inertiajs/vue3':
@@ -924,14 +921,11 @@ packages:
   '@floating-ui/vue@1.1.11':
     resolution: {integrity: sha512-HzHKCNVxnGS35r9fCHBc3+uCnjw9IWIlCPL683cGgM9Kgj2BiAl8x1mS7vtvP6F9S/e/q4O6MApwSHj8hNLGfw==}
 
-  '@fontsource-variable/jetbrains-mono@5.3.0':
-    resolution: {integrity: sha512-F32xpS2NsGYoQi2ADSkKTgpJj7ozajsGgDJ8woTnqjmIB+dxDIqImjl4pXZVEExu8UFZ2ndhmX18EBS/hdz3Lw==}
+  '@fontsource-variable/geist-mono@5.3.0':
+    resolution: {integrity: sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==}
 
-  '@fontsource-variable/space-grotesk@5.3.0':
-    resolution: {integrity: sha512-2IxmvfB08i9vnGB3Ym/AXvhRE+8XOjWMXIyDum03c+tPwH0FUoMNQfGpU8NXPxjbws0Vvss3AH0Zqt4oJBBAdw==}
-
-  '@fontsource/antic@5.3.0':
-    resolution: {integrity: sha512-ImQWKeGuVkYVt+d+bh6Rz/hIelxnf0mlnUd/H8EFYXeVROeDuRTPoI6UzJqHg5FeEygHVaMeBrJfmryL2y3EXw==}
+  '@fontsource-variable/geist@5.3.0':
+    resolution: {integrity: sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==}
 
   '@iconify/collections@1.0.750':
     resolution: {integrity: sha512-dsjsQLm/rHsAxxMg0AFHqqCBLoYPJhqclRmB0qzlfHG2ahnipentuPW/auVwIDtvHPL9lAYTDZ9HPRFS9wkgQg==}
@@ -5069,11 +5063,9 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
-  '@fontsource-variable/jetbrains-mono@5.3.0': {}
+  '@fontsource-variable/geist-mono@5.3.0': {}
 
-  '@fontsource-variable/space-grotesk@5.3.0': {}
-
-  '@fontsource/antic@5.3.0': {}
+  '@fontsource-variable/geist@5.3.0': {}
 
   '@iconify/collections@1.0.750':
     dependencies:

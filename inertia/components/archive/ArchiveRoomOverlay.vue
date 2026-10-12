@@ -128,7 +128,7 @@ watch(isOpen, (open) => {
           v-if="isLoading || sceneLoading"
           class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#1a1810]/90"
         >
-          <p class="font-jetbrains text-sm tracking-widest text-[#e8d48b] uppercase">
+          <p class="font-mono text-sm tracking-widest text-[#e8d48b] uppercase">
             {{ isLoading ? "Ouverture des archives…" : "Chargement des backrooms…" }}
           </p>
           <p class="text-xs text-white/40">Les modèles 3D peuvent prendre quelques secondes</p>
@@ -157,7 +157,7 @@ watch(isOpen, (open) => {
           <div
             class="max-w-md rounded-xl border border-white/10 bg-black/60 px-5 py-4 text-center backdrop-blur-sm"
           >
-            <p class="font-jetbrains text-sm text-[#e8d48b]">Aucune caisse pour l’instant</p>
+            <p class="font-mono text-sm text-[#e8d48b]">Aucune caisse pour l’instant</p>
             <p class="mt-2 text-sm text-white/60">
               Ajoutez des projets à vos favoris pour remplir les backrooms.
             </p>
@@ -172,7 +172,7 @@ watch(isOpen, (open) => {
           <div
             class="rounded-lg border border-[#e8d48b]/35 bg-black/80 px-3 py-2.5 shadow-xl backdrop-blur-md"
           >
-            <p class="truncate font-jetbrains text-sm text-white">
+            <p class="truncate font-mono text-sm text-white">
               {{ hovered.project.name }}
             </p>
             <p class="truncate text-xs text-white/55">{{ hovered.project.ownerName }}</p>
@@ -216,7 +216,7 @@ watch(isOpen, (open) => {
         <div
           class="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-4"
         >
-          <p class="font-jetbrains text-xs tracking-[0.25em] text-[#e8d48b]/75 uppercase">
+          <p class="font-mono text-xs tracking-[0.25em] text-[#e8d48b]/75 uppercase">
             Backrooms · Archives
           </p>
           <button
@@ -234,7 +234,7 @@ watch(isOpen, (open) => {
 
 <style scoped>
 kbd {
-  font-family: var(--font-jetbrains), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
 }
 </style>

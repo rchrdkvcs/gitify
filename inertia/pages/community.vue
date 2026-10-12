@@ -1,10 +1,5 @@
 <script setup lang="ts">
 import { Head } from "@inertiajs/vue3";
-const metadata = {
-  title: "Communauté — Bientôt disponible",
-  description:
-    "La communauté Gitify arrive bientôt : échanges, entraide et événements autour de l’open source.",
-};
 
 const previewItems = [
   {
@@ -18,7 +13,7 @@ const previewItems = [
     description: "Rencontre des développeurs qui partagent tes envies et tes objectifs.",
   },
   {
-    icon: "lucide:calendar-heart",
+    icon: "lucide:calendar",
     title: "Participer",
     description: "Retrouve les prochains rendez-vous et événements de la communauté.",
   },
@@ -26,13 +21,16 @@ const previewItems = [
 </script>
 
 <template>
-  <Head :title="metadata.title"><meta name="description" :content="metadata.description" /></Head>
+  <Head title="Communauté">
+    <meta
+      name="description"
+      content="La communauté Gitify arrive bientôt : entraide, échanges et événements autour de l’open source."
+    />
+  </Head>
   <ComingSoonPage
     eyebrow="Bientôt disponible"
-    title="La communauté prend "
-    highlighted-title="forme."
-    description="Nous préparons un espace où les développeurs pourront s’entraider, apprendre ensemble et faire grandir leurs contributions open source."
-    icon="lucide:users-round"
+    title="La communauté Gitify arrive."
+    description="Un espace pour s’entraider, apprendre à plusieurs et faire grandir ses contributions open source. On le prépare."
     :preview-items="previewItems"
   />
 </template>

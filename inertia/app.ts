@@ -1,6 +1,5 @@
-import "@fontsource-variable/space-grotesk";
-import "@fontsource-variable/jetbrains-mono";
-import "@fontsource/antic";
+import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
 import "./assets/styles/main.css";
 import type { DefineComponent } from "vue";
 import { resolvePageComponent } from "@adonisjs/inertia/helpers";
@@ -33,5 +32,5 @@ createInertiaApp({
       .use(ui)
       .mount(el);
   },
-  progress: { color: "#d9341a" },
+  progress: { color: "oklch(0.83 0.16 163)" },
 });
