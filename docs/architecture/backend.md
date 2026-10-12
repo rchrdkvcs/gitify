@@ -4,21 +4,25 @@
 
 `PagesController` charge les données métier et rend les pages Inertia. Les pages `/explore`, `/favorites`, `/projects/:id`, `/profil` et `/preferences` exigent une session. Les visiteurs sont redirigés vers `/`. Un utilisateur sans préférences est redirigé de l'exploration vers `/preferences`.
 
-Les routes `/api/projects/feed`, `/api/projects/favorites` et `/api/projects/:id/favorite` servent les interactions client. Elles utilisent la même session et la même protection CSRF que les pages. Il n'y a plus de configuration CORS ni de documentation OpenAPI pour une API séparée.
+Seule la route `/api/projects/:id/favorite` (ajout et retrait d'un favori) répond en JSON ; le fil et les favoris sont des pages Inertia (`/explore`, `/favorites`). Elles utilisent la même session et la même protection CSRF que les pages. Il n'y a plus de configuration CORS ni de documentation OpenAPI pour une API séparée.
 
 ## Authentification
 
-`/auth/github/redirect` lance OAuth via Ally ; `/auth/github/callback` vérifie la réponse, crée ou actualise l'utilisateur avec `AuthService`, puis ouvre la session. Le callback redirige vers `/explore` ou `/preferences` selon l'état du profil. `DELETE /auth/logout` ferme la session et redirige vers `/`.
+`/auth/github/redirect` lance OAuth via Ally ; `/auth/github/callback` vérifie la réponse, crée ou actualise l'utilisateur avec `AuthService`, puis ouvre la session. L'identifiant GitHub, numérique au runtime Ally, est normalisé en chaîne stable : un changement d'email vérifié conserve les préférences et les favoris. La première connexion exige un email vérifié, sans réserver une adresse non vérifiée. Un compte historique (sans identifiant GitHub) est lié dès qu'une connexion présente le même email vérifié par GitHub ; il conserve ses préférences et ses favoris. Si cet email appartient déjà à une autre identité GitHub, la connexion est refusée (409). Un utilisateur reconnu par son identifiant ne prend un nouvel email vérifié que s'il est libre ; sinon il garde l'email enregistré et se connecte normalement. Aucun appel HTTP n'a lieu dans la transaction ; un verrou consultatif par identité GitHub sérialise les premières connexions concurrentes. Le callback redirige vers `/explore` ou `/preferences` selon l'état du profil. `DELETE /auth/logout` ferme la session et redirige vers `/`.
 
-`UserTransformer` expose le profil partagé avec Inertia et exclut le jeton GitHub. `ProjectTransformer` sérialise les données des projets, leurs dates ISO, les contributeurs et l'état favori. Les types générés de l'utilisateur sont disponibles dans `.adonisjs/client/data.d.ts`.
+`UserTransformer` expose le profil partagé avec Inertia et exclut le jeton GitHub. Les lectures de projets composent des projections publiques communes aux pages, avec des dates ISO et un état favori propre au lecteur. `ProjectTransformer` définit la projection de liste, qui exclut le README et les détails ; `ProjectDetailTransformer` ajoute les détails et les contributeurs. Le module de lecture retourne leurs objets publics sans exposer Lucid aux contrôleurs. Les types générés sont disponibles dans `.adonisjs/client/data.d.ts`.
 
 ## Préférences et projets
 
-`PUT /auth/preferences` utilise Vine pour valider le niveau et les langages, enregistre les préférences et redirige vers l'exploration.
+`PUT /auth/preferences` utilise Vine pour valider le niveau et les langages, enregistre les préférences et redirige vers l'exploration. Le catalogue partagé `shared/preferences.ts` définit les identifiants et les libellés ; le validator normalise, déduplique et borne les choix. Les identifiants inconnus sont refusés.
 
-`ProjectFeedService` orchestre la vitrine, le fil et les favoris. La vitrine sélectionne des projets par langage dans le cache PostgreSQL. Si le stock est insuffisant et qu'un jeton serveur existe, elle déclenche un enrichissement GitHub. Le fil combine les langages par alternance et renseigne l'état des favoris.
+`ProjectFeedService` orchestre la vitrine, le fil et les favoris. La sélection s'appuie sur les appartenances aux recherches, indépendantes de l'identité des dépôts. Le fil combine les langages par alternance, sans doublon de dépôt, et renseigne l'état des favoris. Chaque langage vérifie sa fraîcheur, même lorsque le stock global est important. Les projets en cache restent disponibles en cas de panne GitHub ; `refreshState` indique si le résultat est prêt, en cours d'actualisation, dégradé ou indisponible.
 
-`GitHubApiClient` appelle GitHub ; `GitHubSyncService` importe les repositories et enrichit les détails (README, langages, contributeurs, release). Les seuils, limites et durées de cache restent dans `config/gitify.ts`.
+La vitrine utilise la même politique de fraîcheur quand un jeton serveur existe. Elle conserve les données en cache lors d'un échec distant et limite l'enrichissement des détails à deux dépôts par requête. Chaque carte reçoit ses deux principaux contributeurs, avec un ordre déterministe.
+
+`GitHubApiClient` appelle GitHub avec un délai borné couvrant la requête et le corps de réponse. Les absences attendues de README ou de release sont distinguées des erreurs ; une réponse 204 des contributeurs représente une liste vide. `GitHubSyncService` accepte un adapter GitHub et une horloge ; les tests fournissent un adapter contrôlé et une base PostgreSQL dédiée. `ensureSearchFresh` vérifie le TTL sous un verrou transactionnel PostgreSQL pour coordonner plusieurs processus. Deux recherches au maximum par processus réservent une connexion pour un appel distant ; les autres servent le résultat en cache avec un état d'actualisation différée. Les échecs reportent la prochaine tentative de 60 secondes, avec une trace partagée en base. Toutes les recherches importent jusqu'à 100 dépôts, y compris celles lancées par la vitrine et le seeder ; les limites de présentation n'altèrent pas le stock du fil. Un import réussi remplace les appartenances du critère ; l'enrichissement remplace les contributeurs et les métadonnées atomiquement. Les limites et durées de cache restent dans `config/gitify.ts`.
+
+La pagination des favoris normalise et ramène les pages à la dernière page disponible, avec un ordre stable par date puis identifiant. Après suppression, le navigateur relit la page canonique.
 
 ## Base et configuration
 

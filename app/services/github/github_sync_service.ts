@@ -1,85 +1,244 @@
+import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
+import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
+import type { GitHubAdapter } from "#services/github/github_adapter";
 import gitifyConfig from "#config/gitify";
 import Contributor from "#models/contributor";
 import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
+import ProjectSearchMembership from "#models/project_search_membership";
 import GitHubApiClient from "#services/github/github_api_client";
 
-export default class GitHubSyncService {
-  static async needsFetch(language: string, difficulty: "beginner" | "expert"): Promise<boolean> {
-    const cache = await GithubFetchCache.query()
-      .where("language", language.toLowerCase())
-      .where("difficulty", difficulty)
-      .first();
+export type SearchCriteria = {
+  language: string;
+  difficulty: "beginner" | "expert";
+  token: string;
+};
 
-    if (!cache) {
-      return true;
-    }
+export type SearchFreshness =
+  | { status: "fresh" | "pending" }
+  | { status: "refreshed"; totalStored: number };
 
-    const hoursSinceLastFetch = DateTime.now().diff(cache.fetchedAt, "hours").hours;
-    return hoursSinceLastFetch >= gitifyConfig.cache.fetchTtlHours;
+export class SearchRetryDeferredError extends Error {
+  constructor() {
+    super("GitHub search temporarily unavailable; retry deferred");
+  }
+}
+
+// Shared by every synchronization instance; permits are taken before reserving a DB connection.
+let activeSearches = 0;
+
+export class GitHubSyncService {
+  constructor(
+    private readonly github: GitHubAdapter = GitHubApiClient,
+    private readonly now: () => DateTime = () => DateTime.now(),
+  ) {}
+
+  /** Refresh one criterion atomically; occupied permits serve the existing snapshot. */
+  async ensureSearchFresh(criteria: SearchCriteria): Promise<SearchFreshness> {
+    return this.refreshSearch(criteria, false);
   }
 
-  static async fetchAndStore(
+  /** Administrative imports use the same complete search coverage and resource budget. */
+  async fetchAndStore(
     language: string,
     difficulty: "beginner" | "expert",
     token: string,
-    perPage: number = gitifyConfig.github.search.defaultPerPage,
   ): Promise<number> {
-    const repos = await GitHubApiClient.searchRepositories(language, difficulty, token, perPage);
+    const result = await this.refreshSearch({ language, difficulty, token }, true);
+    if (result.status !== "refreshed") {
+      throw new Error("GitHub search refresh already in progress");
+    }
+    return result.totalStored;
+  }
 
-    // GitHub counts PRs in open_issues_count — filter repos that have real issues
-    const validRepos = repos.filter((repo) => repo.has_issues && repo.open_issues_count > 0);
-
-    await Promise.all(
-      validRepos.map((repo) =>
-        Project.updateOrCreate(
-          { githubRepoId: repo.id },
-          {
-            ownerName: repo.owner.login,
-            name: repo.name,
-            description: repo.description,
-            repositoryUrl: repo.html_url,
-            stars: repo.stargazers_count,
-            forksCount: repo.forks_count,
-            language: repo.language?.toLowerCase() ?? language,
-            topics: repo.topics ?? [],
-            openIssuesCount: repo.open_issues_count,
-            difficulty,
-          },
-        ),
-      ),
+  private isFresh(cache: GithubFetchCache | null): boolean {
+    return (
+      !!cache?.fetchedAt &&
+      this.now().diff(cache.fetchedAt, "hours").hours < gitifyConfig.cache.fetchTtlHours
     );
+  }
+
+  private assertRetryAllowed(cache: GithubFetchCache | null): void {
+    if (cache?.retryAfter && cache.retryAfter.toMillis() > this.now().toMillis()) {
+      throw new SearchRetryDeferredError();
+    }
+  }
+
+  private async readSearchCache(criteria: SearchCriteria, trx?: TransactionClientContract) {
+    return GithubFetchCache.query(trx ? { client: trx } : {})
+      .where("language", criteria.language)
+      .where("difficulty", criteria.difficulty)
+      .first();
+  }
+
+  private async refreshSearch(input: SearchCriteria, force: boolean): Promise<SearchFreshness> {
+    const criteria = { ...input, language: input.language.trim().toLowerCase() };
+    // Cached requests never queue behind network requests for a permit or transaction connection.
+    const cache = await this.readSearchCache(criteria);
+    if (!force && this.isFresh(cache)) {
+      return { status: "fresh" };
+    }
+    this.assertRetryAllowed(cache);
+    if (activeSearches >= gitifyConfig.cache.maxConcurrentSearches) {
+      return { status: "pending" };
+    }
+    activeSearches++;
+    try {
+      return await db.transaction(async (trx) => {
+        const lock = await trx.rawQuery(
+          "SELECT pg_try_advisory_xact_lock(hashtext(?)) AS acquired",
+          [`project-search:${criteria.language}:${criteria.difficulty}`],
+        );
+        if (!lock.rows[0].acquired) {
+          return { status: "pending" };
+        }
+        const current = await this.readSearchCache(criteria, trx);
+        if (!force && this.isFresh(current)) {
+          return { status: "fresh" };
+        }
+        this.assertRetryAllowed(current);
+        const totalStored = await this.importSearch(criteria, trx);
+        return { status: "refreshed", totalStored };
+      });
+    } catch (error) {
+      // The failed transaction has rolled back before failure metadata is written.
+      if (!(error instanceof SearchRetryDeferredError)) {
+        await this.recordSearchFailure(criteria);
+      }
+      throw error;
+    } finally {
+      activeSearches--;
+    }
+  }
+
+  private async recordSearchFailure(criteria: SearchCriteria): Promise<void> {
+    await db.transaction(async (trx) => {
+      const lock = await trx.rawQuery("SELECT pg_try_advisory_xact_lock(hashtext(?)) AS acquired", [
+        `project-search:${criteria.language}:${criteria.difficulty}`,
+      ]);
+      // Another process owns this criterion and will publish its own outcome.
+      if (!lock.rows[0].acquired) {
+        return;
+      }
+      const current = await this.readSearchCache(criteria, trx);
+      if (this.isFresh(current)) {
+        return;
+      }
+      const retryAfter = this.now().plus({ seconds: gitifyConfig.cache.searchRetrySeconds });
+      if (current) {
+        current.retryAfter = retryAfter;
+        await current.save();
+      } else {
+        await GithubFetchCache.create(
+          {
+            language: criteria.language,
+            difficulty: criteria.difficulty,
+            fetchedAt: null,
+            totalStored: 0,
+            retryAfter,
+          },
+          { client: trx },
+        );
+      }
+    });
+  }
+
+  private async importSearch(
+    { language: searchLanguage, difficulty, token }: SearchCriteria,
+    trx: TransactionClientContract,
+  ): Promise<number> {
+    const repos = await this.github.searchRepositories(
+      searchLanguage,
+      difficulty,
+      token,
+      gitifyConfig.github.search.defaultPerPage,
+    );
+    const validRepos = repos.filter((repo) => repo.has_issues && repo.open_issues_count > 0);
+    // Search criteria describe membership, while the repository has one stable identity.
+    await ProjectSearchMembership.query({ client: trx })
+      .where("language", searchLanguage)
+      .where("difficulty", difficulty)
+      .delete();
+
+    // Lock identities in a fixed order so simultaneous language imports can share repositories.
+    for (const repo of [...validRepos].sort((a, b) => a.id - b.id)) {
+      await trx.rawQuery("SELECT pg_advisory_xact_lock(hashtext(?))", [
+        `project-identity:${repo.id}`,
+      ]);
+      const metadata = {
+        ownerName: repo.owner.login,
+        name: repo.name,
+        description: repo.description,
+        repositoryUrl: repo.html_url,
+        stars: repo.stargazers_count,
+        forksCount: repo.forks_count,
+        language: repo.language?.toLowerCase() ?? searchLanguage,
+        topics: repo.topics ?? [],
+        openIssuesCount: repo.open_issues_count,
+      };
+      const project = await Project.firstOrCreate(
+        { githubRepoId: repo.id },
+        { ...metadata, difficulty },
+        { client: trx },
+      );
+      project.merge(metadata);
+      await project.save();
+      await ProjectSearchMembership.firstOrCreate(
+        { projectId: project.id, language: searchLanguage, difficulty },
+        {},
+        { client: trx },
+      );
+    }
 
     await GithubFetchCache.updateOrCreate(
-      { language: language.toLowerCase(), difficulty },
-      { totalStored: validRepos.length, fetchedAt: DateTime.now() },
+      { language: searchLanguage, difficulty },
+      { totalStored: validRepos.length, fetchedAt: this.now(), retryAfter: null },
+      { client: trx },
     );
-
     return validRepos.length;
   }
 
-  static needsDetailsFetch(project: Project): boolean {
+  needsDetailsFetch(project: Project): boolean {
     if (!project.detailsFetchedAt) {
       return true;
     }
-    const daysSince = DateTime.now().diff(project.detailsFetchedAt, "days").days;
+    const daysSince = this.now().diff(project.detailsFetchedAt, "days").days;
     return daysSince >= gitifyConfig.cache.detailsCacheDays;
   }
 
-  static async fetchProjectDetails(project: Project, token: string): Promise<void> {
-    const details = await GitHubApiClient.getProjectDetails(project.ownerName, project.name, token);
+  async fetchProjectDetails(project: Project, token: string): Promise<void> {
+    const details = await this.github.getProjectDetails(project.ownerName, project.name, token);
 
-    project.readme = details.readme;
-    project.languages = details.languages;
-    project.latestRelease = details.latestRelease;
-    project.totalContributorsCount = details.totalContributorsCount;
-    project.detailsFetchedAt = DateTime.now();
-    await project.save();
+    await db.transaction(async (trx) => {
+      // Keep the caller's model untouched until the entire snapshot commits.
+      const stored = await Project.query({ client: trx })
+        .where("id", project.id)
+        .forUpdate()
+        .firstOrFail();
+      stored.merge({
+        readme: details.readme,
+        languages: details.languages,
+        latestRelease: details.latestRelease,
+        totalContributorsCount: details.totalContributorsCount,
+        detailsFetchedAt: this.now(),
+      });
+      await stored.save();
 
-    await Promise.all(
-      details.contributors.map((c) =>
-        Contributor.updateOrCreate(
+      const previousContributors = Contributor.query({ client: trx }).where(
+        "projectId",
+        project.id,
+      );
+      if (details.contributors.length > 0) {
+        previousContributors.whereNotIn(
+          "githubUserId",
+          details.contributors.map((c) => c.id),
+        );
+      }
+      await previousContributors.delete();
+
+      for (const c of details.contributors) {
+        await Contributor.updateOrCreate(
           { projectId: project.id, githubUserId: c.id },
           {
             login: c.login,
@@ -87,8 +246,12 @@ export default class GitHubSyncService {
             profileUrl: c.html_url,
             contributions: c.contributions,
           },
-        ),
-      ),
-    );
+          { client: trx },
+        );
+      }
+    });
+    await project.refresh();
   }
 }
+
+export default new GitHubSyncService();

@@ -10,7 +10,7 @@ start/              Routes, middleware et validation de l'environnement
 database/           Migrations, schéma généré et seeders
 inertia/            Pages, composants, composables et styles Vue
 resources/views/    Document HTML Edge utilisé par Inertia
-public/             Fichiers statiques et modèles 3D
+public/             Fichiers statiques
 shared/types/       Contrats métier partagés, sans paquet de workspace
 tests/              Tests Japa
 ```

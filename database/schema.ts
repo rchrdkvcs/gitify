@@ -47,6 +47,7 @@ export class GithubFetchCacheSchema extends BaseModel {
     "fetchedAt",
     "id",
     "language",
+    "retryAfter",
     "totalStored",
     "updatedAt",
   ] as const;
@@ -56,15 +57,30 @@ export class GithubFetchCacheSchema extends BaseModel {
   @column()
   declare difficulty: string;
   @column.dateTime()
-  declare fetchedAt: DateTime;
+  declare fetchedAt: DateTime | null;
+  @column({ isPrimary: true })
+  declare id: string;
+  @column()
+  declare language: string;
+  @column.dateTime()
+  declare retryAfter: DateTime | null;
+  @column()
+  declare totalStored: number;
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null;
+}
+
+export class ProjectSearchMembershipSchema extends BaseModel {
+  static $columns = ["difficulty", "id", "language", "projectId"] as const;
+  $columns = ProjectSearchMembershipSchema.$columns;
+  @column()
+  declare difficulty: string;
   @column({ isPrimary: true })
   declare id: string;
   @column()
   declare language: string;
   @column()
-  declare totalStored: number;
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null;
+  declare projectId: string;
 }
 
 export class ProjectSchema extends BaseModel {
@@ -151,6 +167,7 @@ export class UserSchema extends BaseModel {
     "createdAt",
     "email",
     "githubAccessToken",
+    "githubUserId",
     "id",
     "isVerified",
     "name",
@@ -166,6 +183,8 @@ export class UserSchema extends BaseModel {
   declare email: string;
   @column()
   declare githubAccessToken: string | null;
+  @column()
+  declare githubUserId: string | null;
   @column({ isPrimary: true })
   declare id: string;
   @column()

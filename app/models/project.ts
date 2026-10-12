@@ -1,5 +1,5 @@
 import type { HasMany } from "@adonisjs/lucid/types/relations";
-import { beforeCreate, column, computed, hasMany } from "@adonisjs/lucid/orm";
+import { beforeCreate, column, hasMany } from "@adonisjs/lucid/orm";
 import { ulid } from "ulid";
 import type { Difficulty } from "#shared/types/index";
 import { ProjectSchema } from "#database/schema";
@@ -8,8 +8,6 @@ import Contributor from "#models/contributor";
 export default class Project extends ProjectSchema {
   @column()
   declare difficulty: Difficulty;
-  @computed()
-  declare isFavorite: boolean;
 
   @beforeCreate()
   static generateId(model: Project) {

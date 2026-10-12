@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { createHeroAnimation } from "~/lib/hero-animation";
 // Git commit graph drifting slowly behind the hero content.
 //
 // The graph lives in "world" coordinates and the camera scrolls right at a
@@ -308,42 +309,23 @@ onMounted(() => {
     ctx.globalAlpha = 1;
   };
 
-  let raf = 0;
-  let last = 0;
-  let running = false;
+  const animation = createHeroAnimation(
+    (dt) => {
+      offset += SPEED * dt;
+      time += dt;
+      generate(offset + width + 200);
+      draw();
+    },
+    window,
+    reduced,
+  );
+  animation.setDocumentHidden(document.hidden);
 
-  const loop = (now: number) => {
-    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
-    last = now;
-    offset += SPEED * dt;
-    time += dt;
-    generate(offset + width + 200);
-    draw();
-    raf = requestAnimationFrame(loop);
-  };
-
-  const start = () => {
-    if (running || reduced || document.hidden) return;
-    running = true;
-    last = 0;
-    raf = requestAnimationFrame(loop);
-  };
-
-  const stop = () => {
-    running = false;
-    cancelAnimationFrame(raf);
-  };
-
-  // Only animate while the hero is on screen.
+  // Visibility and tab activity must both permit animation.
   const visibility = new IntersectionObserver(([entry]) => {
-    if (entry?.isIntersecting) start();
-    else stop();
+    animation.setVisible(entry?.isIntersecting ?? false);
   });
-
-  const onVisibilityChange = () => {
-    if (document.hidden) stop();
-    else start();
-  };
+  const onVisibilityChange = () => animation.setDocumentHidden(document.hidden);
 
   let resizeTimer: ReturnType<typeof setTimeout> | null = null;
   const onResize = () => {
@@ -372,7 +354,7 @@ onMounted(() => {
 
   cleanup = () => {
     disposed = true;
-    stop();
+    animation.dispose();
     if (resizeTimer) clearTimeout(resizeTimer);
     visibility.disconnect();
     window.removeEventListener("resize", onResize);

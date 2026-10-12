@@ -10,7 +10,8 @@ const emit = defineEmits<{
   (e: "toggle", title: string): void;
 }>();
 
-const isSelected = (title: string) => props.languages.includes(title.toLowerCase());
+const languageId = (item: Preference) => item.value ?? item.title.toLowerCase();
+const isSelected = (item: Preference) => props.languages.includes(languageId(item));
 </script>
 
 <template>
@@ -25,8 +26,8 @@ const isSelected = (title: string) => props.languages.includes(title.toLowerCase
         <input
           type="checkbox"
           class="peer sr-only"
-          :checked="isSelected(item.title)"
-          @change="emit('toggle', item.title.toLowerCase())"
+          :checked="isSelected(item)"
+          @change="emit('toggle', languageId(item))"
         />
         <span
           class="absolute -inset-px border border-transparent peer-checked:border-primary"

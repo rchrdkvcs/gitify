@@ -1,3 +1,4 @@
+import { languageCatalog } from "@shared/preferences";
 import type { PreferenceGroup } from "~/types/preferences";
 
 export const stepperItems: PreferenceGroup[] = [
@@ -28,19 +29,7 @@ export const stepperItems: PreferenceGroup[] = [
     description:
       "Choisis ceux avec lesquels tu es à l’aise. Ton fil répartit les projets entre chacun d’eux.",
     label: "Langages",
-    data: [
-      { title: "JavaScript", label: "JS" },
-      { title: "TypeScript", label: "TS" },
-      { title: "Python", label: "PY" },
-      { title: "Java", label: "JA" },
-      { title: "C++", label: "C++" },
-      { title: "C#", label: "C#" },
-      { title: "Ruby", label: "RB" },
-      { title: "Go", label: "GO" },
-      { title: "Rust", label: "RS" },
-      { title: "PHP", label: "PHP" },
-      { title: "Swift", label: "SW" },
-    ],
+    data: languageCatalog.map(({ id, name, label }) => ({ title: name, label, value: id })),
   },
   {
     title: "Tout est prêt",

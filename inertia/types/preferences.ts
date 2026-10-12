@@ -1,5 +1,6 @@
 export interface Preference {
   title: string;
+  value?: string;
   label?: string | undefined;
   description?: string | undefined;
   icon?: string | undefined;

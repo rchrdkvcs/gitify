@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import type { ShowcaseLanguageResult } from "@shared/types/index";
 import { Head } from "@inertiajs/vue3";
-import type { ProjectGroup } from "~/types/projects";
 
-const props = defineProps<{ languages: ProjectGroup[] }>();
+const props = defineProps<{ languages: ShowcaseLanguageResult[] }>();
 
 const authStore = useAuth();
 const isLoading = ref(false);

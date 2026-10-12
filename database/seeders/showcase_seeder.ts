@@ -1,6 +1,6 @@
 import gitifyConfig from "#config/gitify";
-import Project from "#models/project";
 import GitHubSyncService from "#services/github/github_sync_service";
+import { projectsForSearch } from "#services/project_feed_service";
 import env from "#start/env";
 
 export default class ShowcaseSeeder {
@@ -13,23 +13,24 @@ export default class ShowcaseSeeder {
     }
 
     const { languages, pool, seederDifficulty } = gitifyConfig.showcase;
-    console.log(`Seeding ${languages.length} languages, ${pool} projects each...`);
+    console.log(
+      `Seeding ${languages.length} languages, ${gitifyConfig.github.search.defaultPerPage} search results each...`,
+    );
 
     for (const language of languages) {
-      console.log(`\n[${language}] Fetching top ${pool} repos...`);
+      console.log(
+        `\n[${language}] Fetching top ${gitifyConfig.github.search.defaultPerPage} repos...`,
+      );
 
       try {
         const count = await GitHubSyncService.fetchAndStore(
           language,
           seederDifficulty,
           serverToken,
-          pool,
         );
         console.log(`[${language}] Stored ${count} projects`);
 
-        const projects = await Project.query()
-          .where("language", language)
-          .where("difficulty", seederDifficulty)
+        const projects = await projectsForSearch([language], seederDifficulty)
           .orderBy("stars", "desc")
           .limit(pool);
 
