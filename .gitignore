@@ -3,7 +3,6 @@ node_modules/
 .env
 .env.*
 !.env.example
-.adonisjs/
 .nuxt-ui/
 inertia/auto-imports.d.ts
 inertia/components.d.ts
