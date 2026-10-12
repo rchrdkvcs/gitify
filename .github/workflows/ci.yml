@@ -2,31 +2,43 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
   pull_request:
-    branches: [master, develop]
 
 jobs:
-  lint:
+  checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: gitify_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U root -d gitify_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
         with:
-          node-version: lts/*
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run lint
-
-  fmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run fmt:check
+      - run: cp .env.example .env
+      - run: node ace generate:key
+      - run: pnpm lint
+      - run: pnpm fmt:check
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: node ace migration:run --force
+        env:
+          NODE_ENV: test
+          DB_DATABASE: gitify_test
+      - run: pnpm test
+        env:
+          DB_DATABASE: gitify_test

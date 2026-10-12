@@ -1,9 +1,12 @@
-packages:
-  - apps/*
-  - packages/*
 allowBuilds:
   "@parcel/watcher": true
   "@swc/core": true
   esbuild: true
-  sharp: true
   vue-demi: true
+minimumReleaseAgeExclude:
+  - "@japa/runner@5.4.0"
+  - "@iconify/collections@1.0.750"
+  - "@poppinss/utils@7.1.2"
+  - "@tanstack/virtual-core@3.19.2"
+  - "@tanstack/vue-virtual@3.13.43"
+  - "strtok3@10.4.0"

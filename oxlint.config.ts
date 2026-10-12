@@ -12,7 +12,6 @@ export default defineConfig({
     "**/dist/**",
     "**/build/**",
     "**/.adonisjs/**",
-    "**/.nuxt/**",
     "**/node_modules/**",
     "**/*.d.ts",
     "**/public/assets/**",
@@ -20,7 +19,7 @@ export default defineConfig({
   ],
   overrides: [
     {
-      files: ["apps/api/**/*.ts"],
+      files: ["{app,bin,config,start,database,tests}/**/*.ts"],
       plugins: ["typescript", "unicorn", "node"],
       env: { node: true },
       rules: {
@@ -69,7 +68,7 @@ export default defineConfig({
       },
     },
     {
-      files: ["apps/web/**/*.{ts,vue}"],
+      files: ["inertia/**/*.{ts,vue}"],
       plugins: ["typescript", "vue"],
       env: { browser: true, es2022: true },
       rules: {
