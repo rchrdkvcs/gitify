@@ -73,7 +73,10 @@ export class FakeGitHubAdapter implements GitHubAdapter {
   issueSearchError?: Error;
   detailsCalls: { ownerName: string; repoName: string; token: string }[] = [];
   insightsCalls: { ownerName: string; repoName: string; token: string }[] = [];
+  userRepositoryCalls: string[] = [];
   repos: GitHubRepo[] = [];
+  /** Primary languages of the signed-in user's repositories, most recently pushed first. */
+  userRepositoryLanguages: (string | null)[] = [];
   details: ProjectDetails = {
     readme: null,
     languages: null,
@@ -117,6 +120,7 @@ export class FakeGitHubAdapter implements GitHubAdapter {
   };
   searchError?: Error;
   detailsError?: Error;
+  userRepositoriesError?: Error;
 
   async searchRepositories(
     language: string,
@@ -154,6 +158,36 @@ export class FakeGitHubAdapter implements GitHubAdapter {
     }
     return this.insights;
   }
+
+  async listUserRepositoryLanguages(token: string) {
+    this.userRepositoryCalls.push(token);
+    if (this.userRepositoriesError) {
+      throw this.userRepositoriesError;
+    }
+    return this.userRepositoryLanguages;
+  }
+}
+
+/** Recent outside contribution as returned by the GraphQL activity sample. */
+export function graphqlActivityItem(
+  overrides: {
+    createdAt?: string;
+    state?: "OPEN" | "CLOSED" | "MERGED";
+    authorAssociation?: string;
+    bot?: boolean;
+    mergedAt?: string | null;
+    replies?: { createdAt: string; authorAssociation: string }[];
+  } = {},
+) {
+  return {
+    createdAt: overrides.createdAt ?? "2026-09-01T00:00:00Z",
+    state: overrides.state ?? "OPEN",
+    authorAssociation: overrides.authorAssociation ?? "NONE",
+    author: { __typename: overrides.bot ? "Bot" : "User" },
+    comments: { nodes: overrides.replies ?? [] },
+    mergedAt: overrides.mergedAt ?? null,
+    reviews: { nodes: [] },
+  };
 }
 
 const emptyConnection = { totalCount: 0 };
@@ -186,6 +220,9 @@ export function graphqlRepository() {
         recentIssues: { nodes: [] },
         beginnerIssues: { nodes: [] },
         recentPullRequests: { nodes: [] },
+        activityIssues: { nodes: [] as ReturnType<typeof graphqlActivityItem>[] },
+        activityPullRequests: { nodes: [] as ReturnType<typeof graphqlActivityItem>[] },
+        lastMergedPullRequest: { nodes: [] as { mergedAt: string | null }[] },
       },
     },
   };

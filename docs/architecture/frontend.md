@@ -2,15 +2,25 @@
 
 Les pages Vue vivent dans `inertia/pages/`. Le premier chargement reçoit le document Edge et les props Inertia ; les navigations suivantes échangent des pages Inertia avec AdonisJS. Le premier chargement est rendu côté serveur par `inertia/ssr.ts`, puis `inertia/app.ts` hydrate le HTML reçu. Le code exécuté au rendu (setup des composants) ne doit donc pas lire `window` ni `document` : réserver ces accès à `onMounted` ou aux gestionnaires d’événements.
 
-`inertia/app.ts` initialise Vue et Inertia, installe Nuxt UI via son plugin Vue et applique le layout commun. La page de préférences garde son layout autonome. Nuxt UI fonctionne ici comme bibliothèque de composants Vite ; le framework Nuxt n'est pas utilisé.
+`inertia/app.ts` initialise Vue et Inertia, installe Nuxt UI via son plugin Vue et applique le layout commun. La page d'onboarding garde son layout autonome. Nuxt UI fonctionne ici comme bibliothèque de composants Vite ; le framework Nuxt n'est pas utilisé.
 
 ## Données et session
 
 La vitrine, le fil, les favoris et le détail de projet sont chargés par `PagesController`. Le middleware Inertia partage le profil public de l'utilisateur et les erreurs de validation. `useAuth` expose ces props de façon réactive ; aucune requête `/auth/me` ni store Pinia n'est nécessaire.
 
-Les formulaires de préférences et de déconnexion utilisent le routeur Inertia. Le serveur valide les données puis redirige vers une page. Les liens Nuxt UI utilisent son intégration Inertia.
+Les formulaires de préférences et de déconnexion utilisent le routeur Inertia. `usePreferences` fournit une copie éditable des préférences ; les champs (`components/preferences/`) sont partagés par l'onboarding et la page de préférences. Le serveur valide les données puis redirige vers une page. Les liens Nuxt UI utilisent son intégration Inertia.
 
 Le catalogue filtre et trie côté serveur ; `explore.vue` pousse les filtres dans l'URL et charge les pages suivantes avec `<InfiniteScroll>` d'Inertia (prop `inertia.scroll`). `issues.vue` suit le même modèle pour le fil d'issues (`IssueCard`, prop `issues`) ; la barre de langages est partagée avec le catalogue via `LanguageFilterTabs`. La pagination des favoris effectue une visite Inertia. `useFavorite` utilise les endpoints JSON `/api/projects/:id/favorite` ; `useHttp` envoie le cookie CSRF et les cookies de session sur la même origine.
+
+## Onboarding
+
+`pages/onboarding.vue` pose une question par écran : grandes cartes sélectionnables (groupes de boutons radio ou de cases natives), stepper numéroté (`OnboardingStepper`, étapes terminées, courante et à venir, les étapes atteintes restent cliquables), pied de page Retour / Continuer collant sur mobile. Chaque réponse confirmée part en arrière-plan (`PATCH /api/onboarding`) sans bloquer la transition. Au changement d'étape, le focus passe au titre de la question pour les lecteurs d'écran ; les erreurs sont annoncées dans une région `aria-live`.
+
+Chaque étape a son illustration SVG en ligne (`components/onboarding/OnboardingArt*.vue`), dans le vocabulaire du landing (`.ill`, filets de 1,5 px, carrés, accent menthe) et réactive aux choix : le chemin se trace jusqu'au niveau choisi, les étiquettes et puces sélectionnées s'allument. Le mouvement reste court (`.ill-draw`, `.ill-pop`, `.ill-pulse` limité à trois cycles, dans `main.css`) ; les transitions entre étapes durent 120 à 220 ms, orientées selon le sens de navigation, et se réduisent à un fondu sous `prefers-reduced-motion`. L'écran de fin lance une courte salve de confettis carrés (`lib/confetti.ts`, canvas, retirée après 4 s), uniquement depuis `onMounted` et jamais sous mouvement réduit.
+
+## Score d'accueil
+
+`NewcomerScoreMeter` dessine le score en dix segments. Les cartes du catalogue affichent une ligne « Accueil » (« ≈ » pour une estimation partielle, « Non évalué » sinon). La fiche projet montre le résumé dans la colonne latérale (`ProjectNewcomerScore`) et le détail des signaux dans l'onglet « Contribuer » (`ProjectNewcomerBreakdown`). Les libellés des signaux viennent de `shared/newcomer_score.ts`.
 
 ## Composants et styles
 

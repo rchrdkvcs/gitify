@@ -38,8 +38,9 @@ export default class PagesController {
   }
 
   async explore({ auth, request, inertia }: HttpContext) {
-    const filters = parseExploreFilters(request.qs(), auth.user?.preferences ?? null);
-    const [result, topicOptions] = await Promise.all([
+    const preferences = auth.user?.preferences ?? null;
+    const filters = parseExploreFilters(request.qs(), preferences);
+    const [result, popularTopics] = await Promise.all([
       ProjectFeedService.explore(filters, request.input("page", 1), readerOf(auth.user)),
       ProjectFeedService.popularTopics(filters),
     ]);
@@ -50,7 +51,9 @@ export default class PagesController {
       ),
       total: result.meta.total,
       filters,
-      topicOptions,
+      // The reader's interests come first among the topic shortcuts.
+      topicOptions: [...new Set([...(preferences?.topics ?? []), ...popularTopics])],
+      preferredTopics: preferences?.topics ?? [],
       languageOptions: languageOptions(),
       refreshState: result.refreshState,
     });

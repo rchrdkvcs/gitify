@@ -1,6 +1,6 @@
 import type { IssueFilters, IssueKind, IssueSort, UserPreferences } from "#shared/types/index";
 import { issueKindForDifficulty, issueKinds } from "#shared/issues";
-import { normalizePreferenceLanguages } from "#shared/preferences";
+import { difficultyForLevel, normalizePreferenceLanguages } from "#shared/preferences";
 
 const sorts: IssueSort[] = ["recent", "comments", "stars"];
 
@@ -18,7 +18,7 @@ export function parseIssueFilters(
   const kind = explicit
     ? raw(qs.label)
     : preferences
-      ? issueKindForDifficulty(preferences.difficulty)
+      ? issueKindForDifficulty(difficultyForLevel(preferences.level))
       : "all";
   const sort = raw(qs.sort) as IssueSort;
 

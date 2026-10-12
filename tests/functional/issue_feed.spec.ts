@@ -293,7 +293,12 @@ test.group("Issue feed", (group) => {
       email: "issues@example.com",
       name: "Issue reader",
       githubAccessToken: "private-issue-token",
-      preferences: { difficulty: "beginner", languages: ["typescript"] },
+      preferences: {
+        level: "first_contribution",
+        languages: ["typescript"],
+        contributionTypes: ["code"],
+        topics: [],
+      },
     });
     const personal = await client.get("/issues").loginAs(user).withInertia();
     personal.assertStatus(200);

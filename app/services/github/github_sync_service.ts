@@ -8,6 +8,7 @@ import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
 import GitHubApiClient from "#services/github/github_api_client";
+import { computeNewcomerScore, newcomerScoreInputFromInsights } from "#shared/newcomer_score";
 
 export type SearchCriteria = {
   language: string;
@@ -230,6 +231,12 @@ export class GitHubSyncService {
       this.github.getRepositoryInsights(project.ownerName, project.name, token),
     ]);
 
+    // Scored with the snapshot it describes, so both always refresh together.
+    const newcomerScore = computeNewcomerScore(
+      newcomerScoreInputFromInsights(insights, metadata.pushedAt),
+      this.now().toJSDate(),
+    );
+
     await db.transaction(async (trx) => {
       // Keep the caller's model untouched until the entire snapshot commits.
       const stored = await Project.query({ client: trx })
@@ -242,6 +249,8 @@ export class GitHubSyncService {
         latestRelease: details.latestRelease,
         totalContributorsCount: details.totalContributorsCount,
         insights,
+        newcomerScore: newcomerScore.score,
+        newcomerScoreDetails: newcomerScore,
         contributing,
         stars: metadata.stars,
         forksCount: metadata.forksCount,

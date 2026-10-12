@@ -18,7 +18,7 @@ export default function render(page: ReturnType<typeof usePage>) {
       resolvePageComponent(
         `./pages/${name}.vue`,
         import.meta.glob<DefineComponent>("./pages/**/*.vue", { eager: true }),
-        name === "preferences" ? undefined : Layout,
+        name === "onboarding" ? undefined : Layout,
       ),
     setup({ App, props, plugin }) {
       return createSSRApp({

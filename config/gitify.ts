@@ -5,6 +5,8 @@ const gitifyConfig = {
     baseUrl: "https://api.github.com/search/repositories",
     repoBaseUrl: "https://api.github.com/repos",
     graphqlUrl: "https://api.github.com/graphql",
+    userReposUrl: "https://api.github.com/user/repos",
+    userRepositoriesLimit: 100,
     apiVersion: "2026-03-10",
     acceptHeader: "application/vnd.github+json",
     textMatchAcceptHeader: "application/vnd.github.text-match+json",
@@ -19,6 +21,8 @@ const gitifyConfig = {
       issuesLimit: 20,
       pullRequestsLimit: 20,
       languagesLimit: 12,
+      // Recent issues and PRs inspected for the newcomer score (per kind).
+      activitySampleSize: 25,
       contributingPaths: ["CONTRIBUTING.md", ".github/CONTRIBUTING.md", "docs/CONTRIBUTING.md"],
     },
     issues: {

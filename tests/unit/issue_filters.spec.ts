@@ -1,8 +1,14 @@
 import { test } from "@japa/runner";
+import type { UserPreferences } from "#shared/types/index";
 import { issueKindForDifficulty, issueSignals, isSignalLabel } from "#shared/issues";
 import { parseIssueFilters } from "#validators/issue_filters";
 
-const preferences = { difficulty: "beginner" as const, languages: ["Rust", "typescript"] };
+const preferences: UserPreferences = {
+  level: "first_contribution",
+  languages: ["Rust", "typescript"] as UserPreferences["languages"],
+  contributionTypes: [],
+  topics: [],
+};
 
 test.group("Issue feed filters", () => {
   test("a first visit uses the reader's languages and the label family of their level", ({
@@ -16,7 +22,7 @@ test.group("Issue feed filters", () => {
       sort: "recent",
     });
     assert.equal(
-      parseIssueFilters({}, { ...preferences, difficulty: "expert" }).kind,
+      parseIssueFilters({}, { ...preferences, level: "experienced" }).kind,
       "help-wanted",
     );
     assert.deepEqual(parseIssueFilters({}, null), {

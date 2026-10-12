@@ -1,5 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import AuthService from "#services/auth_service";
+import onboarding from "#services/onboarding_service";
 
 export default class AuthController {
   async redirect({ ally }: HttpContext) {
@@ -24,7 +25,7 @@ export default class AuthController {
 
     await auth.use("web").login(user);
 
-    return response.redirect(user.preferences ? "/explore" : "/preferences");
+    return response.redirect(onboarding.landingPath(user));
   }
 
   async logout({ auth, response }: HttpContext) {

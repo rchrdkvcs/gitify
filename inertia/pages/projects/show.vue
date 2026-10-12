@@ -62,6 +62,11 @@ const tabs = computed<TabsItem[]>(() => [
   { label: "Activité", value: "activity", icon: "lucide:chart-column" },
 ]);
 
+function explainScore() {
+  activeTab.value = "contributing";
+  nextTick(() => document.getElementById("newcomer-breakdown")?.scrollIntoView({ block: "start" }));
+}
+
 const issueFilter = ref<"recent" | "beginner">("recent");
 const issues = computed(() =>
   issueFilter.value === "beginner"
@@ -190,6 +195,8 @@ const communityChecklist = computed(() => {
           </p>
 
           <ProjectGettingStarted :repository-url="project.repositoryUrl" :name="project.name" />
+
+          <ProjectNewcomerBreakdown :score="project.newcomerScoreDetails" />
 
           <section
             v-if="communityChecklist.length"
@@ -338,7 +345,7 @@ const communityChecklist = computed(() => {
         class="order-first border-b border-default lg:order-none lg:border-b-0"
       >
         <div class="lg:sticky lg:top-(--ui-header-height)">
-          <ProjectSidebar :project="project" />
+          <ProjectSidebar :project="project" @explain-score="explainScore" />
         </div>
       </aside>
     </div>

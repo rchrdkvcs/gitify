@@ -14,6 +14,10 @@ import type {
   RepositoryPullRequest,
 } from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
+import {
+  type ActivitySampleItem,
+  summarizeContributorActivity,
+} from "#services/github/contributor_activity";
 import { issueKindLabel } from "#shared/issues";
 export type { GitHubRepo, ProjectDetails } from "#services/github/github_adapter";
 
@@ -22,6 +26,11 @@ const ISSUE_FIELDS = `number title url createdAt
   comments { totalCount }
   labels(first: 6) { nodes { name color } }`;
 
+// Who answered outside contributors, and when: comments and reviews carry the association.
+const ACTIVITY_FIELDS = `createdAt state authorAssociation
+  author { __typename }
+  comments(first: 10) { nodes { createdAt authorAssociation } }`;
+
 const contributingAliases = gitifyConfig.github.insights.contributingPaths
   .map(
     (path, index) =>
@@ -29,7 +38,7 @@ const contributingAliases = gitifyConfig.github.insights.contributingPaths
   )
   .join("\n");
 
-const INSIGHTS_QUERY = `query RepositoryInsights($owner: String!, $name: String!, $issues: Int!, $pullRequests: Int!, $languages: Int!) {
+const INSIGHTS_QUERY = `query RepositoryInsights($owner: String!, $name: String!, $issues: Int!, $pullRequests: Int!, $languages: Int!, $activity: Int!) {
   repository(owner: $owner, name: $name) {
     createdAt pushedAt homepageUrl isArchived diskUsage stargazerCount forkCount
     owner { avatarUrl }
@@ -54,7 +63,16 @@ const INSIGHTS_QUERY = `query RepositoryInsights($owner: String!, $name: String!
       nodes { ${ISSUE_FIELDS} }
     }
     beginnerIssues: issues(first: $issues, states: OPEN, labels: ["good first issue"], orderBy: { field: CREATED_AT, direction: DESC }) {
-      nodes { ${ISSUE_FIELDS} }
+      nodes { ${ISSUE_FIELDS} assignees { totalCount } }
+    }
+    activityIssues: issues(first: $activity, orderBy: { field: CREATED_AT, direction: DESC }) {
+      nodes { ${ACTIVITY_FIELDS} }
+    }
+    activityPullRequests: pullRequests(first: $activity, orderBy: { field: CREATED_AT, direction: DESC }) {
+      nodes { ${ACTIVITY_FIELDS} mergedAt reviews(first: 5) { nodes { createdAt authorAssociation } } }
+    }
+    lastMergedPullRequest: pullRequests(first: 1, states: MERGED, orderBy: { field: UPDATED_AT, direction: DESC }) {
+      nodes { mergedAt }
     }
     recentPullRequests: pullRequests(first: $pullRequests, states: OPEN, orderBy: { field: CREATED_AT, direction: DESC }) {
       nodes { isDraft ${ISSUE_FIELDS} }
@@ -135,6 +153,19 @@ type GraphQLIssue = {
   comments: { totalCount: number };
   labels: { nodes: { name: string; color: string }[] };
   isDraft?: boolean;
+  assignees?: { totalCount: number };
+};
+
+type GraphQLReply = { createdAt: string; authorAssociation: string };
+
+type GraphQLActivityItem = {
+  createdAt: string;
+  state: "OPEN" | "CLOSED" | "MERGED";
+  authorAssociation: string;
+  author: { __typename: string } | null;
+  comments: { nodes: GraphQLReply[] };
+  mergedAt?: string | null;
+  reviews?: { nodes: GraphQLReply[] };
 };
 
 type GraphQLRepository = {
@@ -164,6 +195,10 @@ type GraphQLRepository = {
   recentIssues: { nodes: GraphQLIssue[] };
   beginnerIssues: { nodes: GraphQLIssue[] };
   recentPullRequests: { nodes: GraphQLIssue[] };
+  // Optional so a partial answer degrades the newcomer score instead of failing the snapshot.
+  activityIssues?: { nodes: GraphQLActivityItem[] };
+  activityPullRequests?: { nodes: GraphQLActivityItem[] };
+  lastMergedPullRequest?: { nodes: { mergedAt: string | null }[] };
 } & Record<`contributing${number}`, { text?: string | null } | null>;
 
 function toIssue(issue: GraphQLIssue): RepositoryIssue {
@@ -182,10 +217,23 @@ function toPullRequest(pullRequest: GraphQLIssue): RepositoryPullRequest {
   return { ...toIssue(pullRequest), isDraft: pullRequest.isDraft ?? false };
 }
 
+function toActivityItem(kind: "issue" | "pull", item: GraphQLActivityItem): ActivitySampleItem {
+  return {
+    kind,
+    createdAt: item.createdAt,
+    authorAssociation: item.authorAssociation,
+    automated: !item.author || item.author.__typename === "Bot",
+    state: item.state,
+    mergedAt: item.mergedAt ?? null,
+    replies: [...item.comments.nodes, ...(item.reviews?.nodes ?? [])],
+  };
+}
+
 export class GitHubApiClient implements GitHubAdapter {
   constructor(
     private readonly request: typeof fetch = globalThis.fetch,
     private readonly timeoutMs = 10_000,
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   buildHeaders(token: string): Record<string, string> {
@@ -404,6 +452,7 @@ export class GitHubApiClient implements GitHubAdapter {
             issues: limits.issuesLimit,
             pullRequests: limits.pullRequestsLimit,
             languages: limits.languagesLimit,
+            activity: limits.activitySampleSize,
           },
         },
       }),
@@ -455,6 +504,22 @@ export class GitHubApiClient implements GitHubAdapter {
       (await this.fetchCommunityFile(files.contributing, headers));
 
     const target = repo.defaultBranchRef?.target;
+    const contributorActivity =
+      repo.activityIssues && repo.activityPullRequests
+        ? summarizeContributorActivity(
+            [
+              ...repo.activityIssues.nodes.map((item) => toActivityItem("issue", item)),
+              ...repo.activityPullRequests.nodes.map((item) => toActivityItem("pull", item)),
+            ],
+            {
+              lastMergedPullRequestAt: repo.lastMergedPullRequest?.nodes[0]?.mergedAt ?? null,
+              unassignedGoodFirstIssues: repo.beginnerIssues.nodes.filter(
+                (issue) => issue.assignees?.totalCount === 0,
+              ).length,
+            },
+            this.now(),
+          )
+        : null;
     return {
       contributing,
       metadata: {
@@ -491,8 +556,23 @@ export class GitHubApiClient implements GitHubAdapter {
         issues: repo.recentIssues.nodes.map(toIssue),
         beginnerIssues: repo.beginnerIssues.nodes.map(toIssue),
         pullRequests: repo.recentPullRequests.nodes.map(toPullRequest),
+        contributorActivity,
       },
     };
+  }
+
+  /** Primary languages of the user's own repositories, most recently pushed first. */
+  async listUserRepositoryLanguages(token: string): Promise<(string | null)[]> {
+    const result = await this.requestJson(
+      `${gitifyConfig.github.userReposUrl}?affiliation=owner&sort=pushed&per_page=${gitifyConfig.github.userRepositoriesLimit}`,
+      this.buildHeaders(token),
+    );
+    if (!Array.isArray(result!.data)) {
+      throw new Error("Invalid GitHub response: user repositories");
+    }
+    return (result!.data as { language?: unknown; fork?: unknown }[])
+      .filter((repo) => repo && repo.fork !== true)
+      .map((repo) => (typeof repo.language === "string" ? repo.language : null));
   }
 
   /**

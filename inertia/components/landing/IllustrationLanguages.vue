@@ -2,10 +2,12 @@
 // Step 01: the visitor picks a level, then ticks the languages they know.
 const { state } = useIllustrationReveal();
 
+const levelWidth = 93;
 const levels = [
-  { label: "débutant", x: 20, selected: true },
-  { label: "confirmé", x: 160, selected: false },
-];
+  { label: "1re PR", selected: true },
+  { label: "quelques PR", selected: false },
+  { label: "aguerri", selected: false },
+].map((level, index) => ({ ...level, x: 20 + index * levelWidth }));
 
 const chips = [
   { label: "TS", selected: true },
@@ -35,21 +37,27 @@ const tickDelay = (index: number) =>
   >
     <text x="20" y="28" font-size="10" class="ill-text">niveau</text>
     <g v-for="level in levels" :key="level.label">
-      <rect :x="level.x + 0.5" y="36.5" width="140" height="30" class="ill-line ill-fill" />
-      <text :x="level.x + 70" y="55.5" text-anchor="middle" font-size="11" class="ill-text">
+      <rect :x="level.x + 0.5" y="36.5" :width="levelWidth" height="30" class="ill-line ill-fill" />
+      <text
+        :x="level.x + levelWidth / 2"
+        y="55.5"
+        text-anchor="middle"
+        font-size="11"
+        class="ill-text"
+      >
         {{ level.label }}
       </text>
       <g v-if="level.selected" class="ill-m-sweep" style="--ill-d: 200ms">
         <rect
           :x="level.x + 0.5"
           y="36.5"
-          width="140"
+          :width="levelWidth"
           height="30"
           class="ill-accent ill-accent-soft"
         />
-        <rect :x="level.x + 128" y="41" width="7" height="7" class="ill-accent-fill" />
+        <rect :x="level.x + levelWidth - 12" y="41" width="7" height="7" class="ill-accent-fill" />
         <text
-          :x="level.x + 70"
+          :x="level.x + levelWidth / 2"
           y="55.5"
           text-anchor="middle"
           font-size="11"

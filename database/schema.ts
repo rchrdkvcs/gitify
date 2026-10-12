@@ -186,6 +186,8 @@ export class ProjectSchema extends BaseModel {
     "latestRelease",
     "license",
     "name",
+    "newcomerScore",
+    "newcomerScoreDetails",
     "openIssuesCount",
     "ownerAvatarUrl",
     "ownerName",
@@ -230,6 +232,10 @@ export class ProjectSchema extends BaseModel {
   declare license: string | null;
   @column()
   declare name: string;
+  @column()
+  declare newcomerScore: number | null;
+  @column()
+  declare newcomerScoreDetails: any | null;
   @column()
   declare openIssuesCount: number;
   @column()
@@ -277,6 +283,9 @@ export class UserSchema extends BaseModel {
     "id",
     "isVerified",
     "name",
+    "onboardedAt",
+    "onboardingSkippedAt",
+    "onboardingStep",
     "preferences",
     "updatedAt",
   ] as const;
@@ -297,6 +306,12 @@ export class UserSchema extends BaseModel {
   declare isVerified: boolean | null;
   @column()
   declare name: string | null;
+  @column.dateTime()
+  declare onboardedAt: DateTime | null;
+  @column.dateTime()
+  declare onboardingSkippedAt: DateTime | null;
+  @column()
+  declare onboardingStep: number;
   @column()
   declare preferences: any | null;
   @column.dateTime({ autoCreate: true, autoUpdate: true })

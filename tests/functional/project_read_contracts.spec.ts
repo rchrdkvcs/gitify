@@ -18,7 +18,12 @@ async function fixture() {
     email: "read-contract@example.com",
     name: "Reader",
     githubAccessToken: "secret",
-    preferences: { difficulty: "expert", languages: ["typescript"] },
+    preferences: {
+      level: "experienced",
+      languages: ["typescript"],
+      contributionTypes: ["code"],
+      topics: [],
+    },
   });
   const other = await User.create({ email: "other-read@example.com", name: "Other" });
   const project = await Project.create({
@@ -76,6 +81,7 @@ function assertList(assert: Assert, project: ProjectList) {
       "isFavorite",
       "latestRelease",
       "pushedAt",
+      "newcomerScore",
     ].sort(),
   );
   assert.property(project, "pushedAt");
@@ -87,11 +93,12 @@ test.group("Project public read contracts", (group) => {
     assert,
   }) => {
     const { user, other, project, feed } = await fixture();
-    const result = await feedFor(feed, user.id, user.preferences!, "secret");
+    const criteria = { difficulty: "expert" as const, languages: user.preferences!.languages };
+    const result = await feedFor(feed, user.id, criteria, "secret");
     assertList(assert, result.projects[0]);
     assert.equal(result.projects[0].difficulty, "expert");
     assert.isTrue(result.projects[0].isFavorite);
-    const second = await feedFor(feed, other.id, user.preferences!, "secret");
+    const second = await feedFor(feed, other.id, criteria, "secret");
     assert.isFalse(second.projects[0].isFavorite);
     const detail = await feed.getProject(project.ownerName, project.name, {
       userId: user.id,
@@ -119,8 +126,9 @@ test.group("Project public read contracts", (group) => {
         q: "",
         topic: null,
         languages: user.preferences!.languages,
-        level: user.preferences!.difficulty,
+        level: "expert",
         sort: "stars",
+        minScore: null,
       },
       1,
       { userId: user.id, token: "secret" },

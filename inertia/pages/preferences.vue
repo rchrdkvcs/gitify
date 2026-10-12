@@ -1,78 +1,100 @@
 <script setup lang="ts">
 import { Head } from "@inertiajs/vue3";
-import { stepperItems } from "~/utils/constants";
 
-const {
-  user,
-  formDifficulty,
-  formLanguages,
-  toggleLanguage,
-  editPreferences,
-  savePreferences,
-  submitting,
-} = usePreferences();
+const { form, toggle, submitting, savePreferences } = usePreferences();
 
-const hasPreferences = computed(() => !!user.value?.preferences);
-
-const validateStep = (step: number) => {
-  if (step === 1 && !formDifficulty.value) return "Choisis un niveau pour continuer.";
-  if (step === 2 && formLanguages.value.length === 0)
-    return "Choisis au moins un langage pour continuer.";
-  return null;
-};
-
-onMounted(() => {
-  if (user.value?.preferences) {
-    editPreferences();
-  }
-});
+const sections = [
+  {
+    id: "level",
+    title: "Niveau",
+    description: "Ton expérience de l’open source décide du type de projets proposés.",
+  },
+  {
+    id: "types",
+    title: "Façons de contribuer",
+    description: "Aucune sélection : toutes les contributions sont proposées.",
+  },
+  {
+    id: "languages",
+    title: "Langages",
+    description: "Ton fil répartit les projets entre eux. Aucune sélection : tous les langages.",
+  },
+  {
+    id: "topics",
+    title: "Centres d’intérêt",
+    description: "Ces sujets apparaissent en premier dans les filtres du catalogue.",
+  },
+] as const;
 </script>
 
 <template>
   <Head title="Préférences" />
 
-  <div class="flex min-h-dvh flex-col">
-    <header class="border-b border-default">
-      <div
-        class="mx-auto flex h-(--ui-header-height) max-w-(--ui-container) items-center justify-between px-4 sm:border-x sm:border-default sm:px-8"
-      >
-        <ULink to="/" aria-label="Gitify, accueil" class="text-highlighted">
-          <AppLogo class="h-6 w-auto" />
-        </ULink>
-        <UButton
-          v-if="hasPreferences"
-          to="/profil"
-          label="Annuler"
-          color="neutral"
-          variant="ghost"
+  <PageHeader
+    eyebrow="Préférences"
+    title="Ce que tu cherches"
+    description="Ces réponses règlent les filtres par défaut de ton catalogue. Modifie-les quand tu veux."
+  >
+    <template #actions>
+      <UButton
+        to="/onboarding"
+        icon="lucide:route"
+        label="Refaire le parcours guidé"
+        color="neutral"
+        variant="outline"
+      />
+    </template>
+  </PageHeader>
+
+  <FrameSection v-for="section in sections" :key="section.id">
+    <div class="grid lg:grid-cols-[16rem_1fr]">
+      <div class="border-b border-default p-5 sm:p-8 lg:border-e lg:border-b-0">
+        <h2 :id="`${section.id}-title`" class="font-medium text-highlighted">
+          {{ section.title }}
+        </h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted">{{ section.description }}</p>
+      </div>
+      <div class="p-5 sm:p-8">
+        <PreferenceLevelField
+          v-if="section.id === 'level'"
+          v-model="form.level"
+          :legend="section.title"
+        />
+        <PreferenceTypesField
+          v-else-if="section.id === 'types'"
+          :legend="section.title"
+          :selected="form.contributionTypes"
+          @toggle="toggle('contributionTypes', $event)"
+        />
+        <PreferenceLanguagesField
+          v-else-if="section.id === 'languages'"
+          :legend="section.title"
+          :selected="form.languages"
+          @toggle="toggle('languages', $event)"
+        />
+        <PreferenceTopicsField
+          v-else
+          :legend="section.title"
+          :selected="form.topics"
+          @toggle="toggle('topics', $event)"
         />
       </div>
-    </header>
+    </div>
+  </FrameSection>
 
-    <main class="flex flex-1 flex-col">
-      <Stepper
-        :steps="stepperItems"
-        :validate-step="validateStep"
+  <FrameSection
+    class="sticky bottom-0 z-10 bg-default/90 backdrop-blur"
+    inner-class="px-4 py-3 sm:px-8 sm:py-4"
+  >
+    <div class="flex items-center justify-end gap-3">
+      <UButton to="/profil" label="Annuler" color="neutral" variant="ghost" />
+      <UButton
+        label="Enregistrer"
+        trailing-icon="lucide:check"
+        size="lg"
         :loading="submitting"
-        @submit="savePreferences"
-      >
-        <template #step-1>
-          <LevelSelection v-model="formDifficulty" :items="stepperItems[0]?.data ?? []" />
-        </template>
-
-        <template #step-2>
-          <LangSelection
-            :languages="formLanguages"
-            :items="stepperItems[1]?.data ?? []"
-            @toggle="toggleLanguage"
-          />
-        </template>
-
-        <template #step-3>
-          <Summary :level="formDifficulty ?? undefined" :languages="formLanguages" :user="user" />
-        </template>
-      </Stepper>
-      <div class="mx-auto w-full max-w-(--ui-container) flex-1 sm:border-x sm:border-default" />
-    </main>
-  </div>
+        @click="savePreferences"
+      />
+    </div>
+  </FrameSection>
 </template>

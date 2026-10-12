@@ -1,0 +1,218 @@
+import testUtils from "@adonisjs/core/services/test_utils";
+import db from "@adonisjs/lucid/services/db";
+import { test } from "@japa/runner";
+import { DateTime } from "luxon";
+import { upgradeStoredPreferences } from "#database/migrations/1791800000007_add_onboarding_to_users";
+import User from "#models/user";
+import { OnboardingService } from "#services/onboarding_service";
+import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
+
+const json = { accept: "application/json" };
+
+async function newUser(overrides: Partial<User> = {}) {
+  return User.create({
+    email: "onboarding@example.com",
+    name: "Newcomer",
+    githubAccessToken: "user-token",
+    ...overrides,
+  });
+}
+
+test.group("Onboarding", (group) => {
+  group.each.setup(() => testUtils.db().withGlobalTransaction());
+
+  test("login lands on the onboarding until it is finished or skipped", async ({ assert }) => {
+    const service = new OnboardingService(new FakeGitHubAdapter());
+    assert.equal(
+      service.landingPath({ onboardedAt: null, onboardingSkippedAt: null }),
+      "/onboarding",
+    );
+    assert.equal(
+      service.landingPath({ onboardedAt: null, onboardingSkippedAt: DateTime.now() }),
+      "/explore",
+    );
+    assert.equal(
+      service.landingPath({ onboardedAt: DateTime.now(), onboardingSkippedAt: null }),
+      "/explore",
+    );
+  });
+
+  test("guests cannot open the onboarding", async ({ client }) => {
+    const response = await client.get("/onboarding").redirects(0);
+    response.assertStatus(302);
+    response.assertHeader("location", "/");
+  });
+
+  test("renders the first question with deferred language suggestions", async ({
+    client,
+    assert,
+  }) => {
+    const user = await newUser();
+    const page = await client.get("/onboarding").loginAs(user).withInertia();
+    page.assertStatus(200);
+    page.assertInertiaComponent("onboarding");
+    page.assertInertiaPropsContains({ initialStep: 1, user: { onboardedAt: null } });
+    // GitHub is only called once the page asks for the deferred prop.
+    assert.notProperty(page.inertiaProps, "suggestedLanguages");
+    assert.include(JSON.stringify(page.body()), "suggestedLanguages");
+  });
+
+  test("saves each answer, resumes after a skip and completes", async ({ client, assert }) => {
+    const user = await newUser();
+
+    const first = await client
+      .patch("/api/onboarding")
+      .loginAs(user)
+      .withCsrfToken()
+      .headers(json)
+      .json({ step: 1, level: "some_contributions" });
+    first.assertStatus(200);
+    first.assertBody({ step: 1 });
+
+    const second = await client
+      .patch("/api/onboarding")
+      .loginAs(user)
+      .withCsrfToken()
+      .headers(json)
+      .json({ step: 2, contributionTypes: ["Documentation", "translation"] });
+    second.assertStatus(200);
+
+    const invalid = await client
+      .patch("/api/onboarding")
+      .loginAs(user)
+      .withCsrfToken()
+      .headers(json)
+      .json({ step: 3, languages: ["klingon"] });
+    invalid.assertStatus(422);
+
+    await user.refresh();
+    assert.deepEqual(user.preferences, {
+      level: "some_contributions",
+      languages: [],
+      contributionTypes: ["documentation", "translation"],
+      topics: [],
+    });
+    assert.equal(user.onboardingStep, 2);
+
+    const skipped = await client
+      .post("/onboarding/skip")
+      .loginAs(user)
+      .withCsrfToken()
+      .withInertia()
+      .redirects(0);
+    skipped.assertStatus(302);
+    skipped.assertHeader("location", "/explore");
+    await user.refresh();
+    assert.isNotNull(user.onboardingSkippedAt);
+    assert.equal(new OnboardingService().landingPath(user), "/explore");
+
+    // Coming back resumes on the first unanswered question.
+    const resumed = await client.get("/onboarding").loginAs(user).withInertia();
+    resumed.assertInertiaPropsContains({ initialStep: 3 });
+
+    const completed = await client
+      .put("/onboarding")
+      .loginAs(user)
+      .withCsrfToken()
+      .withInertia()
+      .redirects(0)
+      .json({
+        level: "some_contributions",
+        languages: ["elixir"],
+        contributionTypes: ["documentation"],
+        topics: ["education"],
+      });
+    completed.assertStatus(303);
+    completed.assertHeader("location", "/onboarding");
+    await user.refresh();
+    assert.isNotNull(user.onboardedAt);
+    assert.equal(user.onboardingStep, 4);
+    assert.deepEqual(user.preferences?.languages, ["elixir"]);
+
+    // A finished onboarding opens in review mode, from the first question.
+    const review = await client.get("/onboarding").loginAs(user).withInertia();
+    review.assertInertiaPropsContains({ initialStep: 1 });
+  });
+
+  test("suggests languages from the user's GitHub repositories", async ({ assert }) => {
+    const github = new FakeGitHubAdapter();
+    github.userRepositoryLanguages = ["Rust", "Go", "Rust", null, "Brainfuck"];
+    const service = new OnboardingService(github);
+    const user = await newUser();
+
+    assert.deepEqual(await service.suggestLanguages(user), ["rust", "go"]);
+    assert.deepEqual(github.userRepositoryCalls, ["user-token"]);
+
+    // Chosen languages are never overridden, and GitHub failures mean no suggestion.
+    await service.saveProgress(user, { step: 3, languages: ["python"] });
+    assert.deepEqual(await service.suggestLanguages(user), []);
+    const failing = new FakeGitHubAdapter();
+    failing.userRepositoriesError = new Error("GitHub down");
+    const other = await newUser({ email: "other@example.com" });
+    assert.deepEqual(await new OnboardingService(failing).suggestLanguages(other), []);
+  });
+
+  test("migrates legacy binary preferences to the new levels", async ({ assert }) => {
+    const ids: string[] = [];
+    for (const [email, preferences] of [
+      ["beginner@example.com", { difficulty: "beginner", languages: ["TypeScript", "cobol"] }],
+      ["expert@example.com", { difficulty: "expert", languages: ["rust"] }],
+    ] as const) {
+      const user = await newUser({ email });
+      ids.push(user.id);
+      // Written as raw JSON, exactly like rows saved before the migration.
+      await db
+        .from("users")
+        .where("id", user.id)
+        .update({ preferences: JSON.stringify(preferences) });
+    }
+
+    // Reads are already safe before the data migration runs.
+    const before = await User.findOrFail(ids[1]);
+    assert.equal(before.preferences?.level, "experienced");
+
+    await upgradeStoredPreferences(db.connection());
+    const rows = await db.from("users").whereIn("id", ids).orderBy("email").select("preferences");
+    assert.deepEqual(
+      rows.map((row) => row.preferences),
+      [
+        {
+          level: "first_contribution",
+          languages: ["typescript"],
+          contributionTypes: ["code"],
+          topics: [],
+        },
+        { level: "experienced", languages: ["rust"], contributionTypes: ["code"], topics: [] },
+      ],
+    );
+  });
+
+  test("preferences set the catalogue defaults", async ({ client, assert }) => {
+    const user = await newUser({
+      preferences: {
+        level: "first_contribution",
+        languages: ["rust"],
+        contributionTypes: ["code"],
+        topics: ["cli"],
+      },
+    });
+    const page = await client.get("/explore").loginAs(user).withInertia();
+    page.assertStatus(200);
+    assert.deepEqual(page.inertiaProps.filters, {
+      q: "",
+      topic: null,
+      languages: ["rust"],
+      level: "beginner",
+      // A first contribution starts with the most welcoming projects.
+      sort: "welcome",
+      minScore: null,
+    });
+    assert.equal(page.inertiaProps.topicOptions[0], "cli");
+    assert.deepEqual(page.inertiaProps.preferredTopics, ["cli"]);
+
+    const explicit = await client.get("/explore?level=all&score=60").loginAs(user).withInertia();
+    assert.equal(explicit.inertiaProps.filters.sort, "stars");
+    assert.equal(explicit.inertiaProps.filters.minScore, 60);
+    assert.deepEqual(explicit.inertiaProps.filters.languages, []);
+  });
+});

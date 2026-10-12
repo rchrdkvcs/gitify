@@ -45,6 +45,8 @@ export type Project = {
   isFavorite: boolean;
   latestRelease: string | null;
   pushedAt: string | null;
+  /** Newcomer-friendliness; null until the repository details have been fetched once. */
+  newcomerScore: NewcomerScoreSummary | null;
 };
 
 export type ProjectDetailContributor = {
@@ -83,6 +85,25 @@ export type CommunityFiles = {
   pullRequestTemplate: boolean;
 };
 
+/**
+ * How maintainers treat outside contributors, summarised from the most recent issues and
+ * pull requests. Counts exclude maintainers (owner, members, collaborators) and bots.
+ */
+export type ContributorActivity = {
+  /** External issues and PRs old enough to expect an answer. */
+  sampledItems: number;
+  /** Among them, those that received a maintainer comment, review or merge. */
+  respondedItems: number;
+  /** Median hours until that first answer; unanswered items count with their age. */
+  medianFirstResponseHours: number | null;
+  externalPullRequestsMerged: number;
+  /** Closed without being merged. */
+  externalPullRequestsClosed: number;
+  lastMergedPullRequestAt: string | null;
+  /** Open "good first issue" issues nobody is assigned to, among the latest 20. */
+  unassignedGoodFirstIssues: number;
+};
+
 /** Repository snapshot refreshed together with the README and contributors. */
 export type RepositoryInsights = {
   watchers: number;
@@ -106,7 +127,44 @@ export type RepositoryInsights = {
   issues: RepositoryIssue[];
   beginnerIssues: RepositoryIssue[];
   pullRequests: RepositoryPullRequest[];
+  /** Absent from snapshots taken before contributor activity was collected. */
+  contributorActivity?: ContributorActivity | null;
 };
+
+export type NewcomerSignalKey =
+  | "firstResponse"
+  | "externalMergeRate"
+  | "goodFirstIssues"
+  | "communityProfile"
+  | "maintainerActivity";
+
+export type NewcomerSignal = {
+  key: NewcomerSignalKey;
+  /** Maximum points this signal brings to a complete score. */
+  weight: number;
+  /** Measured value in the signal's unit (hours, ratio, count, days); null when unknown. */
+  value: number | null;
+  /** Normalised quality between 0 and 1; null when unknown. */
+  ratio: number | null;
+  /** Points earned out of `weight`; null when unknown. */
+  points: number | null;
+};
+
+/** Persisted score with its breakdown. */
+export type NewcomerScore = {
+  version: 1;
+  /** 0 to 100, computed over the known signals only; null when too few are known. */
+  score: number | null;
+  /** True when some signals are unknown: the score is an estimate over the others. */
+  partial: boolean;
+  /** Share of the total weight backed by data, between 0 and 1. */
+  coverage: number;
+  archived: boolean;
+  signals: NewcomerSignal[];
+  computedAt: string;
+};
+
+export type NewcomerScoreSummary = Pick<NewcomerScore, "score" | "partial" | "archived">;
 
 export type ProjectDetail = Project & {
   readme: string | null;
@@ -117,10 +175,11 @@ export type ProjectDetail = Project & {
   githubCreatedAt: string | null;
   detailsFetchedAt: string | null;
   insights: RepositoryInsights | null;
+  newcomerScoreDetails: NewcomerScore | null;
   contributors: ProjectDetailContributor[];
 };
 
-export type ExploreSort = "stars" | "recent" | "issues";
+export type ExploreSort = "stars" | "recent" | "issues" | "welcome";
 
 export type ExploreFilters = {
   q: string;
@@ -129,4 +188,6 @@ export type ExploreFilters = {
   languages: string[];
   level: Difficulty | "all";
   sort: ExploreSort;
+  /** Minimum newcomer score; null shows every repository, scored or not. */
+  minScore: number | null;
 };
