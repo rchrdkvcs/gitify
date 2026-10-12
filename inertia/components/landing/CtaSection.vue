@@ -25,24 +25,25 @@ const handleLogin = () => {
       <div class="flex flex-col items-center gap-5 text-center">
         <h2 class="section-title max-w-2xl">Prêt pour ta première pull request ?</h2>
         <p class="max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-          Connecte ton compte GitHub, choisis tes langages et trouve un projet à ta mesure en
-          quelques minutes.
+          Parcours le catalogue, choisis un projet à ta mesure et repère une issue pour débuter.
+          Connecte GitHub pour garder tes favoris.
         </p>
         <div class="mt-4 flex flex-col gap-3 sm:flex-row">
           <UButton
-            v-if="!authStore.isAuthenticated"
-            icon="lucide:github"
-            label="Se connecter avec GitHub"
-            size="lg"
-            :loading="isLoading"
-            @click="handleLogin"
-          />
-          <UButton
-            v-else
             to="/explore"
             trailing-icon="lucide:arrow-right"
             label="Explorer les projets"
             size="lg"
+          />
+          <UButton
+            v-if="!authStore.isAuthenticated"
+            icon="lucide:github"
+            label="Se connecter avec GitHub"
+            color="neutral"
+            variant="outline"
+            size="lg"
+            :loading="isLoading"
+            @click="handleLogin"
           />
         </div>
       </div>

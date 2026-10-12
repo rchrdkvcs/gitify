@@ -176,6 +176,11 @@ export class GitHubSyncService {
         language: repo.language?.toLowerCase() ?? searchLanguage,
         topics: repo.topics ?? [],
         openIssuesCount: repo.open_issues_count,
+        ownerAvatarUrl: repo.owner.avatar_url ?? null,
+        homepageUrl: repo.homepage || null,
+        license: repo.license ? (repo.license.spdx_id ?? repo.license.name) : null,
+        pushedAt: repo.pushed_at ? DateTime.fromISO(repo.pushed_at) : null,
+        githubCreatedAt: repo.created_at ? DateTime.fromISO(repo.created_at) : null,
       };
       const project = await Project.firstOrCreate(
         { githubRepoId: repo.id },
@@ -203,12 +208,15 @@ export class GitHubSyncService {
     if (!project.detailsFetchedAt) {
       return true;
     }
-    const daysSince = this.now().diff(project.detailsFetchedAt, "days").days;
-    return daysSince >= gitifyConfig.cache.detailsCacheDays;
+    const hoursSince = this.now().diff(project.detailsFetchedAt, "hours").hours;
+    return hoursSince >= gitifyConfig.cache.detailsCacheHours;
   }
 
   async fetchProjectDetails(project: Project, token: string): Promise<void> {
-    const details = await this.github.getProjectDetails(project.ownerName, project.name, token);
+    const [details, { insights, contributing, metadata }] = await Promise.all([
+      this.github.getProjectDetails(project.ownerName, project.name, token),
+      this.github.getRepositoryInsights(project.ownerName, project.name, token),
+    ]);
 
     await db.transaction(async (trx) => {
       // Keep the caller's model untouched until the entire snapshot commits.
@@ -221,6 +229,15 @@ export class GitHubSyncService {
         languages: details.languages,
         latestRelease: details.latestRelease,
         totalContributorsCount: details.totalContributorsCount,
+        insights,
+        contributing,
+        stars: metadata.stars,
+        forksCount: metadata.forksCount,
+        ownerAvatarUrl: metadata.ownerAvatarUrl,
+        homepageUrl: metadata.homepageUrl,
+        license: metadata.license,
+        pushedAt: metadata.pushedAt ? DateTime.fromISO(metadata.pushedAt) : stored.pushedAt,
+        githubCreatedAt: DateTime.fromISO(metadata.createdAt),
         detailsFetchedAt: this.now(),
       });
       await stored.save();

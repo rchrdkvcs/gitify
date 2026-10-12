@@ -28,3 +28,33 @@ export const formatLanguage = (language: string | null) => {
   if (!language) return "";
   return formatLanguageName(language);
 };
+
+/** Public project URL, mirroring GitHub's `owner/name`. */
+export const projectPath = (project: { ownerName: string; name: string }) =>
+  `/projects/${encodeURIComponent(project.ownerName)}/${encodeURIComponent(project.name)}`;
+
+/** GitHub avatars accept a size hint; keep URLs that already carry a query string intact. */
+export const avatarUrl = (url: string, size = 80) =>
+  url.includes("avatars.githubusercontent.com")
+    ? `${url}${url.includes("?") ? "&" : "?"}s=${size}`
+    : url;
+
+export const formatNumber = (n: number) => n.toLocaleString("fr-FR");
+
+export const formatSize = (kb: number) => {
+  if (kb < 1024) return `${kb} Ko`;
+  const mb = kb / 1024;
+  if (mb < 1024)
+    return `${mb.toLocaleString("fr-FR", { maximumFractionDigits: mb < 10 ? 1 : 0 })} Mo`;
+  return `${(mb / 1024).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} Go`;
+};
+
+/** Relative time with month and year granularity for older dates. */
+export const timeSince = (iso: string | null) => {
+  if (!iso) return "";
+  const days = Math.round((new Date(iso).getTime() - Date.now()) / 86_400_000);
+  if (Math.abs(days) < 1) return timeAgo(iso);
+  if (Math.abs(days) < 30) return rtf.format(days, "day");
+  if (Math.abs(days) < 365) return rtf.format(Math.round(days / 30), "month");
+  return rtf.format(Math.round(days / 365), "year");
+};

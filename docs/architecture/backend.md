@@ -2,7 +2,7 @@
 
 ## Routes et rendu
 
-`PagesController` charge les données métier et rend les pages Inertia. Les pages `/explore`, `/favorites`, `/projects/:id`, `/profil` et `/preferences` exigent une session. Les visiteurs sont redirigés vers `/`. Un utilisateur sans préférences est redirigé de l'exploration vers `/preferences`.
+`PagesController` charge les données métier et rend les pages Inertia. `/`, `/explore` et `/projects/:owner/:name` sont publiques : les visiteurs utilisent le token serveur, les utilisateurs connectés leur propre token. `/favorites`, `/profil` et `/preferences` exigent une session ; les visiteurs sont redirigés vers `/`.
 
 Seule la route `/api/projects/:id/favorite` (ajout et retrait d'un favori) répond en JSON ; le fil et les favoris sont des pages Inertia (`/explore`, `/favorites`). Elles utilisent la même session et la même protection CSRF que les pages. Il n'y a plus de configuration CORS ni de documentation OpenAPI pour une API séparée.
 

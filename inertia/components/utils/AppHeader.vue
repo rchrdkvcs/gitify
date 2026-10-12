@@ -4,12 +4,10 @@ import type { DropdownMenuItem, NavigationMenuItem } from "@nuxt/ui";
 const authStore = useAuth();
 const isLoading = ref(false);
 
-const navigationItems: NavigationMenuItem[] = [
+const navigationItems = computed<NavigationMenuItem[]>(() => [
   { label: "Explorer", to: "/explore" },
-  { label: "Favoris", to: "/favorites" },
-  { label: "Communauté", to: "/community" },
-  { label: "Ressources", to: "/ressources" },
-];
+  ...(authStore.isAuthenticated ? [{ label: "Favoris", to: "/favorites" }] : []),
+]);
 
 const handleLogin = () => {
   isLoading.value = true;

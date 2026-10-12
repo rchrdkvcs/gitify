@@ -1,5 +1,6 @@
 import { test } from "@japa/runner";
 import { GitHubApiClient } from "#services/github/github_api_client";
+import { graphqlRepository } from "#tests/helpers/fake_github_adapter";
 
 test.group("GitHub HTTP adapter", () => {
   test("uses independent transports and credentials without replacing global fetch", async ({
@@ -82,6 +83,68 @@ test.group("GitHub HTTP adapter", () => {
     assert.deepEqual(
       details.contributors.map((person) => person.login),
       ["person"],
+    );
+  });
+
+  test("maps repository insights and follows shared community files", async ({ assert }) => {
+    const requests: { url: string; method: string }[] = [];
+    const client = new GitHubApiClient(async (input, init) => {
+      const url = String(input);
+      requests.push({ url, method: init?.method ?? "GET" });
+      if (url.endsWith("/graphql")) {
+        const payload = graphqlRepository();
+        payload.data.repository.licenseInfo = { spdxId: "NOASSERTION", name: "Other" } as never;
+        payload.data.repository.watchers = { totalCount: 7 };
+        payload.data.repository.languages = {
+          edges: [{ size: 10, node: { name: "TypeScript", color: "#3178c6" } }],
+        } as never;
+        return Response.json(payload);
+      }
+      if (url.endsWith("/community/profile")) {
+        return Response.json({
+          health_percentage: 42,
+          files: {
+            readme: {},
+            contributing: { html_url: "https://github.com/org/.github/blob/main/CONTRIBUTING.md" },
+          },
+        });
+      }
+      if (url.endsWith("/stats/commit_activity")) {
+        return new Response(null, { status: 202 });
+      }
+      if (url.includes("/repos/org/.github/contents/CONTRIBUTING.md?ref=main")) {
+        return Response.json({
+          content: Buffer.from("# Help").toString("base64"),
+          encoding: "base64",
+        });
+      }
+      return new Response(null, { status: 404 });
+    });
+
+    const result = await client.getRepositoryInsights("owner", "repo", "token");
+
+    assert.equal(requests.find((r) => r.url.endsWith("/graphql"))?.method, "POST");
+    assert.equal(result.metadata.license, "Other");
+    assert.equal(result.insights.watchers, 7);
+    assert.deepEqual(result.insights.languages, [
+      { name: "TypeScript", color: "#3178c6", bytes: 10 },
+    ]);
+    assert.isNull(result.insights.weeklyCommits);
+    assert.equal(result.insights.health?.percentage, 42);
+    assert.isTrue(result.insights.health?.files.contributing);
+    assert.isFalse(result.insights.health?.files.license);
+    assert.equal(result.contributing, "# Help");
+  });
+
+  test("rejects GraphQL answers without a repository", async ({ assert }) => {
+    const client = new GitHubApiClient(async (input) =>
+      String(input).endsWith("/graphql")
+        ? Response.json({ data: { repository: null }, errors: [{ message: "Could not resolve" }] })
+        : Response.json([]),
+    );
+    await assert.rejects(
+      () => client.getRepositoryInsights("owner", "gone", "token"),
+      /Invalid GitHub response: insights \(Could not resolve\)/,
     );
   });
 });

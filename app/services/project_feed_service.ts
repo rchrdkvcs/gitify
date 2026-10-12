@@ -1,5 +1,6 @@
+import db from "@adonisjs/lucid/services/db";
 import type {
-  UserPreferences,
+  ExploreFilters,
   ShowcaseLanguageResult,
   ShowcaseProject,
   FeedRefreshState,
@@ -14,7 +15,6 @@ import ProjectSearchMembership from "#models/project_search_membership";
 import UserProjectFavorite from "#models/user_project_favorite";
 import githubSync, { type GitHubSyncService } from "#services/github/github_sync_service";
 import { normalizePage } from "#shared/pagination";
-import { normalizePreferenceLanguages } from "#shared/preferences";
 import ProjectDetailTransformer from "#transformers/project_detail_transformer";
 import ProjectTransformer from "#transformers/project_transformer";
 
@@ -65,12 +65,13 @@ export class ProjectFeedService {
           id: p.id,
           name: p.name,
           ownerName: p.ownerName,
+          ownerAvatarUrl: p.avatarUrl,
           repositoryUrl: p.repositoryUrl,
           description: p.description,
           language: p.language,
           stars: p.stars,
           latestRelease: p.latestRelease,
-          updatedAt: p.updatedAt?.toISO() ?? null,
+          pushedAt: p.pushedAt?.toISO() ?? null,
           topics: p.topics?.slice(0, gitifyConfig.showcase.topicsDisplay) ?? [],
           totalContributorsCount: p.totalContributorsCount,
           contributors: p.contributors
@@ -89,69 +90,97 @@ export class ProjectFeedService {
     return languagesData.filter((l) => l.projects.length > 0);
   }
 
-  async getProject(id: string, userId: string, token: string): Promise<ProjectDetail | null> {
-    const project = await Project.find(id);
+  async getProject(
+    ownerName: string,
+    name: string,
+    reader: { userId: string | null; token: string | null },
+  ): Promise<ProjectDetail | null> {
+    const project = await Project.query()
+      .whereRaw("lower(owner_name) = ?", [ownerName.toLowerCase()])
+      .whereRaw("lower(name) = ?", [name.toLowerCase()])
+      .orderBy("stars", "desc")
+      .first();
     if (!project) {
       return null;
     }
 
-    if (this.sync.needsDetailsFetch(project)) {
+    if (reader.token && this.sync.needsDetailsFetch(project)) {
       await this.sync
-        .fetchProjectDetails(project, token)
+        .fetchProjectDetails(project, reader.token)
         .catch((err) => console.error(`Failed to fetch details for project ${project.id}:`, err));
     }
 
     await project.load("contributors", (query) =>
       query.orderBy("contributions", "desc").orderBy("id", "asc"),
     );
-    const isFavorite = await UserProjectFavorite.query()
-      .where("userId", userId)
-      .where("projectId", project.id)
-      .first()
-      .then(Boolean);
+    const favoriteIds = await favoriteProjectIds([project], reader.userId);
     const levels = await stableDifficulties([project]);
     return new ProjectDetailTransformer(project, {
-      isFavorite,
+      isFavorite: favoriteIds.has(project.id),
       difficulty: levels.get(project.id)!,
     }).toObject();
   }
 
-  async getFeed(
-    userId: string,
-    preferences: UserPreferences,
-    token: string,
-  ): Promise<{ projects: ProjectList[]; available: number; refreshState: FeedRefreshState }> {
-    const { difficulty } = preferences;
-    const languages = normalizePreferenceLanguages(preferences.languages);
-    const refreshes = await Promise.allSettled(
-      languages.map((language) =>
-        this.sync.ensureSearchFresh({
-          language,
-          difficulty,
-          token,
-        }),
-      ),
+  /** Public catalogue. Only the first page may refresh GitHub searches for the selected criteria. */
+  async explore(
+    filters: ExploreFilters,
+    requestedPage: unknown,
+    reader: { userId: string | null; token: string | null },
+  ): Promise<{ projects: ProjectList[]; meta: PaginationMeta; refreshState: FeedRefreshState }> {
+    const page = normalizePage(requestedPage);
+    const levels: Difficulty[] = filters.level === "all" ? ["beginner", "expert"] : [filters.level];
+
+    const refreshes =
+      page === 1 && reader.token
+        ? await Promise.allSettled(
+            filters.languages.flatMap((language) =>
+              levels.map((difficulty) =>
+                this.sync.ensureSearchFresh({ language, difficulty, token: reader.token! }),
+              ),
+            ),
+          )
+        : [];
+
+    const query = projectsForSearch(
+      filters.languages,
+      filters.level === "all" ? undefined : filters.level,
     );
+    if (filters.topic) {
+      query.whereRaw("jsonb_exists(topics, ?)", [filters.topic]);
+    }
+    const search = filters.q.trim();
+    if (search) {
+      const pattern = `%${search.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+      query.where((builder) => {
+        builder
+          .whereILike("name", pattern)
+          .orWhereILike("owner_name", pattern)
+          .orWhereILike("description", pattern)
+          .orWhereRaw("topics::text ILIKE ?", [pattern]);
+      });
+    }
+    if (filters.sort === "recent") {
+      query.orderByRaw("pushed_at DESC NULLS LAST");
+    } else if (filters.sort === "issues") {
+      query.orderBy("open_issues_count", "desc");
+    } else {
+      query.orderBy("stars", "desc");
+    }
+    const paginator = await query.orderBy("id", "asc").paginate(page, gitifyConfig.feed.pageSize);
+    const projects = paginator.all();
 
-    const projectsPerLanguage = await Promise.all(
-      languages.map((language) => {
-        const query = projectsForSearch([language], difficulty)
-          .orderBy("stars", "desc")
-          .limit(gitifyConfig.feed.perLanguageLimit);
-
-        return query;
-      }),
-    );
-
-    const projects = roundRobin(projectsPerLanguage, gitifyConfig.feed.totalLimit);
-    const favoriteIds = await favoriteProjectIds(projects, userId);
+    const favoriteIds = await favoriteProjectIds(projects, reader.userId);
+    const difficulties =
+      filters.level === "all"
+        ? await stableDifficulties(projects)
+        : new Map(projects.map((project) => [project.id, filters.level as Difficulty]));
 
     const failed = refreshes.some((refresh) => refresh.status === "rejected");
     const refreshing = refreshes.some(
       (refresh) => refresh.status === "fulfilled" && refresh.value.status === "pending",
     );
     const refreshState: FeedRefreshState = failed
-      ? projects.length > 0
+      ? paginator.total > 0
         ? "degraded"
         : "unavailable"
       : refreshing
@@ -162,12 +191,37 @@ export class ProjectFeedService {
       projects: projects.map((project) =>
         new ProjectTransformer(project, {
           isFavorite: favoriteIds.has(project.id),
-          difficulty,
+          difficulty: difficulties.get(project.id)!,
         }).toObject(),
       ),
-      available: await countAvailable(difficulty, languages),
+      meta: {
+        total: paginator.total,
+        perPage: paginator.perPage,
+        currentPage: paginator.currentPage,
+        lastPage: Math.max(1, paginator.lastPage),
+      },
       refreshState,
     };
+  }
+
+  /** Most frequent topics among the repositories matching the language and level filters. */
+  async popularTopics(filters: ExploreFilters, limit = 14): Promise<string[]> {
+    const scope = projectsForSearch(
+      filters.languages,
+      filters.level === "all" ? undefined : filters.level,
+    ).select("id");
+    const rows = await db
+      .from("projects")
+      .joinRaw(
+        "CROSS JOIN LATERAL jsonb_array_elements_text(CASE WHEN jsonb_typeof(projects.topics) = 'array' THEN projects.topics ELSE '[]'::jsonb END) AS topic",
+      )
+      .whereIn("projects.id", scope)
+      .select(db.raw("topic, count(*) AS total"))
+      .groupBy("topic")
+      .orderBy("total", "desc")
+      .orderBy("topic", "asc")
+      .limit(limit);
+    return rows.map((row: { topic: string }) => row.topic);
   }
 
   async getFavoriteProjects(
@@ -247,25 +301,8 @@ function pickRandom<T>(items: T[], count: number): T[] {
     .map(({ item }) => item);
 }
 
-function roundRobin(groups: Project[][], limit: number): Project[] {
-  const result: Project[] = [];
-  const seen = new Set<string>();
-  const maxLength = Math.max(...groups.map((g) => g.length));
-
-  Array.from({ length: maxLength }).forEach((_, i) => {
-    groups.forEach((group) => {
-      if (group[i] && !seen.has(group[i].id) && result.length < limit) {
-        seen.add(group[i].id);
-        result.push(group[i]);
-      }
-    });
-  });
-
-  return result;
-}
-
-async function favoriteProjectIds(projects: Project[], userId: string) {
-  if (projects.length === 0) {
+async function favoriteProjectIds(projects: Project[], userId: string | null) {
+  if (!userId || projects.length === 0) {
     return new Set<string>();
   }
 
@@ -306,24 +343,21 @@ async function stableDifficulties(projects: Project[]): Promise<Map<string, Diff
   return levels;
 }
 
-async function countAvailable(difficulty: string, languages: string[]): Promise<number> {
-  const query = projectsForSearch(languages, difficulty);
-
-  const result = await query.count("* as total");
-  return Number(result[0]?.$extras.total ?? 0);
-}
-
-/** Select each repository once using the criteria under which it was discovered. */
+/** Select each repository once using the criteria under which it was discovered.
+ * No language means every language; retired repositories (without membership) stay hidden.
+ */
 export function projectsForSearch(languages: string[], difficulty?: string) {
   return Project.query().whereExists((membership) => {
     membership
       .from("project_search_memberships")
       .select("id")
-      .whereColumn("project_search_memberships.project_id", "projects.id")
-      .whereIn(
+      .whereColumn("project_search_memberships.project_id", "projects.id");
+    if (languages.length) {
+      membership.whereIn(
         "project_search_memberships.language",
         languages.map((language) => language.toLowerCase()),
       );
+    }
     if (difficulty) {
       membership.where("project_search_memberships.difficulty", difficulty);
     }

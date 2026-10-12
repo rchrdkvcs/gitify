@@ -11,6 +11,7 @@ import User from "#models/user";
 import { GitHubSyncService } from "#services/github/github_sync_service";
 import { ProjectFeedService } from "#services/project_feed_service";
 import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
+import { feedFor } from "#tests/helpers/feed";
 
 async function fixture() {
   const user = await User.create({
@@ -63,6 +64,8 @@ function assertList(assert: Assert, project: ProjectList) {
       "id",
       "name",
       "ownerName",
+      "ownerAvatarUrl",
+      "forksCount",
       "description",
       "repositoryUrl",
       "stars",
@@ -72,11 +75,10 @@ function assertList(assert: Assert, project: ProjectList) {
       "difficulty",
       "isFavorite",
       "latestRelease",
-      "updatedAt",
+      "pushedAt",
     ].sort(),
   );
-  assert.isString(project.updatedAt);
-  assert.isFalse(Number.isNaN(Date.parse(project.updatedAt!)));
+  assert.property(project, "pushedAt");
 }
 
 test.group("Project public read contracts", (group) => {
@@ -85,17 +87,20 @@ test.group("Project public read contracts", (group) => {
     assert,
   }) => {
     const { user, other, project, feed } = await fixture();
-    const result = await feed.getFeed(user.id, user.preferences!, "secret");
+    const result = await feedFor(feed, user.id, user.preferences!, "secret");
     assertList(assert, result.projects[0]);
     assert.equal(result.projects[0].difficulty, "expert");
     assert.isTrue(result.projects[0].isFavorite);
-    const second = await feed.getFeed(other.id, user.preferences!, "secret");
+    const second = await feedFor(feed, other.id, user.preferences!, "secret");
     assert.isFalse(second.projects[0].isFavorite);
-    const detail = await feed.getProject(project.id, user.id, "secret");
+    const detail = await feed.getProject(project.ownerName, project.name, {
+      userId: user.id,
+      token: "secret",
+    });
     assert.equal(detail?.difficulty, "beginner");
     assert.equal(detail?.readme, "# Large detail");
     assert.equal(detail?.contributors[0].login, "contributor");
-    assert.isString(detail?.createdAt);
+    assert.isString(detail?.detailsFetchedAt);
     assert.notProperty(detail, "githubRepoId");
     const favorites = await feed.getFavoriteProjects(user.id, 1);
     assertList(assert, favorites.projects[0]);
@@ -109,10 +114,20 @@ test.group("Project public read contracts", (group) => {
     const { user, project, feed } = await fixture();
     const page = await client.get("/explore").loginAs(user).withInertia();
     page.assertStatus(200);
-    const expected = await feed.getFeed(user.id, user.preferences!, "secret");
-    assert.deepEqual(page.inertiaProps.projects, expected.projects);
+    const expected = await feed.explore(
+      {
+        q: "",
+        topic: null,
+        languages: user.preferences!.languages,
+        level: user.preferences!.difficulty,
+        sort: "stars",
+      },
+      1,
+      { userId: user.id, token: "secret" },
+    );
+    assert.deepEqual(page.inertiaProps.projects.data, expected.projects);
     assert.equal(page.inertiaProps.refreshState, "ready");
-    assertList(assert, page.inertiaProps.projects[0]);
+    assertList(assert, page.inertiaProps.projects.data[0]);
     const favoritesPage = await client.get("/favorites").loginAs(user).withInertia();
     favoritesPage.assertStatus(200);
     assertList(assert, favoritesPage.inertiaProps.projects[0]);
@@ -120,11 +135,14 @@ test.group("Project public read contracts", (group) => {
       Object.keys(favoritesPage.inertiaProps.meta).sort(),
       ["total", "perPage", "currentPage", "lastPage"].sort(),
     );
-    const detail = await client.get(`/projects/${project.id}`).loginAs(user).withInertia();
+    const detail = await client
+      .get(`/projects/${project.ownerName}/${project.name}`)
+      .loginAs(user)
+      .withInertia();
     detail.assertStatus(200);
     assert.deepEqual(
       detail.inertiaProps.project,
-      await feed.getProject(project.id, user.id, "secret"),
+      await feed.getProject(project.ownerName, project.name, { userId: user.id, token: "secret" }),
     );
   });
 });

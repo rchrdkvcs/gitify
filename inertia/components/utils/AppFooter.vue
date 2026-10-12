@@ -1,22 +1,27 @@
 <script setup lang="ts">
 type FooterLink = { label: string; to: string; external?: boolean };
 
-const columns: { title: string; links: FooterLink[] }[] = [
+const authStore = useAuth();
+
+const columns = computed<{ title: string; links: FooterLink[] }[]>(() => [
   {
     title: "Produit",
     links: [
       { label: "Explorer", to: "/explore" },
-      { label: "Favoris", to: "/favorites" },
-      { label: "Préférences", to: "/preferences" },
+      { label: "Projets débutants", to: "/explore?level=beginner" },
     ],
   },
-  {
-    title: "Apprendre",
-    links: [
-      { label: "Ressources", to: "/ressources" },
-      { label: "Communauté", to: "/community" },
-    ],
-  },
+  ...(authStore.isAuthenticated
+    ? [
+        {
+          title: "Compte",
+          links: [
+            { label: "Favoris", to: "/favorites" },
+            { label: "Préférences", to: "/preferences" },
+          ],
+        },
+      ]
+    : []),
   {
     title: "Open source",
     links: [
@@ -28,7 +33,7 @@ const columns: { title: string; links: FooterLink[] }[] = [
       },
     ],
   },
-];
+]);
 
 const year = new Date().getFullYear();
 </script>

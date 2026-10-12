@@ -4,6 +4,7 @@ import User from "#models/user";
 import { GitHubSyncService } from "#services/github/github_sync_service";
 import ProjectFeedService from "#services/project_feed_service";
 import { FakeGitHubAdapter, githubRepo } from "#tests/helpers/fake_github_adapter";
+import { feedFor } from "#tests/helpers/feed";
 
 const token = "test-token";
 
@@ -18,7 +19,8 @@ test.group("Project search memberships", (group) => {
     github.repos = [githubRepo()];
     const sync = new GitHubSyncService(github);
     await sync.fetchAndStore("typescript", "beginner", token);
-    const first = await ProjectFeedService.getFeed(
+    const first = await feedFor(
+      ProjectFeedService,
       user.id,
       { languages: ["typescript"], difficulty: "beginner" },
       token,
@@ -26,7 +28,8 @@ test.group("Project search memberships", (group) => {
     await ProjectFeedService.addFavorite(user.id, first.projects[0].id);
     await sync.fetchAndStore("typescript", "expert", token);
     for (const difficulty of ["beginner", "expert"] as const) {
-      const feed = await ProjectFeedService.getFeed(
+      const feed = await feedFor(
+        ProjectFeedService,
         user.id,
         { languages: ["typescript"], difficulty },
         token,
@@ -47,7 +50,8 @@ test.group("Project search memberships", (group) => {
     const sync = new GitHubSyncService(github);
     await sync.fetchAndStore("TypeScript", "expert", token);
     await sync.fetchAndStore("javascript", "expert", token);
-    const feed = await ProjectFeedService.getFeed(
+    const feed = await feedFor(
+      ProjectFeedService,
       "not-a-user",
       {
         languages: ["typescript", "javascript"],
@@ -59,7 +63,8 @@ test.group("Project search memberships", (group) => {
     assert.lengthOf(feed.projects, 1);
     assert.equal(feed.projects[0].language, "javascript");
     await sync.fetchAndStore("typescript", "beginner", token);
-    const expertFeed = await ProjectFeedService.getFeed(
+    const expertFeed = await feedFor(
+      ProjectFeedService,
       "not-a-user",
       {
         languages: ["typescript"],
@@ -79,16 +84,16 @@ test.group("Project search memberships", (group) => {
     const sync = new GitHubSyncService(github);
     const preferences = { languages: ["typescript"], difficulty: "beginner" as const };
     await sync.fetchAndStore("typescript", "beginner", token);
-    const original = await ProjectFeedService.getFeed(user.id, preferences, token);
+    const original = await feedFor(ProjectFeedService, user.id, preferences, token);
     await ProjectFeedService.addFavorite(user.id, original.projects[0].id);
     github.repos = [githubRepo({ id: 102, name: "replacement" })];
     await sync.fetchAndStore("typescript", "beginner", token);
-    const replacement = await ProjectFeedService.getFeed(user.id, preferences, token);
+    const replacement = await feedFor(ProjectFeedService, user.id, preferences, token);
     assert.equal(replacement.available, 1);
     assert.equal(replacement.projects[0].name, "replacement");
     github.repos = [];
     await sync.fetchAndStore("typescript", "beginner", token);
-    const empty = await ProjectFeedService.getFeed(user.id, preferences, token);
+    const empty = await feedFor(ProjectFeedService, user.id, preferences, token);
     assert.equal(empty.available, 0);
     assert.isEmpty(empty.projects);
     const favorites = await ProjectFeedService.getFavoriteProjects(user.id, 1);
@@ -105,7 +110,8 @@ test.group("Project search memberships", (group) => {
       () => sync.fetchAndStore("typescript", "beginner", token),
       "GitHub unavailable",
     );
-    const feed = await ProjectFeedService.getFeed(
+    const feed = await feedFor(
+      ProjectFeedService,
       "not-a-user",
       {
         languages: ["typescript"],

@@ -1,20 +1,20 @@
 import type { Difficulty } from "./types/common.js";
 
-/** Identifiers used for storage and GitHub searches, and their public labels. */
+/** Identifiers used for storage and GitHub searches, their public labels and Iconify icons. */
 export const languageCatalog = [
-  { id: "javascript", name: "JavaScript", label: "JS" },
-  { id: "typescript", name: "TypeScript", label: "TS" },
-  { id: "python", name: "Python", label: "PY" },
-  { id: "java", name: "Java", label: "JA" },
-  { id: "c++", name: "C++", label: "C++" },
-  { id: "c#", name: "C#", label: "C#" },
-  { id: "ruby", name: "Ruby", label: "RB" },
-  { id: "go", name: "Go", label: "GO" },
-  { id: "rust", name: "Rust", label: "RS" },
-  { id: "php", name: "PHP", label: "PHP" },
-  { id: "swift", name: "Swift", label: "SW" },
-  { id: "kotlin", name: "Kotlin", label: "KT" },
-  { id: "dart", name: "Dart", label: "DT" },
+  { id: "javascript", name: "JavaScript", label: "JS", icon: "devicon-plain:javascript" },
+  { id: "typescript", name: "TypeScript", label: "TS", icon: "devicon-plain:typescript" },
+  { id: "python", name: "Python", label: "PY", icon: "devicon-plain:python" },
+  { id: "java", name: "Java", label: "JA", icon: "devicon-plain:java" },
+  { id: "c++", name: "C++", label: "C++", icon: "devicon-plain:cplusplus" },
+  { id: "c#", name: "C#", label: "C#", icon: "devicon-plain:csharp" },
+  { id: "ruby", name: "Ruby", label: "RB", icon: "devicon-plain:ruby" },
+  { id: "go", name: "Go", label: "GO", icon: "devicon-plain:go" },
+  { id: "rust", name: "Rust", label: "RS", icon: "devicon-plain:rust" },
+  { id: "php", name: "PHP", label: "PHP", icon: "devicon-plain:php" },
+  { id: "swift", name: "Swift", label: "SW", icon: "devicon-plain:swift" },
+  { id: "kotlin", name: "Kotlin", label: "KT", icon: "devicon-plain:kotlin" },
+  { id: "dart", name: "Dart", label: "DT", icon: "devicon-plain:dart" },
 ] as const;
 
 export type PreferenceLanguage = (typeof languageCatalog)[number]["id"];

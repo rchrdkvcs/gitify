@@ -4,6 +4,7 @@ const gitifyConfig = {
   github: {
     baseUrl: "https://api.github.com/search/repositories",
     repoBaseUrl: "https://api.github.com/repos",
+    graphqlUrl: "https://api.github.com/graphql",
     apiVersion: "2026-03-10",
     acceptHeader: "application/vnd.github+json",
     textMatchAcceptHeader: "application/vnd.github.text-match+json",
@@ -12,18 +13,23 @@ const gitifyConfig = {
       expertMinStars: 1000,
     },
     contributors: {
-      topContributorsLimit: 10,
+      topContributorsLimit: 30,
+    },
+    insights: {
+      issuesLimit: 20,
+      pullRequestsLimit: 20,
+      languagesLimit: 12,
+      contributingPaths: ["CONTRIBUTING.md", ".github/CONTRIBUTING.md", "docs/CONTRIBUTING.md"],
     },
   },
   cache: {
     fetchTtlHours: 24,
     searchRetrySeconds: 60,
     maxConcurrentSearches: 2,
-    detailsCacheDays: 7,
+    detailsCacheHours: 12,
   },
   feed: {
-    perLanguageLimit: 60,
-    totalLimit: 60,
+    pageSize: 24,
     favoritePageLimit: 20,
   },
   showcase: {

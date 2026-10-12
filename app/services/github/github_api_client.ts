@@ -3,10 +3,118 @@ import type {
   GitHubContributor,
   GitHubRepo,
   ProjectDetails,
+  RepositoryInsightsResult,
 } from "#services/github/github_adapter";
-import type { Difficulty } from "#shared/types/index";
+import type {
+  CommunityFiles,
+  Difficulty,
+  RepositoryIssue,
+  RepositoryPullRequest,
+} from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
 export type { GitHubRepo, ProjectDetails } from "#services/github/github_adapter";
+
+const ISSUE_FIELDS = `number title url createdAt
+  author { login avatarUrl }
+  comments { totalCount }
+  labels(first: 6) { nodes { name color } }`;
+
+const contributingAliases = gitifyConfig.github.insights.contributingPaths
+  .map(
+    (path, index) =>
+      `contributing${index}: object(expression: "HEAD:${path}") { ... on Blob { text } }`,
+  )
+  .join("\n");
+
+const INSIGHTS_QUERY = `query RepositoryInsights($owner: String!, $name: String!, $issues: Int!, $pullRequests: Int!, $languages: Int!) {
+  repository(owner: $owner, name: $name) {
+    createdAt pushedAt homepageUrl isArchived diskUsage stargazerCount forkCount
+    owner { avatarUrl }
+    licenseInfo { spdxId name }
+    watchers { totalCount }
+    openIssues: issues(states: OPEN) { totalCount }
+    closedIssues: issues(states: CLOSED) { totalCount }
+    openPullRequests: pullRequests(states: OPEN) { totalCount }
+    mergedPullRequests: pullRequests(states: MERGED) { totalCount }
+    goodFirstIssues: issues(states: OPEN, labels: ["good first issue"]) { totalCount }
+    helpWantedIssues: issues(states: OPEN, labels: ["help wanted"]) { totalCount }
+    releases { totalCount }
+    latestRelease { publishedAt }
+    languages(first: $languages, orderBy: { field: SIZE, direction: DESC }) {
+      edges { size node { name color } }
+    }
+    defaultBranchRef {
+      name
+      target { ... on Commit { committedDate history { totalCount } } }
+    }
+    recentIssues: issues(first: $issues, states: OPEN, orderBy: { field: CREATED_AT, direction: DESC }) {
+      nodes { ${ISSUE_FIELDS} }
+    }
+    beginnerIssues: issues(first: $issues, states: OPEN, labels: ["good first issue"], orderBy: { field: CREATED_AT, direction: DESC }) {
+      nodes { ${ISSUE_FIELDS} }
+    }
+    recentPullRequests: pullRequests(first: $pullRequests, states: OPEN, orderBy: { field: CREATED_AT, direction: DESC }) {
+      nodes { isDraft ${ISSUE_FIELDS} }
+    }
+    ${contributingAliases}
+  }
+}`;
+
+type GraphQLIssue = {
+  number: number;
+  title: string;
+  url: string;
+  createdAt: string;
+  author: { login: string; avatarUrl: string } | null;
+  comments: { totalCount: number };
+  labels: { nodes: { name: string; color: string }[] };
+  isDraft?: boolean;
+};
+
+type GraphQLRepository = {
+  createdAt: string;
+  pushedAt: string | null;
+  homepageUrl: string | null;
+  isArchived: boolean;
+  diskUsage: number | null;
+  stargazerCount: number;
+  forkCount: number;
+  owner: { avatarUrl: string };
+  licenseInfo: { spdxId: string | null; name: string } | null;
+  watchers: { totalCount: number };
+  openIssues: { totalCount: number };
+  closedIssues: { totalCount: number };
+  openPullRequests: { totalCount: number };
+  mergedPullRequests: { totalCount: number };
+  goodFirstIssues: { totalCount: number };
+  helpWantedIssues: { totalCount: number };
+  releases: { totalCount: number };
+  latestRelease: { publishedAt: string | null } | null;
+  languages: { edges: { size: number; node: { name: string; color: string | null } }[] };
+  defaultBranchRef: {
+    name: string;
+    target: { committedDate?: string; history?: { totalCount: number } } | null;
+  } | null;
+  recentIssues: { nodes: GraphQLIssue[] };
+  beginnerIssues: { nodes: GraphQLIssue[] };
+  recentPullRequests: { nodes: GraphQLIssue[] };
+} & Record<`contributing${number}`, { text?: string | null } | null>;
+
+function toIssue(issue: GraphQLIssue): RepositoryIssue {
+  return {
+    number: issue.number,
+    title: issue.title,
+    url: issue.url,
+    createdAt: issue.createdAt,
+    author: issue.author ? { login: issue.author.login, avatarUrl: issue.author.avatarUrl } : null,
+    comments: issue.comments.totalCount,
+    labels: issue.labels.nodes.map((label) => ({ name: label.name, color: label.color })),
+  };
+}
+
+function toPullRequest(pullRequest: GraphQLIssue): RepositoryPullRequest {
+  return { ...toIssue(pullRequest), isDraft: pullRequest.isDraft ?? false };
+}
 
 export class GitHubApiClient implements GitHubAdapter {
   constructor(
@@ -138,11 +246,163 @@ export class GitHubApiClient implements GitHubAdapter {
     };
   }
 
+  async getRepositoryInsights(
+    ownerName: string,
+    repoName: string,
+    token: string,
+  ): Promise<RepositoryInsightsResult> {
+    const headers = this.buildHeaders(token);
+    const base = `${gitifyConfig.github.repoBaseUrl}/${ownerName}/${repoName}`;
+    const limits = gitifyConfig.github.insights;
+
+    const [graphqlResult, communityResult, activityResult] = await Promise.all([
+      this.requestJson(gitifyConfig.github.graphqlUrl, headers, {
+        body: {
+          query: INSIGHTS_QUERY,
+          variables: {
+            owner: ownerName,
+            name: repoName,
+            issues: limits.issuesLimit,
+            pullRequests: limits.pullRequestsLimit,
+            languages: limits.languagesLimit,
+          },
+        },
+      }),
+      this.requestJson(`${base}/community/profile`, headers, { optional: true }),
+      // GitHub answers 202 while it computes statistics, and 204 for empty repositories.
+      this.requestJson(`${base}/stats/commit_activity`, headers, { allowPending: true }),
+    ]);
+
+    const payload = graphqlResult!.data as {
+      data?: { repository?: GraphQLRepository | null };
+      errors?: { message?: string }[];
+    };
+    const repo = payload?.data?.repository;
+    if (!repo || typeof repo.stargazerCount !== "number") {
+      const reason = payload?.errors?.[0]?.message ?? "missing repository";
+      throw new Error(`Invalid GitHub response: insights (${reason})`);
+    }
+
+    const community = communityResult?.data as
+      | { health_percentage?: unknown; files?: Record<string, unknown> }
+      | undefined;
+    const files = community?.files ?? {};
+    const health =
+      community && typeof community.health_percentage === "number"
+        ? {
+            percentage: community.health_percentage,
+            files: {
+              readme: !!files.readme,
+              contributing: !!files.contributing,
+              codeOfConduct: !!files.code_of_conduct,
+              license: !!files.license,
+              issueTemplate: !!files.issue_template,
+              pullRequestTemplate: !!files.pull_request_template,
+            } satisfies CommunityFiles,
+          }
+        : null;
+
+    const activity = activityResult?.data;
+    const weeklyCommits = Array.isArray(activity)
+      ? activity.map((week: { total?: unknown }) =>
+          typeof week?.total === "number" ? week.total : 0,
+        )
+      : null;
+
+    const contributing =
+      limits.contributingPaths
+        .map((_, index) => repo[`contributing${index}`]?.text)
+        .find((text): text is string => typeof text === "string" && text.trim() !== "") ??
+      (await this.fetchCommunityFile(files.contributing, headers));
+
+    const target = repo.defaultBranchRef?.target;
+    return {
+      contributing,
+      metadata: {
+        ownerAvatarUrl: repo.owner.avatarUrl,
+        homepageUrl: repo.homepageUrl || null,
+        license: repo.licenseInfo
+          ? repo.licenseInfo.spdxId && repo.licenseInfo.spdxId !== "NOASSERTION"
+            ? repo.licenseInfo.spdxId
+            : repo.licenseInfo.name
+          : null,
+        pushedAt: repo.pushedAt,
+        createdAt: repo.createdAt,
+        stars: repo.stargazerCount,
+        forksCount: repo.forkCount,
+      },
+      insights: {
+        watchers: repo.watchers.totalCount,
+        openIssues: repo.openIssues.totalCount,
+        closedIssues: repo.closedIssues.totalCount,
+        openPullRequests: repo.openPullRequests.totalCount,
+        mergedPullRequests: repo.mergedPullRequests.totalCount,
+        goodFirstIssues: repo.goodFirstIssues.totalCount,
+        helpWantedIssues: repo.helpWantedIssues.totalCount,
+        commits: target?.history?.totalCount ?? null,
+        releases: repo.releases.totalCount,
+        latestReleaseAt: repo.latestRelease?.publishedAt ?? null,
+        diskUsageKb: repo.diskUsage,
+        defaultBranch: repo.defaultBranchRef?.name ?? null,
+        isArchived: repo.isArchived,
+        lastCommitAt: target?.committedDate ?? repo.pushedAt,
+        languages: repo.languages.edges.map((edge) => ({
+          name: edge.node.name,
+          color: edge.node.color,
+          bytes: edge.size,
+        })),
+        weeklyCommits,
+        health,
+        issues: repo.recentIssues.nodes.map(toIssue),
+        beginnerIssues: repo.beginnerIssues.nodes.map(toIssue),
+        pullRequests: repo.recentPullRequests.nodes.map(toPullRequest),
+      },
+    };
+  }
+
+  /**
+   * Organisations can share community files from their `.github` repository; GitHub's
+   * community profile points at the file actually in use.
+   */
+  private async fetchCommunityFile(
+    file: unknown,
+    headers: Record<string, string>,
+  ): Promise<string | null> {
+    const htmlUrl = (file as { html_url?: unknown } | null)?.html_url;
+    const match =
+      typeof htmlUrl === "string"
+        ? /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/.exec(htmlUrl)
+        : null;
+    if (!match) {
+      return null;
+    }
+    const [, owner, repo, ref, path] = match;
+    const result = await this.requestJson(
+      `${gitifyConfig.github.repoBaseUrl}/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(ref)}`,
+      headers,
+      { optional: true },
+    );
+    const data = result?.data as { content?: unknown; encoding?: unknown } | undefined;
+    return typeof data?.content === "string" && data.encoding === "base64"
+      ? Buffer.from(data.content, "base64").toString("utf-8")
+      : null;
+  }
+
   /** Owns the complete request, including body consumption, and only treats documented absence as success. */
   private async requestJson(
     url: string,
     headers: Record<string, string>,
-    { optional = false, allowEmptyContributors = false } = {},
+    {
+      optional = false,
+      allowEmptyContributors = false,
+      allowPending = false,
+      body,
+    }: {
+      optional?: boolean;
+      allowEmptyContributors?: boolean;
+      allowPending?: boolean;
+      body?: unknown;
+    } = {},
   ): Promise<{ data: unknown; headers: Headers } | null> {
     const controller = new AbortController();
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -156,7 +416,21 @@ export class GitHubApiClient implements GitHubAdapter {
     try {
       return await Promise.race([
         (async () => {
-          const response = await this.request(url, { headers, signal: controller.signal });
+          const response = await this.request(
+            url,
+            body === undefined
+              ? { headers, signal: controller.signal }
+              : {
+                  method: "POST",
+                  headers: { ...headers, "Content-Type": "application/json" },
+                  body: JSON.stringify(body),
+                  signal: controller.signal,
+                },
+          );
+          if (allowPending && (response.status === 202 || response.status === 204)) {
+            await response.body?.cancel();
+            return response.status === 204 ? { data: [], headers: response.headers } : null;
+          }
           // GitHub documents 204 for contributors of an empty repository.
           if (allowEmptyContributors && response.status === 204) {
             return { data: [], headers: response.headers };

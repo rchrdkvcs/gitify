@@ -57,29 +57,39 @@ test.group("Inertia application", (group) => {
     });
   });
 
-  test("renders public placeholder pages", async ({ client }) => {
-    for (const [url, component] of [
-      ["/community", "community"],
-      ["/ressources", "ressources"],
-    ]) {
-      const response = await client.get(url).withInertia();
-      response.assertStatus(200);
-      response.assertInertiaComponent(component);
-    }
-  });
-
   test("redirects guests from protected pages", async ({ client }) => {
-    for (const url of [
-      "/explore",
-      "/favorites",
-      "/profil",
-      "/preferences",
-      "/projects/01J00000000000000000000000",
-    ]) {
+    for (const url of ["/favorites", "/profil", "/preferences"]) {
       const response = await client.get(url).redirects(0);
       response.assertStatus(302);
       response.assertHeader("location", "/");
     }
+  });
+
+  test("filters the public catalogue by search text and level", async ({ client, assert }) => {
+    const project = await createProject();
+    const match = await client
+      .get(`/explore?q=${project.name.slice(0, 6)}&level=all`)
+      .withInertia();
+    match.assertStatus(200);
+    assert.deepEqual(
+      match.inertiaProps.projects.data.map((item: { id: string }) => item.id),
+      [project.id],
+    );
+    assert.equal(match.inertiaProps.filters.level, "all");
+
+    const miss = await client.get("/explore?q=%25_no_such_project&level=all").withInertia();
+    assert.lengthOf(miss.inertiaProps.projects.data, 0);
+
+    project.topics = ["cli", "terminal"];
+    await project.save();
+    const topic = await client.get("/explore?topic=cli&level=all").withInertia();
+    assert.lengthOf(topic.inertiaProps.projects.data, 1);
+    assert.includeMembers(topic.inertiaProps.topicOptions, ["cli", "terminal"]);
+    const otherTopic = await client.get("/explore?topic=web&level=all").withInertia();
+    assert.lengthOf(otherTopic.inertiaProps.projects.data, 0);
+
+    const expert = await client.get("/explore?level=expert").withInertia();
+    assert.lengthOf(expert.inertiaProps.projects.data, 0);
   });
 
   test("shares public user data without exposing the GitHub token", async ({ client, assert }) => {
@@ -94,11 +104,23 @@ test.group("Inertia application", (group) => {
     assert.notInclude(JSON.stringify(response.body()), "private-test-token");
   });
 
-  test("redirects users without preferences to onboarding", async ({ client }) => {
-    const user = await createUser(false);
-    const response = await client.get("/explore").loginAs(user).redirects(0);
-    response.assertStatus(302);
-    response.assertHeader("location", "/preferences");
+  test("lets guests browse the catalogue and project pages", async ({ client }) => {
+    const project = await createProject();
+    const list = await client.get("/explore").withInertia();
+    list.assertStatus(200);
+    list.assertInertiaPropsContains({
+      projects: { data: [{ id: project.id, isFavorite: false }] },
+    });
+
+    const detail = await client
+      .get(`/projects/${project.ownerName.toUpperCase()}/${project.name}`)
+      .withInertia();
+    detail.assertStatus(200);
+    detail.assertInertiaComponent("projects/show");
+    detail.assertInertiaPropsContains({ project: { id: project.id, isFavorite: false } });
+
+    const missing = await client.get(`/projects/${project.ownerName}/unknown-repo`);
+    missing.assertStatus(404);
   });
 
   test("renders the personalized feed from cached projects", async ({ client }) => {
@@ -112,14 +134,19 @@ test.group("Inertia application", (group) => {
     });
     const response = await client.get("/explore").loginAs(user).withInertia();
     response.assertStatus(200);
-    response.assertInertiaPropsContains({ projects: [{ id: project.id, isFavorite: false }] });
+    response.assertInertiaPropsContains({
+      projects: { data: [{ id: project.id, isFavorite: false }] },
+    });
   });
 
   test("renders project details and favorite state", async ({ client }) => {
     const user = await createUser();
     const project = await createProject();
     await UserProjectFavorite.create({ userId: user.id, projectId: project.id });
-    const response = await client.get(`/projects/${project.id}`).loginAs(user).withInertia();
+    const response = await client
+      .get(`/projects/${project.ownerName}/${project.name}`)
+      .loginAs(user)
+      .withInertia();
     response.assertStatus(200);
     response.assertInertiaComponent("projects/show");
     response.assertInertiaPropsContains({
