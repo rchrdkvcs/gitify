@@ -3,7 +3,7 @@
 ## Prérequis
 
 - Node.js 24 ou supérieur et pnpm 12.11.2 (version déclarée dans `package.json`).
-- PostgreSQL ; Docker Compose fournit PostgreSQL 17 pour le développement.
+- PostgreSQL ; Docker Compose fournit PostgreSQL 18 pour le développement.
 - Une application OAuth GitHub pour se connecter.
 
 ## Configuration
@@ -41,7 +41,7 @@ pnpm docker:logs
 pnpm docker:down
 ```
 
-Compose lance `app` et `database`. Après une modification des dépendances, exécuter `docker compose -f compose.dev.yaml exec app pnpm install --frozen-lockfile` pour actualiser le volume de dépendances. La base existante peut être conservée : les migrations métier n'ont pas changé. Le montage PostgreSQL est celui de PostgreSQL 17 ; ne pas réutiliser un volume provenant d'une autre version majeure sans migration PostgreSQL.
+Compose lance `app` et `database`. Après une modification des dépendances, exécuter `docker compose -f compose.dev.yaml exec app pnpm install --frozen-lockfile` pour actualiser le volume de dépendances. La base existante peut être conservée : les migrations métier n'ont pas changé. Le volume PostgreSQL est monté sur `/var/lib/postgresql`. Les images 18 y créent le cluster dans `18/docker`. Un volume dont les fichiers sont directement dans `/var/lib/postgresql/data` appartient à PostgreSQL 17 et ne démarre pas avec cette image.
 
 ## Validation et tests
 

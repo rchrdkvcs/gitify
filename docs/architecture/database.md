@@ -1,6 +1,6 @@
 # Base de données
 
-PostgreSQL (17 dans Docker Compose). Tous les modèles utilisent des **ULID** comme clé primaire (générés via le hook `@beforeCreate`).
+PostgreSQL (18 dans Docker Compose). Tous les modèles utilisent des **ULID** comme clé primaire (générés via le hook `@beforeCreate`).
 
 `database/schema.ts` est **auto-généré** par `node ace migration:run`. Il contient les classes de base que les modèles Lucid étendent. Ne jamais l'éditer manuellement.
 
