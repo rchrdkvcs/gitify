@@ -25,8 +25,21 @@ export class SearchRetryDeferredError extends Error {
   }
 }
 
-// Shared by every synchronization instance; permits are taken before reserving a DB connection.
+// Shared by every synchronization instance, repository and issue searches alike;
+// permits are taken before reserving a DB connection.
 let activeSearches = 0;
+
+export function tryAcquireSearchPermit(): boolean {
+  if (activeSearches >= gitifyConfig.cache.maxConcurrentSearches) {
+    return false;
+  }
+  activeSearches++;
+  return true;
+}
+
+export function releaseSearchPermit(): void {
+  activeSearches--;
+}
 
 export class GitHubSyncService {
   constructor(
@@ -80,10 +93,9 @@ export class GitHubSyncService {
       return { status: "fresh" };
     }
     this.assertRetryAllowed(cache);
-    if (activeSearches >= gitifyConfig.cache.maxConcurrentSearches) {
+    if (!tryAcquireSearchPermit()) {
       return { status: "pending" };
     }
-    activeSearches++;
     try {
       return await db.transaction(async (trx) => {
         const lock = await trx.rawQuery(
@@ -108,7 +120,7 @@ export class GitHubSyncService {
       }
       throw error;
     } finally {
-      activeSearches--;
+      releaseSearchPermit();
     }
   }
 

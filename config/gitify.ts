@@ -21,16 +21,26 @@ const gitifyConfig = {
       languagesLimit: 12,
       contributingPaths: ["CONTRIBUTING.md", ".github/CONTRIBUTING.md", "docs/CONTRIBUTING.md"],
     },
+    issues: {
+      searchPerPage: 100,
+      labelsLimit: 10,
+      topicsLimit: 10,
+    },
   },
   cache: {
     fetchTtlHours: 24,
     searchRetrySeconds: 60,
     maxConcurrentSearches: 2,
     detailsCacheHours: 12,
+    // Issues are taken quickly; their snapshot expires sooner than repository searches.
+    issueFetchTtlHours: 6,
   },
   feed: {
     pageSize: 24,
     favoritePageLimit: 20,
+  },
+  issues: {
+    pageSize: 24,
   },
   showcase: {
     languages: [

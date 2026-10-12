@@ -1,6 +1,7 @@
 import type {
   GitHubAdapter,
   GitHubContributor,
+  GitHubIssue,
   GitHubRepo,
   ProjectDetails,
   RepositoryInsightsResult,
@@ -8,10 +9,12 @@ import type {
 import type {
   CommunityFiles,
   Difficulty,
+  IssueKind,
   RepositoryIssue,
   RepositoryPullRequest,
 } from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
+import { issueKindLabel } from "#shared/issues";
 export type { GitHubRepo, ProjectDetails } from "#services/github/github_adapter";
 
 const ISSUE_FIELDS = `number title url createdAt
@@ -59,6 +62,69 @@ const INSIGHTS_QUERY = `query RepositoryInsights($owner: String!, $name: String!
     ${contributingAliases}
   }
 }`;
+
+// Search results are a union; non-issue nodes come back as empty objects.
+const ISSUE_SEARCH_QUERY = `query IssueSearch($query: String!, $first: Int!, $labels: Int!, $topics: Int!) {
+  search(type: ISSUE, query: $query, first: $first) {
+    nodes {
+      ... on Issue {
+        databaseId number title url createdAt
+        comments { totalCount }
+        assignees { totalCount }
+        closedByPullRequestsReferences(first: 1, includeClosedPrs: false) { totalCount }
+        labels(first: $labels) { nodes { name color } }
+        repository {
+          databaseId name url description homepageUrl pushedAt createdAt
+          isArchived isPrivate stargazerCount forkCount
+          owner { login avatarUrl }
+          primaryLanguage { name }
+          licenseInfo { spdxId name }
+          repositoryTopics(first: $topics) { nodes { topic { name } } }
+          issues(states: OPEN) { totalCount }
+          pullRequests(states: OPEN) { totalCount }
+        }
+      }
+    }
+  }
+}`;
+
+type GraphQLSearchIssue = {
+  databaseId?: number;
+  number: number;
+  title: string;
+  url: string;
+  createdAt: string;
+  comments: { totalCount: number };
+  assignees: { totalCount: number };
+  closedByPullRequestsReferences: { totalCount: number } | null;
+  labels: { nodes: { name: string; color: string }[] };
+  repository: {
+    databaseId: number;
+    name: string;
+    url: string;
+    description: string | null;
+    homepageUrl: string | null;
+    pushedAt: string | null;
+    createdAt: string | null;
+    isArchived: boolean;
+    isPrivate: boolean;
+    stargazerCount: number;
+    forkCount: number;
+    owner: { login: string; avatarUrl: string | null };
+    primaryLanguage: { name: string } | null;
+    licenseInfo: { spdxId: string | null; name: string } | null;
+    repositoryTopics: { nodes: { topic: { name: string } }[] };
+    issues: { totalCount: number };
+    pullRequests: { totalCount: number };
+  };
+};
+
+function licenseName(license: { spdxId: string | null; name: string } | null): string | null {
+  if (!license) {
+    return null;
+  }
+  return license.spdxId && license.spdxId !== "NOASSERTION" ? license.spdxId : license.name;
+}
 
 type GraphQLIssue = {
   number: number;
@@ -156,6 +222,79 @@ export class GitHubApiClient implements GitHubAdapter {
       throw new Error("Invalid GitHub response: repositories");
     }
     return data.items as GitHubRepo[];
+  }
+
+  /** Open public issues of active repositories, without a pull request that already closes them. */
+  buildIssueSearchQuery(language: string, kind: IssueKind): string {
+    return `is:issue is:open is:public archived:false -linked:pr language:${language} label:"${issueKindLabel(kind)}" sort:created-desc`;
+  }
+
+  async searchIssues(
+    language: string,
+    kind: IssueKind,
+    token: string,
+    perPage: number = gitifyConfig.github.issues.searchPerPage,
+  ): Promise<GitHubIssue[]> {
+    const result = await this.requestJson(
+      gitifyConfig.github.graphqlUrl,
+      this.buildHeaders(token),
+      {
+        body: {
+          query: ISSUE_SEARCH_QUERY,
+          variables: {
+            query: this.buildIssueSearchQuery(language, kind),
+            first: perPage,
+            labels: gitifyConfig.github.issues.labelsLimit,
+            topics: gitifyConfig.github.issues.topicsLimit,
+          },
+        },
+      },
+    );
+    const payload = result!.data as {
+      data?: { search?: { nodes?: unknown } | null };
+      errors?: { message?: string }[];
+    };
+    const nodes = payload?.data?.search?.nodes;
+    if (!Array.isArray(nodes)) {
+      const reason = payload?.errors?.[0]?.message ?? "missing search";
+      throw new Error(`Invalid GitHub response: issues (${reason})`);
+    }
+
+    return (nodes as GraphQLSearchIssue[])
+      .filter((node) => typeof node?.databaseId === "number" && node.repository)
+      .map((issue) => {
+        const repo = issue.repository;
+        return {
+          id: issue.databaseId!,
+          number: issue.number,
+          title: issue.title,
+          url: issue.url,
+          createdAt: issue.createdAt,
+          comments: issue.comments.totalCount,
+          assignees: issue.assignees.totalCount,
+          linkedPullRequests: issue.closedByPullRequestsReferences?.totalCount ?? 0,
+          labels: issue.labels.nodes.map((label) => ({ name: label.name, color: label.color })),
+          repository: {
+            id: repo.databaseId,
+            name: repo.name,
+            ownerLogin: repo.owner.login,
+            ownerAvatarUrl: repo.owner.avatarUrl,
+            url: repo.url,
+            description: repo.description,
+            stars: repo.stargazerCount,
+            forksCount: repo.forkCount,
+            openIssuesCount: repo.issues.totalCount + repo.pullRequests.totalCount,
+            language: repo.primaryLanguage?.name ?? null,
+            topics: repo.repositoryTopics.nodes.map((node) => node.topic.name),
+            homepageUrl: repo.homepageUrl || null,
+            license: licenseName(repo.licenseInfo),
+            pushedAt: repo.pushedAt,
+            createdAt: repo.createdAt,
+            isArchived: repo.isArchived,
+            isPrivate: repo.isPrivate,
+          },
+        };
+      });
   }
 
   async getProjectDetails(
@@ -321,11 +460,7 @@ export class GitHubApiClient implements GitHubAdapter {
       metadata: {
         ownerAvatarUrl: repo.owner.avatarUrl,
         homepageUrl: repo.homepageUrl || null,
-        license: repo.licenseInfo
-          ? repo.licenseInfo.spdxId && repo.licenseInfo.spdxId !== "NOASSERTION"
-            ? repo.licenseInfo.spdxId
-            : repo.licenseInfo.name
-          : null,
+        license: licenseName(repo.licenseInfo),
         pushedAt: repo.pushedAt,
         createdAt: repo.createdAt,
         stars: repo.stargazerCount,

@@ -44,6 +44,22 @@ Catalogue public paginé (24 projets par page, défilement infini). Filtres en q
 
 Sans paramètre, les préférences du lecteur connecté s’appliquent. La première page rafraîchit les recherches GitHub expirées pour les langages sélectionnés.
 
+### Issues pour moi (`GET /issues`)
+
+Fil public d’issues ouvertes, tous dépôts confondus (24 par page, défilement infini) : l’action concrète de contribution est de choisir une issue. Chaque carte affiche le titre (lien vers l’issue GitHub), le dépôt (lien vers la page projet Gitify), son langage, l’ancienneté, le nombre de commentaires, les étoiles du dépôt, les labels et les signaux « good first issue », « help wanted », non assignée et sans PR liée.
+
+Filtres en query string :
+
+- `q` — recherche dans le titre de l’issue, le nom et le propriétaire du dépôt
+- `language` — liste séparée par des virgules
+- `label` — `good-first-issue`, `help-wanted` ou `documentation` (toutes par défaut)
+- `unassigned` — actif par défaut ; `unassigned=0` affiche aussi les issues déjà assignées
+- `sort` — `recent` (défaut, plus récentes), `comments` (moins commentées d’abord) ou `stars` (dépôts les plus étoilés)
+
+Sans paramètre, les préférences du lecteur connecté s’appliquent : ses langages, et `good-first-issue` pour le niveau débutant ou `help-wanted` pour le niveau confirmé. Les mêmes règles d’accès que le catalogue s’appliquent (token serveur pour les visiteurs, quota personnel pour les utilisateurs connectés).
+
+Les issues proviennent de la recherche GraphQL GitHub (`is:issue is:open is:public archived:false -linked:pr language:X label:"…"`), une recherche par couple langage × type. Les issues des dépôts archivés ou privés et celles déjà liées à une pull request ouverte sont écartées. Chaque recherche est mise en cache 6 heures ; un échec GitHub conserve l’instantané précédent. Les dépôts découverts ainsi sont enregistrés comme projets, pour que leur page Gitify soit accessible, sans entrer dans le catalogue `/explore`.
+
 ### Favoris
 
 - **Ajouter** (`POST /api/projects/:id/favorite`) — ajoute un projet aux favoris

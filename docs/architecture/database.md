@@ -98,6 +98,44 @@ Trace les appels GitHub Search API par couple `(language, difficulty)` pour évi
 
 ---
 
+### `project_issues`
+
+Issues ouvertes retenues par le fil `/issues`. Chaque issue référence le dépôt enregistré dans `projects` ; un dépôt découvert par une issue est créé sans appartenance de recherche, il reste hors du catalogue mais sa page projet existe.
+
+| Colonne             | Type                | Description                                     |
+| ------------------- | ------------------- | ----------------------------------------------- |
+| `id`                | `string` (ULID, PK) |                                                 |
+| `project_id`        | `string` (FK)       | Référence `projects.id`, suppression cascade    |
+| `github_issue_id`   | `bigint`            | ID GitHub de l'issue — **clé d'upsert**, unique |
+| `number`            | `integer`           | Numéro de l'issue dans son dépôt                |
+| `title`             | `text`              |                                                 |
+| `url`               | `string`            | URL GitHub de l'issue                           |
+| `labels`            | `jsonb`             | `[{ name, color }]`, 10 premiers labels         |
+| `comments_count`    | `integer`           |                                                 |
+| `assignees_count`   | `integer`           | 0 = non assignée (filtre par défaut)            |
+| `github_created_at` | `timestamp \| null` | Date d'ouverture sur GitHub, tri par défaut     |
+| `created_at`        | `timestamp`         |                                                 |
+| `updated_at`        | `timestamp`         |                                                 |
+
+### `issue_search_memberships`
+
+Associe une issue à un critère `(language, kind)` ; `kind` vaut `good-first-issue`, `help-wanted` ou `documentation`. `(language, kind, issue_id)` est unique, `issue_id` référence `project_issues.id` avec suppression en cascade. Une recherche réussie remplace ses appartenances dans une transaction, puis supprime les issues qui n'en ont plus.
+
+### `issue_search_caches`
+
+Fraîcheur des recherches d'issues, sur le modèle de `github_fetch_caches`, unique par `(language, kind)`.
+
+| Colonne        | Type                | Description                                            |
+| -------------- | ------------------- | ------------------------------------------------------ |
+| `id`           | `string` (ULID, PK) |                                                        |
+| `language`     | `string`            | Langage en minuscules                                  |
+| `kind`         | `string`            | Type d'issue recherché                                 |
+| `total_stored` | `integer`           | Issues retenues lors du dernier import                 |
+| `fetched_at`   | `timestamp \| null` | Dernière recherche réussie ; null si aucune n'a réussi |
+| `retry_after`  | `timestamp \| null` | Prochaine tentative autorisée après un échec distant   |
+| `created_at`   | `timestamp`         |                                                        |
+| `updated_at`   | `timestamp`         |                                                        |
+
 ## Gestion des migrations
 
 ### Appartenances aux recherches
