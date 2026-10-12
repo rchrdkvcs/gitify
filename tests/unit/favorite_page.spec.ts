@@ -25,6 +25,7 @@ function project(id: string): Project {
     ownerAvatarUrl: "https://github.com/owner.png",
     forksCount: 0,
     isFavorite: true,
+    newcomerScore: null,
   };
 }
 

@@ -14,11 +14,15 @@ router
     router.get("/favorites", [controllers.Pages, "favorites"]);
     router.on("/profil").renderInertia("profil", {});
     router.on("/preferences").renderInertia("preferences", {});
+    router.get("/onboarding", [controllers.Onboarding, "show"]);
+    router.put("/onboarding", [controllers.Onboarding, "complete"]);
+    router.post("/onboarding/skip", [controllers.Onboarding, "skip"]);
     router.delete("/auth/logout", [controllers.Auth, "logout"]);
     router.put("/auth/preferences", [controllers.Preferences, "update"]);
 
     // JSON endpoints for client interactions.
     router.post("/api/projects/:id/favorite", [controllers.Project, "addFavorite"]);
     router.delete("/api/projects/:id/favorite", [controllers.Project, "removeFavorite"]);
+    router.patch("/api/onboarding", [controllers.Onboarding, "progress"]);
   })
   .use(middleware.auth());

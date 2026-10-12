@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { Head } from "@inertiajs/vue3";
+import { contributionTypeCatalog, experienceLevelCatalog } from "@shared/preferences";
 
 const authStore = useAuth();
 const user = computed(() => authStore.user);
 const preferences = computed(() => user.value?.preferences ?? null);
 
-const levelLabel = computed(() => {
-  if (!preferences.value) return null;
-  return preferences.value.difficulty === "expert" ? "Confirmé" : "Débutant";
-});
+const level = computed(() =>
+  experienceLevelCatalog.find((item) => item.id === preferences.value?.level),
+);
 
-const levelHint = computed(() =>
-  preferences.value?.difficulty === "expert"
-    ? "Projets populaires qui cherchent de l’aide (help wanted)."
-    : "Projets avec des issues pensées pour débuter (good first issue).",
+const contributionLabels = computed(() =>
+  contributionTypeCatalog
+    .filter((item) => preferences.value?.contributionTypes.includes(item.id))
+    .map((item) => item.title),
 );
 </script>
 
@@ -56,8 +56,21 @@ const levelHint = computed(() =>
         <dl class="grid gap-px bg-(--ui-border) sm:grid-cols-2">
           <div class="flex flex-col gap-2 bg-default p-5 sm:p-8">
             <dt class="eyebrow">Niveau</dt>
-            <dd class="text-lg text-highlighted">{{ levelLabel }}</dd>
-            <dd class="text-sm text-muted">{{ levelHint }}</dd>
+            <dd class="text-lg text-highlighted">{{ level?.title }}</dd>
+            <dd class="text-sm text-muted">{{ level?.description }}</dd>
+          </div>
+          <div class="flex flex-col gap-3 bg-default p-5 sm:p-8">
+            <dt class="eyebrow">Contributions</dt>
+            <dd class="flex flex-wrap gap-1.5">
+              <span
+                v-for="label in contributionLabels"
+                :key="label"
+                class="border border-accented px-2 py-1 font-mono text-xs text-toned"
+              >
+                {{ label }}
+              </span>
+              <span v-if="!contributionLabels.length" class="text-sm text-muted">Toutes</span>
+            </dd>
           </div>
           <div class="flex flex-col gap-3 bg-default p-5 sm:p-8">
             <dt class="eyebrow">Langages</dt>
@@ -69,16 +82,36 @@ const levelHint = computed(() =>
               >
                 {{ formatLanguage(lang) }}
               </span>
+              <span v-if="!preferences.languages.length" class="text-sm text-muted">Tous</span>
+            </dd>
+          </div>
+          <div class="flex flex-col gap-3 bg-default p-5 sm:p-8">
+            <dt class="eyebrow">Centres d’intérêt</dt>
+            <dd class="flex flex-wrap gap-1.5">
+              <span
+                v-for="topic in preferences.topics"
+                :key="topic"
+                class="border border-default px-2 py-1 font-mono text-xs text-muted"
+              >
+                {{ topic }}
+              </span>
+              <span v-if="!preferences.topics.length" class="text-sm text-muted">Aucun</span>
             </dd>
           </div>
         </dl>
-        <div class="border-t border-default p-5 sm:px-8">
+        <div class="flex flex-wrap gap-3 border-t border-default p-5 sm:px-8">
           <UButton
             to="/preferences"
             icon="lucide:sliders-horizontal"
             label="Modifier mes préférences"
             color="neutral"
             variant="outline"
+          />
+          <UButton
+            v-if="!user?.onboardedAt"
+            to="/onboarding"
+            label="Terminer le parcours guidé"
+            trailing-icon="lucide:arrow-right"
           />
         </div>
       </div>
@@ -89,13 +122,14 @@ const levelHint = computed(() =>
           <div>
             <p class="font-medium text-highlighted">Préférences à compléter</p>
             <p class="mt-1 text-sm text-muted">
-              Indique ton niveau et tes langages pour débloquer ton fil de projets.
+              Quatre questions pour régler ton fil : ton niveau, ta façon de contribuer, tes
+              langages et tes centres d’intérêt.
             </p>
           </div>
         </div>
         <UButton
-          to="/preferences"
-          label="Compléter mes préférences"
+          to="/onboarding"
+          label="Commencer le parcours"
           trailing-icon="lucide:arrow-right"
         />
       </div>

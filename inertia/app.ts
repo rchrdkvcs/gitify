@@ -15,7 +15,7 @@ createInertiaApp({
     resolvePageComponent(
       `./pages/${name}.vue`,
       import.meta.glob<DefineComponent>("./pages/**/*.vue"),
-      name === "preferences" ? undefined : Layout,
+      name === "onboarding" ? undefined : Layout,
     ),
   setup({ el, App, props, plugin }) {
     createApp({

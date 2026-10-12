@@ -12,7 +12,14 @@ async function createUser(preferences = true) {
     email: "contributor@example.com",
     name: "Contributor",
     githubAccessToken: "private-test-token",
-    preferences: preferences ? { difficulty: "beginner", languages: ["typescript"] } : null,
+    preferences: preferences
+      ? {
+          level: "first_contribution",
+          languages: ["typescript"],
+          contributionTypes: ["code"],
+          topics: [],
+        }
+      : null,
   });
 }
 
@@ -175,11 +182,16 @@ test.group("Inertia application", (group) => {
       .withCsrfToken()
       .withInertia()
       .redirects(0)
-      .json({ difficulty: "expert", languages: ["rust"] });
+      .json({ level: "experienced", languages: ["rust"], contributionTypes: ["code"], topics: [] });
     response.assertStatus(303);
     response.assertHeader("location", "/explore");
     await user.refresh();
-    assert.deepEqual(user.preferences, { difficulty: "expert", languages: ["rust"] });
+    assert.deepEqual(user.preferences, {
+      level: "experienced",
+      languages: ["rust"],
+      contributionTypes: ["code"],
+      topics: [],
+    });
   });
 
   test("returns validation errors through the Inertia session", async ({ client }) => {

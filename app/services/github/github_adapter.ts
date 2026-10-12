@@ -63,4 +63,6 @@ export interface GitHubAdapter {
     repoName: string,
     token: string,
   ): Promise<RepositoryInsightsResult>;
+  /** Primary language of each repository owned by the token's user (forks excluded). */
+  listUserRepositoryLanguages(token: string): Promise<(string | null)[]>;
 }

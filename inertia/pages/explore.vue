@@ -14,6 +14,7 @@ const props = defineProps<{
   total: number;
   filters: ExploreFilters;
   topicOptions: string[];
+  preferredTopics?: string[];
   languageOptions: { value: string; label: string; icon: string }[];
   refreshState: FeedRefreshState;
 }>();
@@ -23,6 +24,11 @@ const topic = ref<string | null>(props.filters.topic);
 const languages = ref<string[]>([...props.filters.languages]);
 const level = ref<Difficulty | "all">(props.filters.level);
 const sort = ref<ExploreSort>(props.filters.sort);
+const minScore = ref<number>(props.filters.minScore ?? 0);
+
+const authStore = useAuth();
+// Accounts that skipped or left the onboarding are invited back, without blocking.
+const onboardingPending = computed(() => !!authStore.user && !authStore.user.onboardedAt);
 
 const levelItems: { label: string; value: Difficulty | "all" }[] = [
   { label: "Tous niveaux", value: "all" },
@@ -34,6 +40,13 @@ const sortItems: { label: string; value: ExploreSort }[] = [
   { label: "Plus d’étoiles", value: "stars" },
   { label: "Activité récente", value: "recent" },
   { label: "Plus d’issues", value: "issues" },
+  { label: "Plus accueillants", value: "welcome" },
+];
+
+const scoreItems: { label: string; value: number }[] = [
+  { label: "Tout accueil", value: 0 },
+  { label: "Accueillants (50+)", value: 50 },
+  { label: "Très accueillants (75+)", value: 75 },
 ];
 
 function applyFilters() {
@@ -46,6 +59,7 @@ function applyFilters() {
       // Always explicit, so "all levels" is not replaced by the reader's preferences.
       level: level.value,
       sort: sort.value === "stars" ? undefined : sort.value,
+      score: minScore.value || undefined,
     },
     {
       preserveState: true,
@@ -63,7 +77,7 @@ watch(searchQuery, () => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(applyFilters, 300);
 });
-watch([languages, level, sort, topic], applyFilters, { deep: true });
+watch([languages, level, sort, topic, minScore], applyFilters, { deep: true });
 
 function toggleLanguage(value: string) {
   languages.value = languages.value.includes(value)
@@ -88,7 +102,25 @@ const hasActiveFilters = computed(
     topic.value !== null ||
     languages.value.length > 0 ||
     level.value !== "all" ||
-    sort.value !== "stars",
+    sort.value !== "stars" ||
+    minScore.value > 0,
+);
+
+// Empty results: one click undoes the most restrictive filter.
+const relaxations = computed(() =>
+  [
+    minScore.value > 0 && { label: "Tout accueil", apply: () => (minScore.value = 0) },
+    languages.value.length > 0 && {
+      label: "Tous les langages",
+      apply: () => (languages.value = []),
+    },
+    level.value !== "all" && { label: "Tous niveaux", apply: () => (level.value = "all") },
+    topic.value && { label: `Sans #${topic.value}`, apply: () => (topic.value = null) },
+    searchQuery.value.trim() && {
+      label: "Effacer la recherche",
+      apply: () => (searchQuery.value = ""),
+    },
+  ].filter((item) => !!item),
 );
 
 function resetFilters() {
@@ -97,6 +129,7 @@ function resetFilters() {
   languages.value = [];
   level.value = "all";
   sort.value = "stars";
+  minScore.value = 0;
 }
 
 const tabClass = (active: boolean) =>
@@ -115,6 +148,21 @@ const chipClass = (active: boolean) =>
       content="Parcours des projets open source GitHub par langage et par niveau, avec leurs issues prêtes à être prises."
     />
   </Head>
+
+  <FrameSection v-if="onboardingPending" inner-class="px-4 py-3 sm:px-8">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2" role="status">
+      <UIcon name="lucide:route" class="size-4 shrink-0 text-primary" aria-hidden="true" />
+      <p class="flex-1 text-sm text-toned">
+        Ton profil n’est pas terminé : réponds aux questions restantes pour un fil à ta mesure.
+      </p>
+      <UButton
+        to="/onboarding"
+        :label="authStore.user?.onboardingStep ? 'Reprendre' : 'Commencer'"
+        trailing-icon="lucide:arrow-right"
+        size="sm"
+      />
+    </div>
+  </FrameSection>
 
   <FrameSection inner-class="px-4 py-12 sm:px-8 sm:py-16">
     <div class="flex max-w-3xl flex-col gap-6">
@@ -162,7 +210,15 @@ const chipClass = (active: boolean) =>
           :class="chipClass(topic === item)"
           @click="toggleTopic(item)"
         >
+          <span
+            v-if="preferredTopics?.includes(item)"
+            class="me-1 inline-block size-1 bg-primary align-middle"
+            aria-hidden="true"
+          />
           {{ item }}
+          <span v-if="preferredTopics?.includes(item)" class="sr-only"
+            >(tes centres d’intérêt)</span
+          >
         </button>
       </div>
     </div>
@@ -258,6 +314,15 @@ const chipClass = (active: boolean) =>
         {{ resultLabel }}
       </p>
       <USelect
+        v-model="minScore"
+        :items="scoreItems"
+        size="sm"
+        color="neutral"
+        variant="outline"
+        aria-label="Filtrer par score d’accueil des débutants"
+        class="w-48"
+      />
+      <USelect
         v-model="sort"
         :items="sortItems"
         size="sm"
@@ -324,13 +389,26 @@ const chipClass = (active: boolean) =>
       v-else
       icon="lucide:search-x"
       title="Aucun projet ne correspond"
-      description="Élargis ta recherche ou réinitialise les filtres."
+      :description="
+        relaxations.length
+          ? 'Élargis ta recherche, par exemple :'
+          : 'Le catalogue ne contient pas encore de projet pour ces critères.'
+      "
     >
+      <button
+        v-for="item in relaxations"
+        :key="item.label"
+        type="button"
+        class="cursor-pointer border border-default px-3 py-2 text-sm text-toned transition-colors duration-150 hover:border-accented hover:text-highlighted focus-visible:outline-2 focus-visible:outline-primary"
+        @click="item.apply"
+      >
+        {{ item.label }}
+      </button>
       <UButton
         v-if="hasActiveFilters"
-        label="Réinitialiser les filtres"
+        label="Tout réinitialiser"
         color="neutral"
-        variant="outline"
+        variant="ghost"
         @click="resetFilters"
       />
     </EmptyState>

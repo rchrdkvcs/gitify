@@ -159,8 +159,14 @@ export class ProjectFeedService {
           .orWhereRaw("topics::text ILIKE ?", [pattern]);
       });
     }
+    if (filters.minScore !== null) {
+      query.where("newcomer_score", ">=", filters.minScore);
+    }
     if (filters.sort === "recent") {
       query.orderByRaw("pushed_at DESC NULLS LAST");
+    } else if (filters.sort === "welcome") {
+      // Unscored repositories stay listed after the scored ones, by popularity.
+      query.orderByRaw("newcomer_score DESC NULLS LAST").orderBy("stars", "desc");
     } else if (filters.sort === "issues") {
       query.orderBy("open_issues_count", "desc");
     } else {
@@ -344,22 +350,25 @@ async function stableDifficulties(projects: Project[]): Promise<Map<string, Diff
 }
 
 /** Select each repository once using the criteria under which it was discovered.
- * No language means every language; retired repositories (without membership) stay hidden.
+ * No language means every language; retired repositories (without membership) stay hidden,
+ * and so do repositories archived since their import (known from their detail snapshot).
  */
 export function projectsForSearch(languages: string[], difficulty?: string) {
-  return Project.query().whereExists((membership) => {
-    membership
-      .from("project_search_memberships")
-      .select("id")
-      .whereColumn("project_search_memberships.project_id", "projects.id");
-    if (languages.length) {
-      membership.whereIn(
-        "project_search_memberships.language",
-        languages.map((language) => language.toLowerCase()),
-      );
-    }
-    if (difficulty) {
-      membership.where("project_search_memberships.difficulty", difficulty);
-    }
-  });
+  return Project.query()
+    .whereRaw("coalesce((insights->>'isArchived')::boolean, false) = false")
+    .whereExists((membership) => {
+      membership
+        .from("project_search_memberships")
+        .select("id")
+        .whereColumn("project_search_memberships.project_id", "projects.id");
+      if (languages.length) {
+        membership.whereIn(
+          "project_search_memberships.language",
+          languages.map((language) => language.toLowerCase()),
+        );
+      }
+      if (difficulty) {
+        membership.where("project_search_memberships.difficulty", difficulty);
+      }
+    });
 }

@@ -46,7 +46,12 @@ test.group("GitHub account identity", (group) => {
     assert,
   }) => {
     const original = await AuthService.findOrCreateFromGitHub(githubUser("old@example.com"));
-    original.preferences = { difficulty: "expert", languages: ["rust"] };
+    original.preferences = {
+      level: "experienced",
+      languages: ["rust"],
+      contributionTypes: ["code"],
+      topics: [],
+    };
     await original.save();
     const project = await Project.create({
       githubRepoId: 9191,
@@ -61,7 +66,7 @@ test.group("GitHub account identity", (group) => {
     const returned = await AuthService.findOrCreateFromGitHub(githubUser("new@example.com"));
     assert.equal(returned.id, original.id);
     assert.equal(returned.email, "new@example.com");
-    assert.deepEqual(returned.preferences, { difficulty: "expert", languages: ["rust"] });
+    assert.deepEqual(returned.preferences, original.preferences);
     assert.exists(await UserProjectFavorite.findBy("userId", returned.id));
     assert.lengthOf(await User.all(), 1);
   });
@@ -73,7 +78,12 @@ test.group("GitHub account identity", (group) => {
       email: "Legacy@example.com",
       isVerified: false,
       githubAccessToken: "dead-legacy-token",
-      preferences: { difficulty: "beginner", languages: ["typescript"] },
+      preferences: {
+        level: "first_contribution",
+        languages: ["typescript"],
+        contributionTypes: ["code"],
+        topics: [],
+      },
     });
     const project = await Project.create({
       githubRepoId: 9192,

@@ -4,6 +4,7 @@ import type { ProjectDetail } from "@shared/types/index";
 const props = defineProps<{
   project: ProjectDetail;
 }>();
+const emit = defineEmits<{ explainScore: [] }>();
 
 const insights = computed(() => props.project.insights);
 
@@ -90,6 +91,8 @@ function projectLink(label: string, href: string, icon: string) {
 
 <template>
   <div class="flex flex-col [&>section:last-child]:border-b-0">
+    <ProjectNewcomerScore :score="project.newcomerScoreDetails" @explain="emit('explainScore')" />
+
     <section aria-labelledby="stats-title" class="border-b border-default p-5">
       <h2 id="stats-title" class="eyebrow mb-4">Statistiques</h2>
       <dl class="flex flex-col gap-2.5 text-sm">
