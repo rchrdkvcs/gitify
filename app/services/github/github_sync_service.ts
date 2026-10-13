@@ -3,12 +3,11 @@ import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
 import type { GitHubAdapter } from "#services/github/github_adapter";
 import gitifyConfig from "#config/gitify";
-import Contributor from "#models/contributor";
 import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
 import GitHubApiClient from "#services/github/github_api_client";
-import { computeNewcomerScore, newcomerScoreInputFromInsights } from "#shared/newcomer_score";
+import { storeRepositorySnapshot } from "#services/github/repository_snapshot_store";
 
 export type SearchCriteria = {
   language: string;
@@ -26,8 +25,6 @@ export class SearchRetryDeferredError extends Error {
   }
 }
 
-// Shared by every synchronization instance, repository and issue searches alike;
-// permits are taken before reserving a DB connection.
 let activeSearches = 0;
 
 export function tryAcquireSearchPermit(): boolean {
@@ -48,12 +45,10 @@ export class GitHubSyncService {
     private readonly now: () => DateTime = () => DateTime.now(),
   ) {}
 
-  /** Refresh one criterion atomically; occupied permits serve the existing snapshot. */
   async ensureSearchFresh(criteria: SearchCriteria): Promise<SearchFreshness> {
     return this.refreshSearch(criteria, false);
   }
 
-  /** Administrative imports use the same complete search coverage and resource budget. */
   async fetchAndStore(
     language: string,
     difficulty: "beginner" | "expert",
@@ -88,7 +83,6 @@ export class GitHubSyncService {
 
   private async refreshSearch(input: SearchCriteria, force: boolean): Promise<SearchFreshness> {
     const criteria = { ...input, language: input.language.trim().toLowerCase() };
-    // Cached requests never queue behind network requests for a permit or transaction connection.
     const cache = await this.readSearchCache(criteria);
     if (!force && this.isFresh(cache)) {
       return { status: "fresh" };
@@ -115,7 +109,6 @@ export class GitHubSyncService {
         return { status: "refreshed", totalStored };
       });
     } catch (error) {
-      // The failed transaction has rolled back before failure metadata is written.
       if (!(error instanceof SearchRetryDeferredError)) {
         await this.recordSearchFailure(criteria);
       }
@@ -130,7 +123,6 @@ export class GitHubSyncService {
       const lock = await trx.rawQuery("SELECT pg_try_advisory_xact_lock(hashtext(?)) AS acquired", [
         `project-search:${criteria.language}:${criteria.difficulty}`,
       ]);
-      // Another process owns this criterion and will publish its own outcome.
       if (!lock.rows[0].acquired) {
         return;
       }
@@ -167,33 +159,31 @@ export class GitHubSyncService {
       token,
       gitifyConfig.github.search.defaultPerPage,
     );
-    const validRepos = repos.filter((repo) => repo.has_issues && repo.open_issues_count > 0);
-    // Search criteria describe membership, while the repository has one stable identity.
+    const validRepos = repos.filter((repo) => repo.hasIssues && repo.openIssuesCount > 0);
     await ProjectSearchMembership.query({ client: trx })
       .where("language", searchLanguage)
       .where("difficulty", difficulty)
       .delete();
 
-    // Lock identities in a fixed order so simultaneous language imports can share repositories.
     for (const repo of [...validRepos].sort((a, b) => a.id - b.id)) {
       await trx.rawQuery("SELECT pg_advisory_xact_lock(hashtext(?))", [
         `project-identity:${repo.id}`,
       ]);
       const metadata = {
-        ownerName: repo.owner.login,
+        ownerName: repo.ownerLogin,
         name: repo.name,
         description: repo.description,
-        repositoryUrl: repo.html_url,
-        stars: repo.stargazers_count,
-        forksCount: repo.forks_count,
+        repositoryUrl: repo.url,
+        stars: repo.stars,
+        forksCount: repo.forksCount,
         language: repo.language?.toLowerCase() ?? searchLanguage,
-        topics: repo.topics ?? [],
-        openIssuesCount: repo.open_issues_count,
-        ownerAvatarUrl: repo.owner.avatar_url ?? null,
-        homepageUrl: repo.homepage || null,
-        license: repo.license ? (repo.license.spdx_id ?? repo.license.name) : null,
-        pushedAt: repo.pushed_at ? DateTime.fromISO(repo.pushed_at) : null,
-        githubCreatedAt: repo.created_at ? DateTime.fromISO(repo.created_at) : null,
+        topics: repo.topics,
+        openIssuesCount: repo.openIssuesCount,
+        ownerAvatarUrl: repo.ownerAvatarUrl,
+        homepageUrl: repo.homepageUrl,
+        license: repo.license,
+        pushedAt: repo.pushedAt ? DateTime.fromISO(repo.pushedAt) : null,
+        githubCreatedAt: repo.createdAt ? DateTime.fromISO(repo.createdAt) : null,
       };
       const project = await Project.firstOrCreate(
         { githubRepoId: repo.id },
@@ -226,68 +216,12 @@ export class GitHubSyncService {
   }
 
   async fetchProjectDetails(project: Project, token: string): Promise<void> {
-    const [details, { insights, contributing, metadata }] = await Promise.all([
-      this.github.getProjectDetails(project.ownerName, project.name, token),
-      this.github.getRepositoryInsights(project.ownerName, project.name, token),
-    ]);
-
-    // Scored with the snapshot it describes, so both always refresh together.
-    const newcomerScore = computeNewcomerScore(
-      newcomerScoreInputFromInsights(insights, metadata.pushedAt),
-      this.now().toJSDate(),
+    const snapshot = await this.github.getRepositorySnapshot(
+      project.ownerName,
+      project.name,
+      token,
     );
-
-    await db.transaction(async (trx) => {
-      // Keep the caller's model untouched until the entire snapshot commits.
-      const stored = await Project.query({ client: trx })
-        .where("id", project.id)
-        .forUpdate()
-        .firstOrFail();
-      stored.merge({
-        readme: details.readme,
-        languages: details.languages,
-        latestRelease: details.latestRelease,
-        totalContributorsCount: details.totalContributorsCount,
-        insights,
-        newcomerScore: newcomerScore.score,
-        newcomerScoreDetails: newcomerScore,
-        contributing,
-        stars: metadata.stars,
-        forksCount: metadata.forksCount,
-        ownerAvatarUrl: metadata.ownerAvatarUrl,
-        homepageUrl: metadata.homepageUrl,
-        license: metadata.license,
-        pushedAt: metadata.pushedAt ? DateTime.fromISO(metadata.pushedAt) : stored.pushedAt,
-        githubCreatedAt: DateTime.fromISO(metadata.createdAt),
-        detailsFetchedAt: this.now(),
-      });
-      await stored.save();
-
-      const previousContributors = Contributor.query({ client: trx }).where(
-        "projectId",
-        project.id,
-      );
-      if (details.contributors.length > 0) {
-        previousContributors.whereNotIn(
-          "githubUserId",
-          details.contributors.map((c) => c.id),
-        );
-      }
-      await previousContributors.delete();
-
-      for (const c of details.contributors) {
-        await Contributor.updateOrCreate(
-          { projectId: project.id, githubUserId: c.id },
-          {
-            login: c.login,
-            avatarUrl: c.avatar_url,
-            profileUrl: c.html_url,
-            contributions: c.contributions,
-          },
-          { client: trx },
-        );
-      }
-    });
+    await storeRepositorySnapshot(project.id, snapshot, this.now());
     await project.refresh();
   }
 }

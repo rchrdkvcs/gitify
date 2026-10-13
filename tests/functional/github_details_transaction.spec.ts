@@ -3,18 +3,11 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import Project from "#models/project";
 import { GitHubSyncService } from "#services/github/github_sync_service";
-import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
-
-function contributor(id: number, contributions = 10) {
-  return {
-    id,
-    login: `contributor-${id}`,
-    avatar_url: `https://github.com/avatar/${id}`,
-    html_url: `https://github.com/contributor-${id}`,
-    contributions,
-    type: "User",
-  };
-}
+import {
+  FakeGitHubAdapter,
+  githubContributor as contributor,
+  repositorySnapshot,
+} from "#tests/helpers/fake_github_adapter";
 
 async function createProject(githubRepoId: number) {
   return Project.create({
@@ -37,23 +30,23 @@ test.group("GitHub detail snapshot transactions", (group) => {
     const github = new FakeGitHubAdapter();
     let now = DateTime.utc(2026, 1, 1);
     const sync = new GitHubSyncService(github, () => now);
-    github.details = {
+    github.snapshot = repositorySnapshot({
       readme: "# First",
       languages: { TypeScript: 100 },
       latestRelease: "v1",
       totalContributorsCount: 20,
       contributors: [contributor(96011), contributor(96012)],
-    };
+    });
     await sync.fetchProjectDetails(project, "token");
     await project.load("contributors");
     now = now.plus({ days: 10 });
-    github.details = {
+    github.snapshot = repositorySnapshot({
       readme: "# Second",
       languages: { JavaScript: 200 },
       latestRelease: "v2",
       totalContributorsCount: 30,
       contributors: [contributor(96012, 50), contributor(96013)],
-    };
+    });
     await sync.fetchProjectDetails(project, "token");
     assert.equal(project.readme, "# Second");
     assert.equal(project.detailsFetchedAt!.toMillis(), now.toMillis());
@@ -86,25 +79,24 @@ test.group("GitHub detail snapshot transactions", (group) => {
     const github = new FakeGitHubAdapter();
     let now = DateTime.utc(2026, 1, 1);
     const sync = new GitHubSyncService(github, () => now);
-    github.details = {
+    github.snapshot = repositorySnapshot({
       readme: "# Cached",
       languages: { TypeScript: 100 },
       latestRelease: "v1",
       totalContributorsCount: 20,
       contributors: [contributor(96021), contributor(96022)],
-    };
+    });
     await sync.fetchProjectDetails(project, "token");
     await project.load("contributors");
     const previousFetchedAt = now;
     now = now.plus({ days: 10 });
-    github.details = {
+    github.snapshot = repositorySnapshot({
       readme: "# Replacement",
       languages: { JavaScript: 200 },
       latestRelease: "v2",
       totalContributorsCount: 30,
-      // PostgreSQL rejects this value for the integer contributions column.
       contributors: [contributor(96022, 50), contributor(96023, 2147483648)],
-    };
+    });
     await assert.rejects(() => sync.fetchProjectDetails(project, "token"), /out of range/);
     assert.equal(project.readme, "# Cached");
     assert.equal(project.detailsFetchedAt!.toMillis(), previousFetchedAt.toMillis());
@@ -128,7 +120,7 @@ test.group("GitHub detail snapshot transactions", (group) => {
       10,
     );
     assert.isTrue(sync.needsDetailsFetch(stored));
-    github.details.contributors[1].contributions = 25;
+    github.snapshot.contributors[1].contributions = 25;
     await sync.fetchProjectDetails(project, "token");
     await project.load("contributors");
     assert.equal(project.readme, "# Replacement");
@@ -143,11 +135,11 @@ test.group("GitHub detail snapshot transactions", (group) => {
     const project = await createProject(96003);
     const github = new FakeGitHubAdapter();
     const sync = new GitHubSyncService(github);
-    github.details.contributors = [contributor(96031)];
-    github.details.totalContributorsCount = 1;
+    github.snapshot.contributors = [contributor(96031)];
+    github.snapshot.totalContributorsCount = 1;
     await sync.fetchProjectDetails(project, "token");
-    github.details.contributors = [];
-    github.details.totalContributorsCount = 0;
+    github.snapshot.contributors = [];
+    github.snapshot.totalContributorsCount = 0;
     await sync.fetchProjectDetails(project, "token");
     await project.load("contributors");
     assert.isEmpty(project.contributors);

@@ -3,9 +3,10 @@ import db from "@adonisjs/lucid/services/db";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import User from "#models/user";
+import { GitHubUnavailableError } from "#services/github/github_errors";
 import { GitHubSyncService } from "#services/github/github_sync_service";
 import { ProjectFeedService } from "#services/project_feed_service";
-import { FakeGitHubAdapter, githubRepo } from "#tests/helpers/fake_github_adapter";
+import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 
 const now = DateTime.fromISO("2026-10-12T12:00:00Z");
@@ -17,14 +18,14 @@ test.group("Degraded project feed", (group) => {
   test("returns cached projects when their remote refresh fails", async ({ assert }) => {
     const user = await User.create({ email: "feed@example.com", name: "Feed reader" });
     const github = new FakeGitHubAdapter();
-    github.repos = [githubRepo()];
+    github.repos = [githubRepository()];
     let clock = now;
     const sync = new GitHubSyncService(github, () => clock);
     const feed = new ProjectFeedService(sync);
     const preferences = { difficulty: "beginner" as const, languages: ["typescript"] };
     await sync.ensureSearchFresh({ ...preferences, language: "typescript", token });
     clock = now.plus({ days: 2 });
-    github.searchError = new Error(`Remote outage: ${token}`);
+    github.searchError = new GitHubUnavailableError(null, `Remote outage: ${token}`);
 
     const result = await feedFor(feed, user.id, preferences, token);
 
@@ -43,13 +44,13 @@ test.group("Degraded project feed", (group) => {
   }) => {
     const user = await User.create({ email: "mixed-feed@example.com", name: "Feed reader" });
     const github = new FakeGitHubAdapter();
-    github.repos = [githubRepo()];
+    github.repos = [githubRepository()];
     let clock = now;
     const sync = new GitHubSyncService(github, () => clock);
     await sync.ensureSearchFresh({ language: "typescript", difficulty: "beginner", token });
     clock = now.plus({ days: 2 });
-    github.repos = [githubRepo({ id: 102, name: "rust-project", language: "Rust" })];
-    const failTypescript = new Error("TypeScript unavailable");
+    github.repos = [githubRepository({ id: 102, name: "rust-project", language: "Rust" })];
+    const failTypescript = new GitHubUnavailableError(null, "TypeScript unavailable");
     class MixedGitHub extends FakeGitHubAdapter {
       override async searchRepositories(
         ...args: Parameters<FakeGitHubAdapter["searchRepositories"]>
@@ -87,7 +88,7 @@ test.group("Degraded project feed", (group) => {
   }) => {
     const user = await User.create({ email: "empty-feed@example.com", name: "Feed reader" });
     const github = new FakeGitHubAdapter();
-    github.searchError = new Error("GitHub unavailable");
+    github.searchError = new GitHubUnavailableError(null, "GitHub unavailable");
     let clock = now;
     const feed = new ProjectFeedService(new GitHubSyncService(github, () => clock));
     const preferences = { difficulty: "beginner" as const, languages: ["typescript"] };
@@ -106,7 +107,6 @@ test.group("Degraded project feed", (group) => {
   });
 });
 
-// Use a separate connection because advisory locks are reentrant within one transaction.
 test("feed reports an ongoing refresh without calling GitHub again", async ({ assert }) => {
   const lock = await db.transaction();
   try {

@@ -1,33 +1,40 @@
 import type {
   GitHubAdapter,
+  GitHubContributor,
   GitHubIssue,
-  GitHubIssueRepository,
-  GitHubRepo,
-  ProjectDetails,
-  RepositoryInsightsResult,
+  GitHubRepository,
+  RepositorySnapshot,
 } from "#services/github/github_adapter";
-import type { Difficulty, IssueKind } from "#shared/types/index";
+import type { GitHubError } from "#services/github/github_errors";
+import type { Difficulty, IssueKind, RepositoryInsights } from "#shared/types/index";
 
-export function githubRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
+export function githubRepository(overrides: Partial<GitHubRepository> = {}): GitHubRepository {
   return {
     id: 101,
-    owner: { login: "owner" },
     name: "repo-101",
-    html_url: "https://github.com/owner/repo-101",
+    ownerLogin: "owner",
+    ownerAvatarUrl: null,
+    url: "https://github.com/owner/repo-101",
     description: null,
-    stargazers_count: 5,
-    forks_count: 1,
+    stars: 5,
+    forksCount: 1,
+    openIssuesCount: 1,
     language: "TypeScript",
     topics: [],
-    has_issues: true,
-    open_issues_count: 1,
+    homepageUrl: null,
+    license: null,
+    pushedAt: null,
+    createdAt: null,
+    isArchived: false,
+    isPrivate: false,
+    hasIssues: true,
     ...overrides,
   };
 }
 
 export function githubIssue(
   overrides: Partial<Omit<GitHubIssue, "repository">> & {
-    repository?: Partial<GitHubIssueRepository>;
+    repository?: Partial<GitHubRepository>;
   } = {},
 ): GitHubIssue {
   const { repository, ...issue } = overrides;
@@ -43,50 +50,69 @@ export function githubIssue(
     linkedPullRequests: 0,
     labels: [{ name: "good first issue", color: "7057ff" }],
     ...issue,
-    repository: {
+    repository: githubRepository({
       id: 201,
       name: "repo-201",
-      ownerLogin: "owner",
       ownerAvatarUrl: "https://avatars.githubusercontent.com/u/1",
       url: "https://github.com/owner/repo-201",
-      description: null,
       stars: 10,
-      forksCount: 1,
       openIssuesCount: 3,
-      language: "TypeScript",
-      topics: [],
-      homepageUrl: null,
-      license: null,
       pushedAt: "2026-10-01T00:00:00Z",
       createdAt: "2020-01-01T00:00:00Z",
-      isArchived: false,
-      isPrivate: false,
       ...repository,
-    },
+    }),
   };
 }
 
-export class FakeGitHubAdapter implements GitHubAdapter {
-  searchCalls: { language: string; difficulty: Difficulty; token: string; perPage?: number }[] = [];
-  issueSearchCalls: { language: string; kind: IssueKind; token: string; perPage?: number }[] = [];
-  issues: GitHubIssue[] = [];
-  issueSearchError?: Error;
-  detailsCalls: { ownerName: string; repoName: string; token: string }[] = [];
-  insightsCalls: { ownerName: string; repoName: string; token: string }[] = [];
-  userRepositoryCalls: string[] = [];
-  repos: GitHubRepo[] = [];
-  /** Primary languages of the signed-in user's repositories, most recently pushed first. */
-  userRepositoryLanguages: (string | null)[] = [];
-  details: ProjectDetails = {
-    readme: null,
-    languages: null,
-    contributors: [],
-    latestRelease: null,
-    totalContributorsCount: 0,
+export function githubContributor(id: number, contributions = 10): GitHubContributor {
+  return {
+    id,
+    login: `contributor-${id}`,
+    avatarUrl: `https://github.com/avatar/${id}`,
+    profileUrl: `https://github.com/contributor-${id}`,
+    contributions,
   };
-  insights: RepositoryInsightsResult = {
+}
+
+export function repositoryInsights(
+  overrides: Partial<RepositoryInsights> = {},
+): RepositoryInsights {
+  return {
+    watchers: 1,
+    openIssues: 1,
+    closedIssues: 0,
+    openPullRequests: 0,
+    mergedPullRequests: 0,
+    goodFirstIssues: 0,
+    helpWantedIssues: 0,
+    commits: 10,
+    releases: 0,
+    latestReleaseAt: null,
+    diskUsageKb: 100,
+    defaultBranch: "main",
+    isArchived: false,
+    lastCommitAt: "2026-10-01T00:00:00Z",
+    languages: [],
+    weeklyCommits: null,
+    health: null,
+    issues: [],
+    beginnerIssues: [],
+    pullRequests: [],
+    ...overrides,
+  };
+}
+
+export function repositorySnapshot(
+  overrides: Partial<RepositorySnapshot> = {},
+): RepositorySnapshot {
+  return {
+    readme: null,
+    languages: {},
+    contributors: [],
+    totalContributorsCount: 0,
+    latestRelease: null,
     contributing: null,
-    metadata: {
+    repository: {
       ownerAvatarUrl: "https://avatars.githubusercontent.com/u/1",
       homepageUrl: null,
       license: "MIT",
@@ -95,32 +121,24 @@ export class FakeGitHubAdapter implements GitHubAdapter {
       stars: 5,
       forksCount: 1,
     },
-    insights: {
-      watchers: 1,
-      openIssues: 1,
-      closedIssues: 0,
-      openPullRequests: 0,
-      mergedPullRequests: 0,
-      goodFirstIssues: 0,
-      helpWantedIssues: 0,
-      commits: 10,
-      releases: 0,
-      latestReleaseAt: null,
-      diskUsageKb: 100,
-      defaultBranch: "main",
-      isArchived: false,
-      lastCommitAt: "2026-10-01T00:00:00Z",
-      languages: [],
-      weeklyCommits: null,
-      health: null,
-      issues: [],
-      beginnerIssues: [],
-      pullRequests: [],
-    },
+    insights: repositoryInsights(),
+    ...overrides,
   };
-  searchError?: Error;
-  detailsError?: Error;
-  userRepositoriesError?: Error;
+}
+
+export class FakeGitHubAdapter implements GitHubAdapter {
+  searchCalls: { language: string; difficulty: Difficulty; token: string; perPage?: number }[] = [];
+  issueSearchCalls: { language: string; kind: IssueKind; token: string; perPage?: number }[] = [];
+  snapshotCalls: { ownerName: string; repoName: string; token: string }[] = [];
+  userRepositoryCalls: string[] = [];
+  repos: GitHubRepository[] = [];
+  issues: GitHubIssue[] = [];
+  snapshot: RepositorySnapshot = repositorySnapshot();
+  userRepositoryLanguages: (string | null)[] = [];
+  searchError?: GitHubError;
+  issueSearchError?: GitHubError;
+  snapshotError?: GitHubError;
+  userRepositoriesError?: GitHubError;
 
   async searchRepositories(
     language: string,
@@ -132,7 +150,7 @@ export class FakeGitHubAdapter implements GitHubAdapter {
     if (this.searchError) {
       throw this.searchError;
     }
-    return this.repos;
+    return structuredClone(this.repos);
   }
 
   async searchIssues(language: string, kind: IssueKind, token: string, perPage?: number) {
@@ -140,23 +158,15 @@ export class FakeGitHubAdapter implements GitHubAdapter {
     if (this.issueSearchError) {
       throw this.issueSearchError;
     }
-    return this.issues;
+    return structuredClone(this.issues);
   }
 
-  async getProjectDetails(ownerName: string, repoName: string, token: string) {
-    this.detailsCalls.push({ ownerName, repoName, token });
-    if (this.detailsError) {
-      throw this.detailsError;
+  async getRepositorySnapshot(ownerName: string, repoName: string, token: string) {
+    this.snapshotCalls.push({ ownerName, repoName, token });
+    if (this.snapshotError) {
+      throw this.snapshotError;
     }
-    return this.details;
-  }
-
-  async getRepositoryInsights(ownerName: string, repoName: string, token: string) {
-    this.insightsCalls.push({ ownerName, repoName, token });
-    if (this.detailsError) {
-      throw this.detailsError;
-    }
-    return this.insights;
+    return structuredClone(this.snapshot);
   }
 
   async listUserRepositoryLanguages(token: string) {
@@ -164,66 +174,6 @@ export class FakeGitHubAdapter implements GitHubAdapter {
     if (this.userRepositoriesError) {
       throw this.userRepositoriesError;
     }
-    return this.userRepositoryLanguages;
+    return [...this.userRepositoryLanguages];
   }
-}
-
-/** Recent outside contribution as returned by the GraphQL activity sample. */
-export function graphqlActivityItem(
-  overrides: {
-    createdAt?: string;
-    state?: "OPEN" | "CLOSED" | "MERGED";
-    authorAssociation?: string;
-    bot?: boolean;
-    mergedAt?: string | null;
-    replies?: { createdAt: string; authorAssociation: string }[];
-  } = {},
-) {
-  return {
-    createdAt: overrides.createdAt ?? "2026-09-01T00:00:00Z",
-    state: overrides.state ?? "OPEN",
-    authorAssociation: overrides.authorAssociation ?? "NONE",
-    author: { __typename: overrides.bot ? "Bot" : "User" },
-    comments: { nodes: overrides.replies ?? [] },
-    mergedAt: overrides.mergedAt ?? null,
-    reviews: { nodes: [] },
-  };
-}
-
-const emptyConnection = { totalCount: 0 };
-
-/** Minimal GraphQL `repository` payload accepted by the HTTP adapter. */
-export function graphqlRepository() {
-  return {
-    data: {
-      repository: {
-        createdAt: "2020-01-01T00:00:00Z",
-        pushedAt: null,
-        homepageUrl: null,
-        isArchived: false,
-        diskUsage: 1,
-        stargazerCount: 0,
-        forkCount: 0,
-        owner: { avatarUrl: "https://avatars.githubusercontent.com/u/1" },
-        licenseInfo: null,
-        watchers: emptyConnection,
-        openIssues: emptyConnection,
-        closedIssues: emptyConnection,
-        openPullRequests: emptyConnection,
-        mergedPullRequests: emptyConnection,
-        goodFirstIssues: emptyConnection,
-        helpWantedIssues: emptyConnection,
-        releases: emptyConnection,
-        latestRelease: null,
-        languages: { edges: [] },
-        defaultBranchRef: null,
-        recentIssues: { nodes: [] },
-        beginnerIssues: { nodes: [] },
-        recentPullRequests: { nodes: [] },
-        activityIssues: { nodes: [] as ReturnType<typeof graphqlActivityItem>[] },
-        activityPullRequests: { nodes: [] as ReturnType<typeof graphqlActivityItem>[] },
-        lastMergedPullRequest: { nodes: [] as { mergedAt: string | null }[] },
-      },
-    },
-  };
 }
