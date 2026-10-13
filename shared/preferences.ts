@@ -1,5 +1,5 @@
 import type { Difficulty } from "./types/common.js";
-import type { ContributionType, ExperienceLevel, UserPreferences } from "./types/user.js";
+import type { ExperienceLevel, UserPreferences } from "./types/user.js";
 
 export const languageCatalog = [
   { id: "javascript", name: "JavaScript", label: "JS", icon: "devicon-plain:javascript" },
@@ -67,7 +67,7 @@ export const experienceLevelCatalog = [
     difficulty: "expert",
   },
 ] as const satisfies readonly {
-  id: ExperienceLevel;
+  id: string;
   title: string;
   description: string;
   icon: string;
@@ -114,7 +114,7 @@ export const contributionTypeCatalog = [
     icon: "lucide:list-checks",
   },
 ] as const satisfies readonly {
-  id: ContributionType;
+  id: string;
   title: string;
   description: string;
   icon: string;

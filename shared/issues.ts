@@ -30,7 +30,7 @@ export const issueKindCatalog = [
     difficulty: null,
   },
 ] as const satisfies readonly {
-  id: IssueKind;
+  id: string;
   label: string;
   name: string;
   contributionType: ContributionType;
