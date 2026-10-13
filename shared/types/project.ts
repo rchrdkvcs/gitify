@@ -1,4 +1,5 @@
 import type { Difficulty } from "./common.js";
+import type { PreferenceLanguage } from "./user.js";
 
 export type FeedRefreshState = "ready" | "refreshing" | "degraded" | "unavailable";
 
@@ -45,7 +46,6 @@ export type Project = {
   isFavorite: boolean;
   latestRelease: string | null;
   pushedAt: string | null;
-  /** Newcomer-friendliness; null until the repository details have been fetched once. */
   newcomerScore: NewcomerScoreSummary | null;
 };
 
@@ -75,7 +75,6 @@ export type RepositoryPullRequest = RepositoryIssue & { isDraft: boolean };
 
 export type RepositoryLanguage = { name: string; color: string | null; bytes: number };
 
-/** Community files GitHub checks for its community profile. */
 export type CommunityFiles = {
   readme: boolean;
   contributing: boolean;
@@ -85,26 +84,16 @@ export type CommunityFiles = {
   pullRequestTemplate: boolean;
 };
 
-/**
- * How maintainers treat outside contributors, summarised from the most recent issues and
- * pull requests. Counts exclude maintainers (owner, members, collaborators) and bots.
- */
 export type ContributorActivity = {
-  /** External issues and PRs old enough to expect an answer. */
   sampledItems: number;
-  /** Among them, those that received a maintainer comment, review or merge. */
   respondedItems: number;
-  /** Median hours until that first answer; unanswered items count with their age. */
   medianFirstResponseHours: number | null;
   externalPullRequestsMerged: number;
-  /** Closed without being merged. */
   externalPullRequestsClosed: number;
   lastMergedPullRequestAt: string | null;
-  /** Open "good first issue" issues nobody is assigned to, among the latest 20. */
   unassignedGoodFirstIssues: number;
 };
 
-/** Repository snapshot refreshed together with the README and contributors. */
 export type RepositoryInsights = {
   watchers: number;
   openIssues: number;
@@ -121,13 +110,11 @@ export type RepositoryInsights = {
   isArchived: boolean;
   lastCommitAt: string | null;
   languages: RepositoryLanguage[];
-  /** Commits per week over the last year, oldest first; null while GitHub computes it. */
   weeklyCommits: number[] | null;
   health: { percentage: number; files: CommunityFiles } | null;
   issues: RepositoryIssue[];
   beginnerIssues: RepositoryIssue[];
   pullRequests: RepositoryPullRequest[];
-  /** Absent from snapshots taken before contributor activity was collected. */
   contributorActivity?: ContributorActivity | null;
 };
 
@@ -140,24 +127,16 @@ export type NewcomerSignalKey =
 
 export type NewcomerSignal = {
   key: NewcomerSignalKey;
-  /** Maximum points this signal brings to a complete score. */
   weight: number;
-  /** Measured value in the signal's unit (hours, ratio, count, days); null when unknown. */
   value: number | null;
-  /** Normalised quality between 0 and 1; null when unknown. */
   ratio: number | null;
-  /** Points earned out of `weight`; null when unknown. */
   points: number | null;
 };
 
-/** Persisted score with its breakdown. */
 export type NewcomerScore = {
   version: 1;
-  /** 0 to 100, computed over the known signals only; null when too few are known. */
   score: number | null;
-  /** True when some signals are unknown: the score is an estimate over the others. */
   partial: boolean;
-  /** Share of the total weight backed by data, between 0 and 1. */
   coverage: number;
   archived: boolean;
   signals: NewcomerSignal[];
@@ -183,11 +162,9 @@ export type ExploreSort = "stars" | "recent" | "issues" | "welcome";
 
 export type ExploreFilters = {
   q: string;
-  /** Exact GitHub topic, e.g. `react`. */
   topic: string | null;
-  languages: string[];
+  languages: PreferenceLanguage[];
   level: Difficulty | "all";
   sort: ExploreSort;
-  /** Minimum newcomer score; null shows every repository, scored or not. */
   minScore: number | null;
 };

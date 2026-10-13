@@ -12,6 +12,10 @@ Les formulaires de préférences et de déconnexion utilisent le routeur Inertia
 
 Le catalogue filtre et trie côté serveur ; `explore.vue` pousse les filtres dans l'URL et charge les pages suivantes avec `<InfiniteScroll>` d'Inertia (prop `inertia.scroll`). `issues.vue` suit le même modèle pour le fil d'issues (`IssueCard`, prop `issues`) ; la barre de langages est partagée avec le catalogue via `LanguageFilterTabs`. La pagination des favoris effectue une visite Inertia. `useFavorite` utilise les endpoints JSON `/api/projects/:id/favorite` ; `lib/http.ts` envoie le cookie CSRF et les cookies de session sur la même origine.
 
+## Types partagés
+
+`shared/types` est le seul contrat de données entre serveur et client : les transformers déclarent le type de retour de `toObject()` (`AuthUser`, `Project`, `FeedIssue`…) et les pages, composants et composables importent ces mêmes types. Les types `Data.*` générés dans `.adonisjs/client/data.d.ts` ne sont pas utilisés côté client. Les unions métier (`ExperienceLevel`, `ContributionType`, `IssueKind`, `PreferenceLanguage`) sont dérivées des catalogues de `shared/preferences.ts` et `shared/issues.ts` : ajouter une valeur au catalogue suffit.
+
 ## Onboarding
 
 `pages/onboarding.vue` pose une question par écran : grandes cartes sélectionnables (groupes de boutons radio ou de cases natives), stepper numéroté (`OnboardingStepper`, étapes terminées, courante et à venir, les étapes atteintes restent cliquables), pied de page Retour / Continuer collant sur mobile. Chaque réponse confirmée part en arrière-plan (`PATCH /api/onboarding`) sans bloquer la transition. Au changement d'étape, le focus passe au titre de la question pour les lecteurs d'écran ; les erreurs sont annoncées dans une région `aria-live`.
