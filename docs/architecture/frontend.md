@@ -20,7 +20,7 @@ Chaque étape a son illustration SVG en ligne (`components/onboarding/Onboarding
 
 ## Score d'accueil
 
-`NewcomerScoreMeter` dessine le score en dix segments. Les cartes du catalogue affichent une ligne « Accueil » (« ≈ » pour une estimation partielle, « Non évalué » sinon). La fiche projet montre le résumé dans la colonne latérale (`ProjectNewcomerScore`) et le détail des signaux dans l'onglet « Contribuer » (`ProjectNewcomerBreakdown`). Les libellés des signaux viennent de `shared/newcomer_score.ts`.
+`NewcomerScoreMeter` dessine le score en dix segments. Les cartes du catalogue affichent une ligne « Accueil » (« ≈ » pour une estimation partielle, « Non évalué » sinon). La fiche projet montre le résumé dans la colonne latérale (`ProjectNewcomerScore`) et le détail des signaux dans l'onglet « Contribuer » (`ProjectNewcomerBreakdown`). Les règles d'affichage (libellé, info-bulle, palier, segments remplis, archivé vidant la jauge) viennent toutes de `describeNewcomerScore` dans `shared/newcomer_score_display.ts`, qui porte aussi les paliers (`newcomerScoreTiers`, réutilisés par le filtre de score d'Explorer) et les libellés des signaux.
 
 ## Composants et styles
 

@@ -8,6 +8,7 @@ import type {
   Project,
 } from "@shared/types/index";
 import { Head } from "@inertiajs/vue3";
+import { newcomerScoreTiers } from "@shared/newcomer_score_display";
 import type { FeedStatusCopy } from "~/components/feed/FeedStatus.vue";
 import { exploreFilterSchema } from "~/lib/feed-filter-schemas";
 
@@ -23,8 +24,10 @@ const props = defineProps<{
 
 const minScoreItems: { label: string; value: number }[] = [
   { label: "Tout accueil", value: 0 },
-  { label: "Accueillants (50+)", value: 50 },
-  { label: "Très accueillants (75+)", value: 75 },
+  ...newcomerScoreTiers
+    .filter((tier) => tier.filterLabel !== null)
+    .map((tier) => ({ label: `${tier.filterLabel} (${tier.min}+)`, value: tier.min }))
+    .reverse(),
 ];
 
 const levelItems: { label: string; value: Difficulty | "all" }[] = [

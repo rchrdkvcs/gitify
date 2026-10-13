@@ -4,43 +4,8 @@ import type {
   NewcomerSignalKey,
   RepositoryInsights,
 } from "./types/project.js";
+import { newcomerScoreRules, newcomerScoreWeights } from "./newcomer_score_rules.js";
 
-/**
- * Newcomer-friendliness score ("score d'accueil des débutants").
- *
- * Each signal is normalised to a ratio between 0 and 1, then weighted. Weights sum to 100.
- * Unknown signals are left out and the score is rescaled over the known weight, so a missing
- * statistic lowers the confidence (`partial`, `coverage`) instead of the score itself. Below
- * `minimumCoverage` the score is withheld. Archived repositories always score 0.
- */
-export const newcomerScoreWeights: Record<NewcomerSignalKey, number> = {
-  firstResponse: 25,
-  externalMergeRate: 20,
-  goodFirstIssues: 20,
-  communityProfile: 15,
-  maintainerActivity: 20,
-};
-
-export const newcomerScoreRules = {
-  minimumCoverage: 0.5,
-  /** A first answer within a day is ideal; a month or more earns nothing (log scale between). */
-  firstResponseHours: { ideal: 24, worst: 24 * 30 },
-  /** Merge rate earning every point; fewer decided PRs than `minimumDecided` is unknown. */
-  externalMergeRate: { full: 0.8, minimumDecided: 3 },
-  /** Unassigned good first issues earning every point. */
-  goodFirstIssues: { full: 5 },
-  /** Share of the community profile signal brought by each file. */
-  communityFiles: {
-    contributing: 0.4,
-    issueTemplate: 0.25,
-    codeOfConduct: 0.2,
-    pullRequestTemplate: 0.15,
-  },
-  /** Days since the latest commit or merged PR: full points up to `ideal`, none from `worst`. */
-  maintainerActivityDays: { ideal: 14, worst: 365 },
-} as const;
-
-/** Raw facts the score is computed from, independent of where they were collected. */
 export type NewcomerScoreInput = {
   isArchived: boolean;
   medianFirstResponseHours: number | null;
@@ -120,7 +85,6 @@ function measure(input: NewcomerScoreInput, now: Date) {
   return measures;
 }
 
-/** Pure computation: same input and clock, same score. */
 export function computeNewcomerScore(input: NewcomerScoreInput, now: Date): NewcomerScore {
   const measures = measure(input, now);
   const signals: NewcomerSignal[] = (Object.keys(newcomerScoreWeights) as NewcomerSignalKey[]).map(
@@ -161,7 +125,6 @@ export function computeNewcomerScore(input: NewcomerScoreInput, now: Date): Newc
   };
 }
 
-/** Maps a stored GitHub snapshot onto score inputs; older snapshots simply lack some signals. */
 export function newcomerScoreInputFromInsights(
   insights: RepositoryInsights,
   fallbackPushedAt: string | null = null,
@@ -190,61 +153,6 @@ export function newcomerScoreInputFromInsights(
     lastMergedPullRequestAt: activity?.lastMergedPullRequestAt ?? null,
   };
 }
-
-export type NewcomerScoreTier = "excellent" | "good" | "fair" | "low";
-
-export const newcomerScoreTiers: { tier: NewcomerScoreTier; min: number; label: string }[] = [
-  { tier: "excellent", min: 75, label: "Très accueillant" },
-  { tier: "good", min: 50, label: "Accueillant" },
-  { tier: "fair", min: 25, label: "Peu outillé" },
-  { tier: "low", min: 0, label: "Difficile d’accès" },
-];
-
-export function newcomerScoreTier(score: number) {
-  return newcomerScoreTiers.find((tier) => score >= tier.min) ?? newcomerScoreTiers.at(-1)!;
-}
-
-/** Public wording of each signal, shared by the project page and the catalogue. */
-export const newcomerSignalCatalog: Record<
-  NewcomerSignalKey,
-  { label: string; description: string; format: (value: number) => string }
-> = {
-  firstResponse: {
-    label: "Première réponse",
-    description:
-      "Délai médian avant qu’un mainteneur réponde à une issue ou une PR ouverte par une personne extérieure.",
-    format: (hours) =>
-      hours < 1
-        ? "moins d’une heure"
-        : hours < 48
-          ? `${Math.round(hours)} h`
-          : `${Math.round(hours / 24)} jours`,
-  },
-  externalMergeRate: {
-    label: "PR externes fusionnées",
-    description:
-      "Part des pull requests de contributeurs extérieurs fusionnées, parmi les plus récentes déjà tranchées.",
-    format: (rate) => `${Math.round(rate * 100)} %`,
-  },
-  goodFirstIssues: {
-    label: "Issues pour débuter",
-    description:
-      "Issues « good first issue » ouvertes et encore libres (personne n’y est assigné).",
-    format: (count) => (count === 1 ? "1 libre" : `${count} libres`),
-  },
-  communityProfile: {
-    label: "Guide du contributeur",
-    description:
-      "Présence d’un CONTRIBUTING, de modèles d’issue et de PR et d’un code de conduite.",
-    format: (count) => `${count} fichier${count > 1 ? "s" : ""} sur 4`,
-  },
-  maintainerActivity: {
-    label: "Activité des mainteneurs",
-    description: "Temps écoulé depuis le dernier commit ou la dernière PR fusionnée.",
-    format: (days) =>
-      days < 1 ? "aujourd’hui" : days === 1 ? "il y a 1 jour" : `il y a ${days} jours`,
-  },
-};
 
 function round(value: number, digits: number) {
   const factor = 10 ** digits;
