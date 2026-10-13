@@ -67,6 +67,7 @@ test.group("Newcomer score", (group) => {
       lastCommitAt: "2026-10-11T00:00:00Z",
     });
     assert.equal(project.newcomerScore, 100);
+    assert.notProperty(project.newcomerScoreDetails, "score");
 
     const page = await client.get("/projects/gitify/welcoming").withInertia();
     page.assertStatus(200);
@@ -140,6 +141,7 @@ test.group("Newcomer score", (group) => {
     });
     await enrich(archived, { isArchived: true });
     assert.equal(archived.newcomerScore, 0);
+    assert.isTrue(archived.isArchived);
 
     const ids = (response: { inertiaProps: Record<string, any> }) =>
       response.inertiaProps.projects.data.map((project: { id: string }) => project.id);

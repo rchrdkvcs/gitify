@@ -7,7 +7,7 @@ type ProjectQuery = ModelQueryBuilderContract<typeof Project>;
 export type ListingCriteria = { languages: string[]; level: Difficulty | "all" };
 
 function excludeArchived(query: ProjectQuery): ProjectQuery {
-  return query.whereRaw("coalesce((insights->>'isArchived')::boolean, false) = false");
+  return query.where("isArchived", false);
 }
 
 function requireSearchMembership(query: ProjectQuery, criteria: ListingCriteria): ProjectQuery {

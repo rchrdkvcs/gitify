@@ -143,6 +143,8 @@ export type NewcomerScore = {
   computedAt: string;
 };
 
+export type NewcomerScoreBreakdown = Omit<NewcomerScore, "score">;
+
 export type NewcomerScoreSummary = Pick<NewcomerScore, "score" | "partial" | "archived">;
 
 export type ProjectDetail = Project & {

@@ -14,6 +14,7 @@ export default class ProjectTransformer extends BaseTransformer<Project> {
 
   toObject(): ProjectList {
     const project = this.resource;
+    const newcomerScore = project.newcomerScoreReport;
     return {
       id: project.id,
       name: project.name,
@@ -30,11 +31,11 @@ export default class ProjectTransformer extends BaseTransformer<Project> {
       isFavorite: this.reader.isFavorite,
       latestRelease: project.latestRelease,
       pushedAt: project.pushedAt?.toISO() ?? null,
-      newcomerScore: project.newcomerScoreDetails
+      newcomerScore: newcomerScore
         ? {
-            score: project.newcomerScoreDetails.score,
-            partial: project.newcomerScoreDetails.partial,
-            archived: project.newcomerScoreDetails.archived,
+            score: newcomerScore.score,
+            partial: newcomerScore.partial,
+            archived: newcomerScore.archived,
           }
         : null,
     };

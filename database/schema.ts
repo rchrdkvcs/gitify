@@ -181,6 +181,7 @@ export class ProjectSchema extends BaseModel {
     "homepageUrl",
     "id",
     "insights",
+    "isArchived",
     "language",
     "languages",
     "latestRelease",
@@ -222,6 +223,8 @@ export class ProjectSchema extends BaseModel {
   declare id: string;
   @column()
   declare insights: any | null;
+  @column()
+  declare isArchived: boolean;
   @column()
   declare language: string | null;
   @column()
