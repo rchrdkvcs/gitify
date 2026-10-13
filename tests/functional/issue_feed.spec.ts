@@ -4,8 +4,8 @@ import IssueSearchMembership from "#models/issue_search_membership";
 import Project from "#models/project";
 import ProjectIssue from "#models/project_issue";
 import ProjectSearchMembership from "#models/project_search_membership";
-import { IssueFeed } from "#services/feeds/issue_feed";
-import { GitHubIssueSyncService } from "#services/github/github_issue_sync_service";
+import IssueFeed from "#services/feeds/issue_feed";
+import GitHubIssueSyncService from "#services/github/github_issue_sync_service";
 import { FakeGitHubAdapter, githubIssue } from "#tests/helpers/fake_github_adapter";
 import {
   issueFeedSetup as setup,

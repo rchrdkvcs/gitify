@@ -3,8 +3,8 @@ import { test } from "@japa/runner";
 import gitifyConfig from "#config/gitify";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
-import { ProjectShowcase } from "#services/feeds/project_showcase";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import ProjectShowcase from "#services/feeds/project_showcase";
+import GitHubSyncService from "#services/github/github_sync_service";
 import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
 
 function descendingRandom() {

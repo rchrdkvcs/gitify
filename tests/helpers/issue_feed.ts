@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import type { IssueFilters } from "#shared/types/index";
-import { IssueFeed } from "#services/feeds/issue_feed";
-import { GitHubIssueSyncService } from "#services/github/github_issue_sync_service";
+import IssueFeed from "#services/feeds/issue_feed";
+import GitHubIssueSyncService from "#services/github/github_issue_sync_service";
 import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
 
 export const issueFeedNow = DateTime.fromISO("2026-10-12T12:00:00Z");

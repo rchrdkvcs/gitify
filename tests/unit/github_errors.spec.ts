@@ -1,5 +1,5 @@
 import { test } from "@japa/runner";
-import { GitHubApiClient } from "#services/github/github_api_client";
+import GitHubApiClient from "#services/github/github_api_client";
 import {
   GitHubAuthError,
   GitHubInvalidResponseError,

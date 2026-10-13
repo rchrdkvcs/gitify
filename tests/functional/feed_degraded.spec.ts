@@ -3,9 +3,9 @@ import db from "@adonisjs/lucid/services/db";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import User from "#models/user";
-import { ProjectCatalogue } from "#services/feeds/project_catalogue";
+import ProjectCatalogue from "#services/feeds/project_catalogue";
 import { GitHubUnavailableError } from "#services/github/github_errors";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 

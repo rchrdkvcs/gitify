@@ -1,9 +1,9 @@
 import logger from "@adonisjs/core/services/logger";
 import type Project from "#models/project";
+import type GitHubSyncService from "#services/github/github_sync_service";
 import type { ShowcaseLanguageResult } from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
 import { listedProjects } from "#services/feeds/visible_projects";
-import githubSync, { type GitHubSyncService } from "#services/github/github_sync_service";
 import ShowcaseProjectTransformer from "#transformers/showcase_project_transformer";
 
 type ShowcaseSync = Pick<
@@ -13,13 +13,13 @@ type ShowcaseSync = Pick<
 
 export type RandomSource = () => number;
 
-export class ProjectShowcase {
+export default class ProjectShowcase {
   constructor(
-    private readonly sync: ShowcaseSync = githubSync,
+    private readonly sync: ShowcaseSync,
     private readonly random: RandomSource = Math.random,
   ) {}
 
-  async languages(serverToken?: string): Promise<ShowcaseLanguageResult[]> {
+  async languages(serverToken?: string | null): Promise<ShowcaseLanguageResult[]> {
     const detailsReserved = new Set<string>();
     const results = await Promise.all(
       gitifyConfig.showcase.languages.map(async (language) => {
@@ -86,5 +86,3 @@ export class ProjectShowcase {
       .map(({ item }) => item);
   }
 }
-
-export default new ProjectShowcase();

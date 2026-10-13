@@ -3,7 +3,7 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import {
   FakeGitHubAdapter,
   githubRepository,

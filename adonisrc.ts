@@ -40,6 +40,7 @@ export default defineConfig({
     () => import("@adonisjs/shield/shield_provider"),
     () => import("@adonisjs/static/static_provider"),
     () => import("@adonisjs/inertia/inertia_provider"),
+    () => import("#providers/app_provider"),
   ],
 
   preloads: [() => import("#start/routes"), () => import("#start/kernel")],

@@ -8,6 +8,7 @@ import { shieldApiClient } from "@adonisjs/shield/plugins/api_client";
 import { apiClient } from "@japa/api-client";
 import { assert } from "@japa/assert";
 import { pluginAdonisJS } from "@japa/plugin-adonisjs";
+import { keepGitHubOffline } from "#tests/helpers/github_container";
 
 export const plugins: Config["plugins"] = [
   assert(),
@@ -20,7 +21,7 @@ export const plugins: Config["plugins"] = [
 ];
 
 export const runnerHooks: Required<Pick<Config, "setup" | "teardown">> = {
-  setup: [],
+  setup: [keepGitHubOffline],
   teardown: [],
 };
 

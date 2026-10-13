@@ -1,3 +1,4 @@
+import type GitHubIssueSyncService from "#services/github/github_issue_sync_service";
 import type {
   FeedIssue,
   FeedRefreshState,
@@ -9,7 +10,6 @@ import gitifyConfig from "#config/gitify";
 import ProjectIssue from "#models/project_issue";
 import { cachedFeedPage, type SearchRefresh } from "#services/feeds/cached_feed_page";
 import { containsPattern } from "#services/feeds/feed_query";
-import issueSync, { type GitHubIssueSyncService } from "#services/github/github_issue_sync_service";
 import { issueKinds } from "#shared/issues";
 import { normalizePage } from "#shared/pagination";
 import IssueTransformer from "#transformers/issue_transformer";
@@ -22,8 +22,8 @@ export type IssuePage = {
   refreshState: FeedRefreshState;
 };
 
-export class IssueFeed {
-  constructor(private readonly sync: IssueSync = issueSync) {}
+export default class IssueFeed {
+  constructor(private readonly sync: IssueSync) {}
 
   async explore(
     filters: IssueFilters,
@@ -84,8 +84,6 @@ export class IssueFeed {
       .orderBy("project_issues.id", "asc");
   }
 }
-
-export default new IssueFeed();
 
 function issuesForSearch(languages: string[], kind?: IssueKind) {
   return ProjectIssue.query().whereExists((membership) => {

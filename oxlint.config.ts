@@ -68,6 +68,12 @@ export default defineConfig({
       },
     },
     {
+      files: ["app/controllers/**/*.ts", "app/services/github/credential_fallback_adapter.ts"],
+      rules: {
+        "typescript/consistent-type-imports": "off",
+      },
+    },
+    {
       files: ["inertia/**/*.{ts,vue}"],
       plugins: ["typescript", "vue"],
       env: { browser: true, es2022: true },

@@ -18,7 +18,8 @@
     "#generated/*": "./.adonisjs/server/*.js",
     "#transformers/*": "./app/transformers/*.js",
     "#shared/*": "./shared/*.js",
-    "#middleware/*": "./app/middleware/*.js"
+    "#middleware/*": "./app/middleware/*.js",
+    "#providers/*": "./providers/*.js"
   },
   "scripts": {
     "build": "node ace build",

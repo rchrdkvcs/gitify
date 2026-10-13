@@ -1,26 +1,19 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import type User from "#models/user";
+import { inject } from "@adonisjs/core";
 import type { PaginationMeta } from "#shared/types/index";
 import ProjectNotFoundException from "#exceptions/project_not_found_exception";
 import { parseExploreFilters } from "#feed_criteria/explore_criteria";
 import { parseIssueFilters } from "#feed_criteria/issue_criteria";
-import issueFeed from "#services/feeds/issue_feed";
+import IssueFeed from "#services/feeds/issue_feed";
 import { popularTopics } from "#services/feeds/popular_topics";
-import projectCatalogue from "#services/feeds/project_catalogue";
-import projectDetailReader from "#services/feeds/project_detail";
+import ProjectCatalogue from "#services/feeds/project_catalogue";
+import ProjectDetailReader from "#services/feeds/project_detail";
 import { favoritePage } from "#services/feeds/project_favorites";
-import projectShowcase from "#services/feeds/project_showcase";
+import ProjectShowcase from "#services/feeds/project_showcase";
+import GitHubCredentials from "#services/github/github_credentials";
 import { issueKindCatalog } from "#shared/issues";
 import { languageCatalog } from "#shared/preferences";
-import env from "#start/env";
 import { projectSlugValidator } from "#validators/project_id_validator";
-
-function readerOf(user: User | undefined) {
-  return {
-    userId: user?.id ?? null,
-    token: user?.githubAccessToken ?? env.get("GITHUB_SERVER_TOKEN") ?? null,
-  };
-}
 
 function scrollPages(meta: PaginationMeta) {
   return {
@@ -34,9 +27,18 @@ function scrollPages(meta: PaginationMeta) {
 const languageOptions = () =>
   languageCatalog.map(({ id, name, icon }) => ({ value: id, label: name, icon }));
 
+@inject()
 export default class PagesController {
+  constructor(
+    private readonly credentials: GitHubCredentials,
+    private readonly showcase: ProjectShowcase,
+    private readonly catalogue: ProjectCatalogue,
+    private readonly issueFeed: IssueFeed,
+    private readonly projectDetail: ProjectDetailReader,
+  ) {}
+
   async home({ inertia }: HttpContext) {
-    const languages = await projectShowcase.languages(env.get("GITHUB_SERVER_TOKEN"));
+    const languages = await this.showcase.languages(this.credentials.server().token);
     return inertia.render("index", { languages });
   }
 
@@ -44,7 +46,11 @@ export default class PagesController {
     const preferences = auth.user?.preferences ?? null;
     const filters = parseExploreFilters(request.qs(), preferences);
     const [result, topics] = await Promise.all([
-      projectCatalogue.explore(filters, request.input("page", 1), readerOf(auth.user)),
+      this.catalogue.explore(
+        filters,
+        request.input("page", 1),
+        this.credentials.readerFor(auth.user),
+      ),
       popularTopics(filters),
     ]);
     return inertia.render("explore", {
@@ -63,7 +69,11 @@ export default class PagesController {
 
   async issues({ auth, request, inertia }: HttpContext) {
     const filters = parseIssueFilters(request.qs(), auth.user?.preferences ?? null);
-    const result = await issueFeed.explore(filters, request.input("page", 1), readerOf(auth.user));
+    const result = await this.issueFeed.explore(
+      filters,
+      request.input("page", 1),
+      this.credentials.readerFor(auth.user),
+    );
     return inertia.render("issues", {
       issues: inertia.scroll(
         () => ({ data: result.issues, meta: result.meta }),
@@ -88,7 +98,11 @@ export default class PagesController {
 
   async project({ auth, request, inertia }: HttpContext) {
     const { params } = await request.validateUsing(projectSlugValidator);
-    const project = await projectDetailReader.read(params.owner, params.name, readerOf(auth.user));
+    const project = await this.projectDetail.read(
+      params.owner,
+      params.name,
+      this.credentials.readerFor(auth.user),
+    );
     if (!project) {
       throw new ProjectNotFoundException();
     }

@@ -1,16 +1,16 @@
 import logger from "@adonisjs/core/services/logger";
+import type GitHubSyncService from "#services/github/github_sync_service";
 import type { ProjectDetail } from "#shared/types/index";
 import { displayedDifficulties, favoriteProjectIds } from "#services/feeds/project_reader_state";
 import { reachableProject } from "#services/feeds/visible_projects";
-import githubSync, { type GitHubSyncService } from "#services/github/github_sync_service";
 import ProjectDetailTransformer from "#transformers/project_detail_transformer";
 
 type DetailSync = Pick<GitHubSyncService, "needsDetailsFetch" | "fetchProjectDetails">;
 
 export type DetailReader = { userId: string | null; token: string | null };
 
-export class ProjectDetailReader {
-  constructor(private readonly sync: DetailSync = githubSync) {}
+export default class ProjectDetailReader {
+  constructor(private readonly sync: DetailSync) {}
 
   async read(ownerName: string, name: string, reader: DetailReader): Promise<ProjectDetail | null> {
     const project = await reachableProject(ownerName, name);
@@ -35,5 +35,3 @@ export class ProjectDetailReader {
     }).toObject();
   }
 }
-
-export default new ProjectDetailReader();

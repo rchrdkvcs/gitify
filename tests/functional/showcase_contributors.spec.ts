@@ -4,7 +4,11 @@ import { test } from "@japa/runner";
 import Contributor from "#models/contributor";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
-import projectShowcase from "#services/feeds/project_showcase";
+import ProjectShowcase from "#services/feeds/project_showcase";
+import GitHubSyncService from "#services/github/github_sync_service";
+import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
+
+const projectShowcase = new ProjectShowcase(new GitHubSyncService(new FakeGitHubAdapter()));
 
 test.group("Showcase contributors", (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction());
