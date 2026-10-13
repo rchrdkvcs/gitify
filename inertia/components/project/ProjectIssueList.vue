@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import type { RepositoryIssue, RepositoryPullRequest } from "@shared/types/index";
+import { labelSwatch } from "~/lib/label-swatch";
 
 defineProps<{
   items: (RepositoryIssue | Partial<RepositoryPullRequest>)[];
   kind: "issue" | "pull";
 }>();
-
-// GitHub label colors are stored without '#'; draw them as a swatch, keep text neutral.
-const swatch = (color: string) => ({ backgroundColor: `#${color}` });
 </script>
 
 <template>
@@ -63,7 +61,11 @@ const swatch = (color: string) => ({ backgroundColor: `#${color}` });
             :key="label.name"
             class="inline-flex items-center gap-1.5 border border-default px-1.5 py-0.5 text-[11px] text-toned"
           >
-            <span class="size-2 rounded-full" :style="swatch(label.color)" aria-hidden="true" />
+            <span
+              class="size-2 rounded-full"
+              :style="labelSwatch(label.color)"
+              aria-hidden="true"
+            />
             {{ label.name }}
           </span>
         </div>
