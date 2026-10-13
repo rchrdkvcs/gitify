@@ -34,7 +34,6 @@ export default class Project extends ProjectSchema {
   })
   declare newcomerScoreDetails: NewcomerScore | null;
 
-  /** GitHub serves its own avatar URL; owners imported before it was stored use the public alias. */
   get avatarUrl(): string {
     return this.ownerAvatarUrl ?? `https://github.com/${this.ownerName}.png?size=96`;
   }

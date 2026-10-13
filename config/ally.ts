@@ -2,10 +2,6 @@ import { defineConfig, services } from "@adonisjs/ally";
 import { type InferSocialProviders } from "@adonisjs/ally/types";
 import env from "#start/env";
 
-/**
- * AdonisJS Ally Configuration
- * Defines the authentication providers (e.g., GitHub) and their credentials.
- */
 const allyConfig = defineConfig({
   github: services.github({
     clientId: env.get("GITHUB_CLIENT_ID"),
