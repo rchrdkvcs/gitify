@@ -12,6 +12,12 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
     };
   }
 
+  flash(ctx: HttpContext): { error?: string } {
+    const { session } = ctx as Partial<HttpContext>;
+    const error: unknown = session?.flashMessages.get("error");
+    return typeof error === "string" ? { error } : {};
+  }
+
   async handle(ctx: HttpContext, next: NextFn) {
     await this.init(ctx);
     const output = await next();

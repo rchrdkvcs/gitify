@@ -1,9 +1,8 @@
-import { Exception } from "@adonisjs/core/exceptions";
 import db from "@adonisjs/lucid/services/db";
+import OAuthCallbackException from "#exceptions/oauth_callback_exception";
 import User from "#models/user";
 
 interface GitHubDriverUser {
-  // Ally's declaration says string, but its GitHub implementation returns a number.
   id: unknown;
   email: string;
   name: string | null;
@@ -20,7 +19,7 @@ function normalizeGitHubId(value: unknown): string {
       (typeof value === "string" && /^\d{1,20}$/.test(value) && BigInt(value) > 0n)
     )
   ) {
-    throw new Exception("GitHub identity is missing or invalid", { status: 400 });
+    throw new OAuthCallbackException("invalid_identity");
   }
   return BigInt(value as number | string).toString();
 }
@@ -30,11 +29,9 @@ export default class AuthService {
     const githubUserId = normalizeGitHubId(driverUser.id);
     const verified = driverUser.emailVerificationState === "verified";
     const email = driverUser.email?.trim().toLowerCase() || null;
-    // An unverified email is never persisted or used to claim an account.
     const verifiedEmail = verified ? email : null;
 
     return db.transaction(async (trx) => {
-      // Serializes concurrent first logins of one identity only.
       await trx.rawQuery("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", [
         `gitify:auth:identity:${githubUserId}`,
       ]);
@@ -45,8 +42,6 @@ export default class AuthService {
         .first();
 
       if (user) {
-        // Take the new verified email only when free; a collision keeps the stored one.
-        // No row lock on the other holder: crossed email changes must not deadlock.
         const taken =
           verifiedEmail &&
           (await User.query({ client: trx })
@@ -58,21 +53,15 @@ export default class AuthService {
         }
       } else {
         if (!verifiedEmail) {
-          throw new Exception("A verified GitHub email is required to create or link an account", {
-            status: 403,
-          });
+          throw new OAuthCallbackException("missing_verified_email");
         }
-        // A verified GitHub email is enough to link a legacy account.
-        // Locking the legacy row makes a concurrent claim by another identity see the link.
         user =
           (await User.query({ client: trx })
             .whereRaw("lower(email) = ?", [verifiedEmail])
             .forUpdate()
             .first()) ?? new User();
         if (user.githubUserId) {
-          throw new Exception("This email already belongs to another GitHub identity", {
-            status: 409,
-          });
+          throw new OAuthCallbackException("identity_conflict");
         }
         user.merge({
           githubUserId,

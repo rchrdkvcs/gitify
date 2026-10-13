@@ -9,6 +9,8 @@ type ExtractProps<T> = Omit<
 
 declare module '@adonisjs/inertia/types' {
   export interface InertiaPages {
+    'errors/error': ExtractProps<(typeof import('../../inertia/pages/errors/error.vue'))['default']>
+    'errors/not_found': ExtractProps<(typeof import('../../inertia/pages/errors/not_found.vue'))['default']>
     'explore': ExtractProps<(typeof import('../../inertia/pages/explore.vue'))['default']>
     'favorites': ExtractProps<(typeof import('../../inertia/pages/favorites.vue'))['default']>
     'index': ExtractProps<(typeof import('../../inertia/pages/index.vue'))['default']>

@@ -1,4 +1,5 @@
 import type { HttpContext } from "@adonisjs/core/http";
+import OAuthCallbackException from "#exceptions/oauth_callback_exception";
 import AuthService from "#services/auth_service";
 import onboarding from "#services/onboarding_service";
 
@@ -8,19 +9,19 @@ export default class AuthController {
   }
 
   async callback({ ally, response, auth }: HttpContext) {
-    const githubDrive = ally.use("github");
+    const githubDriver = ally.use("github");
 
-    if (githubDrive.accessDenied()) {
-      return response.badRequest("Access Denied: You cancelled the login request.");
+    if (githubDriver.accessDenied()) {
+      throw new OAuthCallbackException("access_denied");
     }
-    if (githubDrive.stateMisMatch()) {
-      return response.badRequest("State Mismatch: Session expired or invalid.");
+    if (githubDriver.stateMisMatch()) {
+      throw new OAuthCallbackException("state_mismatch");
     }
-    if (githubDrive.hasError()) {
-      return response.badRequest(`GitHub Error: ${githubDrive.getError()}`);
+    if (githubDriver.hasError()) {
+      throw new OAuthCallbackException("provider_error", { cause: githubDriver.getError() });
     }
 
-    const driverUser = await githubDrive.user();
+    const driverUser = await githubDriver.user();
     const user = await AuthService.findOrCreateFromGitHub(driverUser);
 
     await auth.use("web").login(user);

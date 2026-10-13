@@ -1,3 +1,20 @@
+<script setup lang="ts">
+import { usePage } from "@inertiajs/vue3";
+
+const page = usePage();
+const toast = useToast();
+
+function showFlashedError() {
+  const error: unknown = page.flash?.error;
+  if (typeof error === "string") {
+    toast.add({ title: error, icon: "lucide:triangle-alert", color: "error" });
+  }
+}
+
+onMounted(showFlashedError);
+watch(() => page.flash, showFlashedError);
+</script>
+
 <template>
   <div class="flex min-h-dvh flex-col">
     <a

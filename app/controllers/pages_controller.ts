@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import type User from "#models/user";
 import type { PaginationMeta } from "#shared/types/index";
+import ProjectNotFoundException from "#exceptions/project_not_found_exception";
 import { parseExploreFilters } from "#feed_criteria/explore_criteria";
 import { parseIssueFilters } from "#feed_criteria/issue_criteria";
 import IssueFeedService from "#services/issue_feed_service";
@@ -85,7 +86,7 @@ export default class PagesController {
     });
   }
 
-  async project({ auth, request, inertia, response }: HttpContext) {
+  async project({ auth, request, inertia }: HttpContext) {
     const { params } = await request.validateUsing(projectSlugValidator);
     const project = await ProjectFeedService.getProject(
       params.owner,
@@ -93,7 +94,7 @@ export default class PagesController {
       readerOf(auth.user),
     );
     if (!project) {
-      return response.notFound("Projet introuvable");
+      throw new ProjectNotFoundException();
     }
     return inertia.render("projects/show", { project });
   }
