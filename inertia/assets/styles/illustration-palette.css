@@ -1,0 +1,41 @@
+@layer components {
+  .ill {
+    font-family: var(--font-mono);
+  }
+
+  .ill .ill-line {
+    stroke: var(--ui-color-neutral-700);
+  }
+
+  .ill .ill-faint {
+    stroke: var(--ui-color-neutral-800);
+  }
+
+  .ill .ill-fill {
+    fill: var(--ui-color-neutral-900);
+  }
+
+  .ill .ill-block {
+    fill: var(--ui-color-neutral-800);
+  }
+
+  .ill .ill-text {
+    fill: var(--ui-color-neutral-400);
+  }
+
+  .ill .ill-text-strong {
+    fill: var(--ui-color-neutral-100);
+  }
+
+  .ill .ill-accent {
+    stroke: var(--ui-primary);
+  }
+
+  .ill .ill-accent-fill {
+    fill: var(--ui-primary);
+  }
+
+  .ill .ill-accent-soft {
+    fill: color-mix(in oklab, var(--ui-primary) 12%, transparent);
+  }
+}

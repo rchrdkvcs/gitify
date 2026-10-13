@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// Step 01: the visitor picks a level, then ticks the languages they know.
 const { state } = useIllustrationReveal();
 
 const levelWidth = 93;
@@ -22,8 +21,7 @@ const chips = [
   y: 102 + Math.floor(index / 3) * 36,
 }));
 
-// Languages get ticked one after another, once the level is chosen.
-const tickDelay = (index: number) =>
+const sequentialTickDelayAfterLevel = (index: number) =>
   650 + chips.slice(0, index).filter((chip) => chip.selected).length * 220;
 </script>
 
@@ -84,7 +82,7 @@ const tickDelay = (index: number) =>
         {{ chip.label }}
       </text>
 
-      <g v-if="chip.selected" :style="{ '--ill-d': `${tickDelay(index)}ms` }">
+      <g v-if="chip.selected" :style="{ '--ill-d': `${sequentialTickDelayAfterLevel(index)}ms` }">
         <rect
           :x="chip.x + 0.5"
           :y="chip.y + 0.5"

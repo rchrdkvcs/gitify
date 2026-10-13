@@ -1,0 +1,22 @@
+@layer base {
+  html {
+    background-color: var(--ui-bg);
+  }
+
+  body {
+    @apply bg-default font-sans text-default antialiased;
+  }
+
+  ::selection {
+    background-color: var(--ui-color-primary-400);
+    color: var(--ui-color-neutral-950);
+  }
+
+  :where(h1, h2, h3) {
+    text-wrap: balance;
+  }
+
+  :where(p) {
+    text-wrap: pretty;
+  }
+}

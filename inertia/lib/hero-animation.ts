@@ -1,4 +1,3 @@
-/** Owns the hero's frame scheduling; drawing remains local to the graph. */
 export function createHeroAnimation(
   drawFrame: (seconds: number) => void,
   frames: {

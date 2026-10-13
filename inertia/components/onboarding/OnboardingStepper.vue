@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// Numbered steps with done, current and upcoming states. Reached steps can be revisited.
 const props = defineProps<{
   steps: readonly { label: string }[];
   current: number;

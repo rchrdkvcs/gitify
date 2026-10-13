@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { topicSuggestions } from "@shared/preferences";
 
-// The user at the centre, linked to topics; chosen links draw in with the accent.
 const props = defineProps<{ selected: string[] }>();
 
 const positions = [

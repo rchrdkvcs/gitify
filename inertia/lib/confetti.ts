@@ -1,7 +1,3 @@
-/**
- * One short confetti burst on a canvas covering its parent. Square pieces, like every other
- * shape in the product. Call only from the browser (`onMounted`); returns a cancel function.
- */
 export function confettiBurst(
   canvas: HTMLCanvasElement,
   {
@@ -13,9 +9,7 @@ export function confettiBurst(
   }: {
     colors: string[];
     count?: number;
-    /** Opening angle of the cone, in degrees, centred on straight up. */
     spread?: number;
-    /** Launch point as a fraction of the canvas size. */
     origin?: { x: number; y: number };
     durationMs?: number;
   },
@@ -63,13 +57,8 @@ export function confettiBurst(
       ctx.translate(piece.x, piece.y);
       ctx.rotate(piece.rotation);
       ctx.fillStyle = piece.color;
-      // Flattening on one axis reads as a piece tumbling in 3D.
-      ctx.fillRect(
-        -piece.size / 2,
-        -piece.size / 2,
-        piece.size,
-        piece.size * Math.abs(Math.cos(piece.rotation * 2)),
-      );
+      const tumblingHeight = piece.size * Math.abs(Math.cos(piece.rotation * 2));
+      ctx.fillRect(-piece.size / 2, -piece.size / 2, piece.size, tumblingHeight);
       ctx.restore();
     }
     frame = requestAnimationFrame(tick);

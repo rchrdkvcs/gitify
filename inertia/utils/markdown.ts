@@ -1,9 +1,5 @@
 const isAbsolute = (url: string) => /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(url);
 
-/**
- * READMEs reference images and documents relative to the repository root.
- * Rewrite them so they resolve on GitHub instead of on Gitify.
- */
 export function absolutizeMarkdown(
   markdown: string,
   repo: { ownerName: string; name: string; branch?: string | null },

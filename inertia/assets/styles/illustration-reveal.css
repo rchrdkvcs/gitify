@@ -1,0 +1,93 @@
+@layer components {
+  .ill .ill-m-ring {
+    opacity: 0;
+  }
+
+  .ill :is(.ill-m-pop, .ill-m-ring, .ill-m-sweep, .ill-m-move, .ill-m-rise) {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .ill .ill-m-sweep {
+    transform-origin: left center;
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+    .ill-motion
+      :is(
+        .ill-m-fade,
+        .ill-m-pop,
+        .ill-m-ring,
+        .ill-m-sweep,
+        .ill-m-draw,
+        .ill-m-move,
+        .ill-m-rise
+      ) {
+      animation-duration: var(--ill-t, 450ms);
+      animation-delay: var(--ill-d, 0ms);
+      animation-timing-function: var(--ill-ease, cubic-bezier(0.22, 1, 0.36, 1));
+      animation-fill-mode: both;
+      animation-play-state: paused;
+    }
+
+    .ill-motion[data-state="play"]
+      :is(
+        .ill-m-fade,
+        .ill-m-pop,
+        .ill-m-ring,
+        .ill-m-sweep,
+        .ill-m-draw,
+        .ill-m-move,
+        .ill-m-rise
+      ) {
+      animation-play-state: running;
+    }
+
+    .ill-motion[data-state="static"]
+      :is(
+        .ill-m-fade,
+        .ill-m-pop,
+        .ill-m-ring,
+        .ill-m-sweep,
+        .ill-m-draw,
+        .ill-m-move,
+        .ill-m-rise
+      ) {
+      animation: none;
+    }
+
+    .ill-motion .ill-m-fade {
+      animation-name: ill-fade;
+    }
+
+    .ill-motion .ill-m-pop {
+      animation-name: ill-pop;
+    }
+
+    .ill-motion .ill-m-ring {
+      --ill-t: 700ms;
+      --ill-ease: cubic-bezier(0.25, 1, 0.5, 1);
+      animation-name: ill-ring;
+    }
+
+    .ill-motion .ill-m-sweep {
+      animation-name: ill-sweep;
+    }
+
+    .ill-motion .ill-m-draw {
+      --ill-ease: linear;
+      stroke-dasharray: 1;
+      animation-name: ill-draw;
+    }
+
+    .ill-motion .ill-m-move {
+      --ill-t: 650ms;
+      --ill-ease: cubic-bezier(0.65, 0, 0.35, 1);
+      animation-name: ill-move;
+    }
+
+    .ill-motion .ill-m-rise {
+      animation-name: ill-rise;
+    }
+  }
+}

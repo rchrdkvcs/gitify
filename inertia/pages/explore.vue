@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import type {
-  Difficulty,
   ExploreFilters,
-  ExploreSort,
   FeedRefreshState,
   PaginationMeta,
   Project,
 } from "@shared/types/index";
 import { Head } from "@inertiajs/vue3";
-import { newcomerScoreTiers } from "@shared/newcomer_score_display";
-import type { FeedStatusCopy } from "~/components/feed/FeedStatus.vue";
+import {
+  exploreLevelItems,
+  exploreMinScoreItems,
+  exploreSortItems,
+  exploreStatusCopy,
+} from "~/lib/explore-options";
 import { exploreFilterSchema } from "~/lib/feed-filter-schemas";
 
 const props = defineProps<{
@@ -21,43 +23,6 @@ const props = defineProps<{
   languageOptions: { value: string; label: string; icon: string }[];
   refreshState: FeedRefreshState;
 }>();
-
-const minScoreItems: { label: string; value: number }[] = [
-  { label: "Tout accueil", value: 0 },
-  ...newcomerScoreTiers
-    .filter((tier) => tier.filterLabel !== null)
-    .map((tier) => ({ label: `${tier.filterLabel} (${tier.min}+)`, value: tier.min }))
-    .reverse(),
-];
-
-const levelItems: { label: string; value: Difficulty | "all" }[] = [
-  { label: "Tous niveaux", value: "all" },
-  { label: "Débutant", value: "beginner" },
-  { label: "Confirmé", value: "expert" },
-];
-
-const sortItems: { label: string; value: ExploreSort }[] = [
-  { label: "Plus d’étoiles", value: "stars" },
-  { label: "Activité récente", value: "recent" },
-  { label: "Plus d’issues", value: "issues" },
-  { label: "Plus accueillants", value: "welcome" },
-];
-
-const statusCopy: FeedStatusCopy = {
-  degraded:
-    "Certains projets n’ont pas pu être actualisés. Tu peux explorer ceux déjà disponibles.",
-  refreshing: "Une partie du catalogue sera actualisée au prochain chargement.",
-  unavailable: {
-    title: "Les projets sont momentanément indisponibles",
-    description: "Impossible de récupérer les projets. Réessaie dans quelques instants.",
-  },
-  preparing: {
-    icon: "lucide:folder-search",
-    title: "Le catalogue se prépare",
-    description:
-      "On récupère des projets depuis GitHub pour ces langages. Recharge la page dans quelques instants.",
-  },
-};
 
 const { filters, hasActiveFilters, reload, resetFilters } = useFilteredFeed({
   schema: exploreFilterSchema,
@@ -130,7 +95,7 @@ const relaxations = computed(() =>
     :can-reset="hasActiveFilters"
     @reset="resetFilters"
   >
-    <SegmentedControl v-model="filters.level" label="Niveau" :items="levelItems" />
+    <SegmentedControl v-model="filters.level" label="Niveau" :items="exploreLevelItems" />
 
     <button
       v-if="filters.topic"
@@ -146,7 +111,7 @@ const relaxations = computed(() =>
     <template #trailing>
       <USelect
         v-model="filters.minScore"
-        :items="minScoreItems"
+        :items="exploreMinScoreItems"
         size="sm"
         color="neutral"
         variant="outline"
@@ -155,7 +120,7 @@ const relaxations = computed(() =>
       />
       <USelect
         v-model="filters.sort"
-        :items="sortItems"
+        :items="exploreSortItems"
         size="sm"
         color="neutral"
         variant="outline"
@@ -169,7 +134,7 @@ const relaxations = computed(() =>
     <FeedStatus
       :refresh-state="refreshState"
       :has-items="projectCards.length > 0"
-      :copy="statusCopy"
+      :copy="exploreStatusCopy"
       @retry="reload"
     >
       <FeedGrid data="projects" :items="projectCards">

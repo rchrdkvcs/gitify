@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { ContributionType } from "@shared/types/index";
 
-// A contribution card whose tags light up as kinds of help are chosen.
 const props = defineProps<{ selected: ContributionType[] }>();
 
 const tags: { id: ContributionType; label: string }[] = [

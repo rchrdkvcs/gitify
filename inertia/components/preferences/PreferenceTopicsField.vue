@@ -7,8 +7,9 @@ const emit = defineEmits<{ toggle: [topic: string] }>();
 const custom = ref("");
 const error = ref<string | null>(null);
 
-// Topics typed by the user stay visible next to the suggestions.
-const options = computed(() => [...new Set([...topicSuggestions, ...props.selected])]);
+const suggestionsWithCustomTopics = computed(() => [
+  ...new Set([...topicSuggestions, ...props.selected]),
+]);
 const full = computed(() => props.selected.length >= maxPreferenceTopics);
 
 function addCustom() {
@@ -34,7 +35,7 @@ const pillClass = (active: boolean) =>
     <legend class="sr-only">{{ legend }}</legend>
     <div class="flex flex-wrap gap-2">
       <button
-        v-for="topic in options"
+        v-for="topic in suggestionsWithCustomTopics"
         :key="topic"
         type="button"
         :aria-pressed="selected.includes(topic)"
