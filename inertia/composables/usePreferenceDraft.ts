@@ -25,13 +25,13 @@ export interface PreferenceDraftTransport {
   saveAnswer(progress: OnboardingProgress): Promise<unknown>;
 }
 
-export interface PreferenceDraftOptions {
+interface PreferenceDraftOptions {
   stored: UserPreferences | null;
   unsetLevel?: boolean;
   transport?: PreferenceDraftTransport;
 }
 
-export interface SubmitOptions {
+interface SubmitOptions {
   preserveState?: boolean;
   onSuccess?(): void;
   onError?(): void;
@@ -49,10 +49,7 @@ const inertiaTransport: PreferenceDraftTransport = {
   saveAnswer: (progress) => http("/api/onboarding", { method: "PATCH", body: progress }),
 };
 
-export function seedPreferenceDraft(
-  stored: UserPreferences | null,
-  unsetLevel = false,
-): PreferenceDraft {
+function seedPreferenceDraft(stored: UserPreferences | null, unsetLevel = false): PreferenceDraft {
   return {
     level: stored?.level ?? (unsetLevel ? null : defaultUserPreferences.level),
     languages: [...(stored?.languages ?? [])],

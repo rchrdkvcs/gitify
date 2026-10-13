@@ -1,4 +1,4 @@
-export interface HttpRequestOptions {
+interface HttpRequestOptions {
   method?: "GET" | "POST" | "DELETE" | "PUT" | "PATCH";
   body?: unknown;
 }

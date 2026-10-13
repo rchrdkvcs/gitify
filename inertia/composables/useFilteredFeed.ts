@@ -9,14 +9,14 @@ import {
   type FilterSchema,
 } from "../lib/feed-filters.js";
 
-export type FilteredFeedVisit = (query: FilterQuery) => void;
+type FilteredFeedVisit = (query: FilterQuery) => void;
 
 export interface FilteredFeedTimer {
   setTimeout(callback: () => void, delay: number): unknown;
   clearTimeout(handle: unknown): void;
 }
 
-export interface FilteredFeedOptions<Values, Source> {
+interface FilteredFeedOptions<Values, Source> {
   schema: FilterSchema<Values, Source>;
   source: Source;
   visit: FilteredFeedVisit;

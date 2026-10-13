@@ -6,20 +6,20 @@ import type {
 } from "../../shared/types/index.js";
 import { codeIssueKindFor, issueKindLabel } from "../../shared/issues.js";
 
-export type CommitSeries = {
+type CommitSeries = {
   weeks: number[];
   total: number;
   peak: number;
   activeWeeks: number;
 };
 
-export type HealthTier = "Excellente" | "Correcte" | "À améliorer";
+type HealthTier = "Excellente" | "Correcte" | "À améliorer";
 
-export type ProjectHealth = { percentage: number; tier: HealthTier };
+type ProjectHealth = { percentage: number; tier: HealthTier };
 
 export type CommunityChecklistItem = { label: string; done: boolean };
 
-export type ProjectCounts = {
+type ProjectCounts = {
   goodFirstIssues: number | null;
   helpWantedIssues: number | null;
   openIssues: number;

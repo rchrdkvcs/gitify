@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { FeedIssue } from "@shared/types/index";
 import { isSignalLabel } from "@shared/issues";
+import { formatLanguageName } from "@shared/preferences";
 import { labelSwatch } from "~/lib/label-swatch";
 
 const props = defineProps<{ issue: FeedIssue }>();
@@ -43,7 +44,7 @@ const stats = computed(() => [
         class="ms-auto inline-flex shrink-0 items-center gap-1.5 border border-accented px-1.5 py-0.5 font-mono text-[11px] text-toned"
       >
         <span class="size-1.5 bg-current" aria-hidden="true" />
-        {{ formatLanguage(issue.project.language) }}
+        {{ formatLanguageName(issue.project.language) }}
       </span>
     </header>
 
