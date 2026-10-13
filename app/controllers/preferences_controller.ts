@@ -5,10 +5,7 @@ import { updatePreferencesValidator } from "#validators/update_preferences_valid
 export default class PreferencesController {
   async update({ auth, request, response }: HttpContext) {
     const user = auth.getUserOrFail();
-
-    // Saving every answer from the preferences page completes the onboarding as well.
-    await onboarding.complete(user, await request.validateUsing(updatePreferencesValidator));
-
+    await onboarding.completeWith(user, await request.validateUsing(updatePreferencesValidator));
     return response.redirect("/explore");
   }
 }

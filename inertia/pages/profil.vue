@@ -1,19 +1,11 @@
 <script setup lang="ts">
 import { Head } from "@inertiajs/vue3";
-import { contributionTypeCatalog, experienceLevelCatalog } from "@shared/preferences";
+import { summarizePreferences } from "@shared/preference_summary";
 
 const authStore = useAuth();
 const user = computed(() => authStore.user);
-const preferences = computed(() => user.value?.preferences ?? null);
-
-const level = computed(() =>
-  experienceLevelCatalog.find((item) => item.id === preferences.value?.level),
-);
-
-const contributionLabels = computed(() =>
-  contributionTypeCatalog
-    .filter((item) => preferences.value?.contributionTypes.includes(item.id))
-    .map((item) => item.title),
+const summary = computed(() =>
+  user.value?.preferences ? summarizePreferences(user.value.preferences) : null,
 );
 </script>
 
@@ -52,50 +44,56 @@ const contributionLabels = computed(() =>
         </p>
       </div>
 
-      <div v-if="preferences" class="flex flex-col">
+      <div v-if="summary" class="flex flex-col">
         <dl class="grid gap-px bg-(--ui-border) sm:grid-cols-2">
           <div class="flex flex-col gap-2 bg-default p-5 sm:p-8">
             <dt class="eyebrow">Niveau</dt>
-            <dd class="text-lg text-highlighted">{{ level?.title }}</dd>
-            <dd class="text-sm text-muted">{{ level?.description }}</dd>
+            <dd class="text-lg text-highlighted">{{ summary.level?.title }}</dd>
+            <dd class="text-sm text-muted">{{ summary.level?.description }}</dd>
           </div>
           <div class="flex flex-col gap-3 bg-default p-5 sm:p-8">
             <dt class="eyebrow">Contributions</dt>
             <dd class="flex flex-wrap gap-1.5">
               <span
-                v-for="label in contributionLabels"
+                v-for="label in summary.contributionTypes.values"
                 :key="label"
                 class="border border-accented px-2 py-1 font-mono text-xs text-toned"
               >
                 {{ label }}
               </span>
-              <span v-if="!contributionLabels.length" class="text-sm text-muted">Toutes</span>
+              <span v-if="!summary.contributionTypes.values.length" class="text-sm text-muted">
+                {{ summary.contributionTypes.text }}
+              </span>
             </dd>
           </div>
           <div class="flex flex-col gap-3 bg-default p-5 sm:p-8">
             <dt class="eyebrow">Langages</dt>
             <dd class="flex flex-wrap gap-1.5">
               <span
-                v-for="lang in preferences.languages"
-                :key="lang"
+                v-for="language in summary.languages.values"
+                :key="language"
                 class="border border-accented px-2 py-1 font-mono text-xs text-toned"
               >
-                {{ formatLanguage(lang) }}
+                {{ language }}
               </span>
-              <span v-if="!preferences.languages.length" class="text-sm text-muted">Tous</span>
+              <span v-if="!summary.languages.values.length" class="text-sm text-muted">
+                {{ summary.languages.text }}
+              </span>
             </dd>
           </div>
           <div class="flex flex-col gap-3 bg-default p-5 sm:p-8">
             <dt class="eyebrow">Centres d’intérêt</dt>
             <dd class="flex flex-wrap gap-1.5">
               <span
-                v-for="topic in preferences.topics"
+                v-for="topic in summary.topics.values"
                 :key="topic"
                 class="border border-default px-2 py-1 font-mono text-xs text-muted"
               >
                 {{ topic }}
               </span>
-              <span v-if="!preferences.topics.length" class="text-sm text-muted">Aucun</span>
+              <span v-if="!summary.topics.values.length" class="text-sm text-muted">
+                {{ summary.topics.text }}
+              </span>
             </dd>
           </div>
         </dl>

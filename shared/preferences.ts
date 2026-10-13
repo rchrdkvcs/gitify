@@ -1,10 +1,6 @@
 import type { Difficulty } from "./types/common.js";
 import type { ContributionType, ExperienceLevel, UserPreferences } from "./types/user.js";
 
-/**
- * Identifiers used for storage and GitHub searches (`language:<id>`), their public labels and
- * Iconify icons. This list is the single source of truth for supported languages.
- */
 export const languageCatalog = [
   { id: "javascript", name: "JavaScript", label: "JS", icon: "devicon-plain:javascript" },
   { id: "typescript", name: "TypeScript", label: "TS", icon: "devicon-plain:typescript" },
@@ -45,7 +41,6 @@ export type PreferenceLanguage = (typeof languageCatalog)[number]["id"];
 export const supportedPreferenceLanguages = languageCatalog.map((language) => language.id);
 export const maxPreferenceLanguages = languageCatalog.length;
 
-/** How far the user is in their open source journey; replaces the binary difficulty. */
 export const experienceLevelCatalog = [
   {
     id: "first_contribution",
@@ -81,10 +76,6 @@ export const experienceLevelCatalog = [
 
 export const experienceLevels = experienceLevelCatalog.map((level) => level.id);
 
-/**
- * Ways to help a project. `issueLabels` are the GitHub labels that usually mark matching
- * issues, so issue-based features can filter on them.
- */
 export const contributionTypeCatalog = [
   {
     id: "code",
@@ -138,7 +129,6 @@ export const contributionTypeCatalog = [
 
 export const contributionTypes = contributionTypeCatalog.map((type) => type.id);
 
-/** Common GitHub topics proposed during onboarding. Any valid topic slug is accepted. */
 export const topicSuggestions = [
   "web",
   "cli",
@@ -161,7 +151,6 @@ export const topicSuggestions = [
 export const maxPreferenceTopics = 10;
 export const topicPattern = /^[a-z0-9][a-z0-9-]{0,49}$/;
 
-/** Preferences of someone who has not answered anything yet: no filter applied. */
 export const defaultUserPreferences: UserPreferences = {
   level: "first_contribution",
   languages: [],
@@ -177,7 +166,6 @@ export function formatLanguageName(language: string): string {
   return languageNames.get(language.trim().toLowerCase()) ?? language;
 }
 
-/** Handles legacy stored preferences too: discard unsupported entries and preserve first-choice order. */
 export function normalizePreferenceLanguages(languages: readonly string[]): PreferenceLanguage[] {
   const normalized = languages.map((language) => language.trim().toLowerCase());
   return [...new Set(normalized)].filter((language): language is PreferenceLanguage =>
@@ -185,85 +173,10 @@ export function normalizePreferenceLanguages(languages: readonly string[]): Pref
   );
 }
 
-/** GitHub search level used by the catalogue for an experience level. */
 export function difficultyForLevel(level: ExperienceLevel): Difficulty {
   return experienceLevelCatalog.find((item) => item.id === level)?.difficulty ?? "beginner";
 }
 
-/** Legacy binary difficulty mapped onto the new levels (used by the data migration too). */
 export function levelForDifficulty(difficulty: unknown): ExperienceLevel {
   return difficulty === "expert" ? "experienced" : "first_contribution";
-}
-
-function stringList(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
-}
-
-/**
- * Reads stored preferences of any shape: the current one, the legacy
- * `{ difficulty, languages }` one, or partial drafts. Unknown entries are dropped and
- * missing ones fall back to "no preference". Returns null when nothing was ever saved.
- */
-export function normalizeUserPreferences(raw: unknown): UserPreferences | null {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-    return null;
-  }
-  const value = raw as Record<string, unknown>;
-  const level = experienceLevels.includes(value.level as ExperienceLevel)
-    ? (value.level as ExperienceLevel)
-    : levelForDifficulty(value.difficulty);
-  // Legacy accounts chose programming languages: they came for code contributions.
-  const legacy = !("level" in value) && "difficulty" in value;
-  const types = stringList(value.contributionTypes).filter((type): type is ContributionType =>
-    contributionTypes.includes(type as ContributionType),
-  );
-
-  return {
-    level,
-    languages: normalizePreferenceLanguages(stringList(value.languages)),
-    contributionTypes: legacy && types.length === 0 ? ["code"] : [...new Set(types)],
-    topics: [
-      ...new Set(
-        stringList(value.topics)
-          .map((topic) => topic.trim().toLowerCase())
-          .filter((topic) => topicPattern.test(topic)),
-      ),
-    ].slice(0, maxPreferenceTopics),
-  };
-}
-
-// GitHub reports some languages under names that differ from the catalogue identifier.
-const githubLanguageAliases: Record<string, PreferenceLanguage> = {
-  "jupyter notebook": "python",
-  scss: "css",
-  "vim script": "shell",
-  powershell: "shell",
-};
-
-/**
- * Most used catalogue languages among a user's repositories, most frequent first.
- * Ties keep the order of first appearance, so callers should pass recently pushed
- * repositories first.
- */
-export function inferPreferredLanguages(
-  repositoryLanguages: readonly (string | null)[],
-  limit = 4,
-): PreferenceLanguage[] {
-  const counts = new Map<PreferenceLanguage, number>();
-  for (const name of repositoryLanguages) {
-    if (!name) {
-      continue;
-    }
-    const lower = name.trim().toLowerCase();
-    const id = githubLanguageAliases[lower] ?? normalizePreferenceLanguages([lower])[0];
-    if (id) {
-      counts.set(id, (counts.get(id) ?? 0) + 1);
-    }
-  }
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([id]) => id);
 }

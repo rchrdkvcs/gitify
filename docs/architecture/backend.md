@@ -14,16 +14,18 @@ Seules les routes `/api/projects/:id/favorite` (ajout et retrait d'un favori) et
 
 ## Onboarding et préférences
 
-`shared/preferences.ts` est la source unique des choix possibles : `languageCatalog`, `experienceLevelCatalog` (avec le niveau de recherche GitHub associé), `contributionTypeCatalog` (avec les étiquettes d'issue usuelles, `issueLabels`) et `topicSuggestions`. Il fournit aussi `normalizeUserPreferences` (lit l'ancien et le nouveau format), `difficultyForLevel` et `inferPreferredLanguages`. Toute fonctionnalité qui a besoin du niveau, des langages ou des façons de contribuer d'un utilisateur lit `user.preferences` (déjà normalisé par le modèle) et ces helpers.
+`shared/preferences.ts` est la source unique des choix possibles : `languageCatalog`, `experienceLevelCatalog` (avec le niveau de recherche GitHub associé), `contributionTypeCatalog` (avec les étiquettes d'issue usuelles, `issueLabels`) et `topicSuggestions`. Il fournit aussi `difficultyForLevel` et `normalizePreferenceLanguages`. `shared/stored_preferences.ts` porte `normalizeUserPreferences` (lit l'ancien et le nouveau format), `shared/language_inference.ts` porte `inferPreferredLanguages` et `shared/preference_summary.ts` porte `summarizePreferences` (libellés affichés par le profil et l'écran de fin). Toute fonctionnalité qui a besoin du niveau, des langages ou des façons de contribuer d'un utilisateur lit `user.preferences` (déjà normalisé par le modèle) et ces helpers.
 
 `OnboardingController` et `OnboardingService` gèrent le parcours :
 
+`shared/onboarding.ts` est la source unique du parcours : liste des étapes et champ de préférence auquel chacune répond, bornes, reprise, transitions et enregistrement d'une réponse. Le validator en dérive ses bornes, la page en dérive son affichage.
+
 - `GET /onboarding` rend la page avec la question de reprise et une prop différée `suggestedLanguages`, calculée depuis les dépôts de l'utilisateur (`GET /user/repos`) ; un échec GitHub ne donne simplement aucune suggestion.
-- `PATCH /api/onboarding` (JSON) enregistre une réponse confirmée et l'étape atteinte.
+- `PATCH /api/onboarding` (JSON) enregistre une réponse confirmée et l'étape atteinte. La réponse doit porter exactement le champ de son étape, sinon 422.
 - `PUT /onboarding` valide toutes les réponses, les enregistre et renseigne `onboarded_at`.
 - `POST /onboarding/skip` renseigne `onboarding_skipped_at` et redirige vers le catalogue.
 
-`PUT /auth/preferences` valide les mêmes champs avec Vine, enregistre les préférences, termine l'onboarding s'il ne l'était pas et redirige vers l'exploration. Les validators normalisent, dédupliquent et bornent les choix ; les identifiants inconnus sont refusés. `parseExploreFilters` dérive les filtres par défaut du catalogue des préférences.
+`PUT /auth/preferences` valide les mêmes champs avec Vine et passe par le même `OnboardingService.completeWith` que `PUT /onboarding` : il enregistre les préférences, termine l'onboarding s'il ne l'était pas et redirige vers l'exploration. Les validators normalisent, dédupliquent et bornent les choix ; les identifiants inconnus sont refusés. `parseExploreFilters` dérive les filtres par défaut du catalogue des préférences.
 
 ## Score d'accueil des débutants
 

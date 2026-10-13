@@ -1,11 +1,8 @@
 import { test } from "@japa/runner";
-import {
-  difficultyForLevel,
-  inferPreferredLanguages,
-  languageCatalog,
-  levelForDifficulty,
-  normalizeUserPreferences,
-} from "#shared/preferences";
+import { inferPreferredLanguages } from "#shared/language_inference";
+import { lastOnboardingStep } from "#shared/onboarding";
+import { difficultyForLevel, languageCatalog, levelForDifficulty } from "#shared/preferences";
+import { normalizeUserPreferences } from "#shared/stored_preferences";
 import {
   onboardingProgressValidator,
   updatePreferencesValidator,
@@ -50,7 +47,6 @@ test.group("Preference validation", () => {
   }) => {
     for (const input of [
       { ...valid, level: "intermediate" },
-      // The legacy binary payload is no longer accepted.
       { difficulty: "beginner", languages: ["rust"] },
       { ...valid, languages: ["   "] },
       { ...valid, languages: ["made-up-language"] },
@@ -86,14 +82,35 @@ test.group("Preference validation", () => {
     assert.deepEqual(preferences.languages, languages);
   });
 
-  test("onboarding progress accepts one answer at a time within the four questions", async ({
+  test("onboarding progress accepts one answer at a time within the onboarding steps", async ({
     assert,
   }) => {
     assert.deepEqual(
       await onboardingProgressValidator.validate({ step: 2, contributionTypes: ["design"] }),
       { step: 2, contributionTypes: ["design"] },
     );
-    for (const input of [{ step: 0 }, { step: 5 }, { step: 1, level: "guru" }]) {
+    assert.deepEqual(
+      await onboardingProgressValidator.validate({ step: lastOnboardingStep, topics: ["cli"] }),
+      { step: lastOnboardingStep, topics: ["cli"] },
+    );
+    for (const input of [
+      { step: 0, level: "experienced" },
+      { step: lastOnboardingStep + 1, topics: [] },
+      { step: 1, level: "guru" },
+    ]) {
+      await assert.rejects(() => onboardingProgressValidator.validate(input));
+    }
+  });
+
+  test("onboarding progress rejects answers that do not belong to their step", async ({
+    assert,
+  }) => {
+    for (const input of [
+      { step: 4 },
+      { step: 4, level: "experienced" },
+      { step: 1, level: "experienced", topics: ["cli"] },
+      { step: 3, contributionTypes: ["code"] },
+    ]) {
       await assert.rejects(() => onboardingProgressValidator.validate(input));
     }
   });
@@ -130,7 +147,6 @@ test.group("Preference mapping", () => {
       contributionTypes: ["tests"],
       topics: ["cli"],
     });
-    // A new-shape draft without any contribution type keeps "no preference".
     assert.deepEqual(
       normalizeUserPreferences({ level: "experienced", languages: [] })?.contributionTypes,
       [],
