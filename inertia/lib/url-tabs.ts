@@ -5,14 +5,14 @@ export type TabDescriptor<Id extends string, Source> = {
   badge?: (source: Source) => number | null | undefined;
 };
 
-export type TabItem<Id extends string> = {
+type TabItem<Id extends string> = {
   value: Id;
   label: string;
   icon: string;
   badge?: string;
 };
 
-export const tabQueryKey = "tab";
+const tabQueryKey = "tab";
 
 export function tabFromUrl<Id extends string>(url: string, ids: readonly Id[], fallback: Id): Id {
   const query = url.split("?")[1]?.split("#")[0] ?? "";

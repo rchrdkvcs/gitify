@@ -11,7 +11,7 @@ import {
   type OnboardingField,
 } from "../../shared/onboarding.js";
 
-export interface OnboardingFlowOptions {
+interface OnboardingFlowOptions {
   initialStep: number;
   answeredSteps: number | null;
   preferences: Pick<PreferenceDraftHandle, "draft" | "submit" | "saveAnswer">;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ProjectDetail } from "@shared/types/index";
+import { formatLanguageName } from "@shared/preferences";
 
 const props = defineProps<{
   project: ProjectDetail;
@@ -69,7 +70,7 @@ const { isFavorite, pending, toggleFavorite } = useFavorite(() => props.project)
               class="inline-flex items-center gap-1.5 border border-default px-2 py-1 text-muted"
             >
               <span class="size-1.5 bg-current" aria-hidden="true" />
-              {{ formatLanguage(project.language) }}
+              {{ formatLanguageName(project.language) }}
             </span>
             <span
               v-if="project.license"

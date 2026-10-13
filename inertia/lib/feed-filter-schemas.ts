@@ -25,7 +25,7 @@ const languagesFilter = <Source extends { languages: string[] }>(): FilterDescri
   toQuery: (value) => value.join(","),
 });
 
-export interface ExploreFilterValues {
+interface ExploreFilterValues {
   q: string;
   topic: string | null;
   languages: string[];
@@ -64,7 +64,7 @@ export const exploreFilterSchema: FilterSchema<ExploreFilterValues, ExploreFilte
   },
 };
 
-export interface IssueFilterValues {
+interface IssueFilterValues {
   q: string;
   languages: string[];
   kind: IssueKind | "all";

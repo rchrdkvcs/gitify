@@ -16,10 +16,7 @@ function schemaKeys<Values, Source>(schema: FilterSchema<Values, Source>) {
   return Object.keys(schema) as (keyof Values)[];
 }
 
-export function isFilterActive<Value, Source>(
-  descriptor: FilterDescriptor<Value, Source>,
-  value: Value,
-) {
+function isFilterActive<Value, Source>(descriptor: FilterDescriptor<Value, Source>, value: Value) {
   return descriptor.toQuery(value) !== descriptor.toQuery(descriptor.default);
 }
 
