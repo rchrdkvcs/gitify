@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import type { ProjectDetail } from "@shared/types/index";
-import { Head } from "@inertiajs/vue3";
+import { Deferred, Head } from "@inertiajs/vue3";
 import { useUrlTabs } from "~/composables/useUrlTabs";
 import { projectFacts } from "~/lib/project-facts";
 import { projectTabs } from "~/lib/project-tabs";
 
-const props = defineProps<{ project: ProjectDetail }>();
-const project = computed(() => props.project);
-const insights = computed(() => props.project.insights);
-const facts = computed(() => projectFacts(props.project));
+const props = defineProps<{
+  project: ProjectDetail;
+  detailsPending: boolean;
+  details?: ProjectDetail;
+}>();
+const project = computed(() => props.details ?? props.project);
+const facts = computed(() => projectFacts(project.value));
 
 const tabBarId = "project-tabs";
 const newcomerBreakdownId = "newcomer-breakdown";
@@ -50,59 +53,32 @@ const explainScore = () => selectTab("contributing", newcomerBreakdownId);
           />
         </div>
 
-        <p
-          v-if="!insights"
-          role="status"
-          class="flex items-center gap-2 border-b border-default px-4 py-3 text-sm text-muted sm:px-8"
-        >
-          <UIcon name="lucide:info" class="size-4 shrink-0" aria-hidden="true" />
-          Les statistiques détaillées de ce dépôt n’ont pas encore pu être récupérées depuis GitHub.
-        </p>
-
-        <ProjectOverviewTab
-          v-if="activeTab === 'overview'"
+        <Deferred v-if="detailsPending" data="details">
+          <template #fallback>
+            <ProjectDetailsSkeleton />
+          </template>
+          <template #rescue>
+            <ProjectTabPanels
+              :project="project"
+              :facts="facts"
+              :active-tab="activeTab"
+              @navigate="selectTab"
+            />
+          </template>
+          <ProjectTabPanels
+            :project="project"
+            :facts="facts"
+            :active-tab="activeTab"
+            @navigate="selectTab"
+          />
+        </Deferred>
+        <ProjectTabPanels
+          v-else
           :project="project"
           :facts="facts"
+          :active-tab="activeTab"
           @navigate="selectTab"
         />
-
-        <ProjectContributingTab
-          v-else-if="activeTab === 'contributing'"
-          :project="project"
-          :facts="facts"
-        />
-
-        <ProjectIssuesTab
-          v-else-if="activeTab === 'issues'"
-          :insights="insights"
-          :repository-url="project.repositoryUrl"
-        />
-
-        <ProjectPullsTab
-          v-else-if="activeTab === 'pulls'"
-          :pull-requests="insights?.pullRequests ?? []"
-          :repository-url="project.repositoryUrl"
-        />
-
-        <section v-else-if="activeTab === 'contributors'" aria-label="Contributeurs">
-          <ProjectContributors
-            v-if="project.contributors.length"
-            :contributors="project.contributors"
-            :total="project.totalContributorsCount"
-            :repository-url="project.repositoryUrl"
-          />
-          <EmptyState v-else icon="lucide:users" title="Aucun contributeur connu" />
-        </section>
-
-        <section v-else aria-label="Activité">
-          <ProjectActivity v-if="insights" :insights="insights" :facts="facts" />
-          <EmptyState
-            v-else
-            icon="lucide:chart-column"
-            title="Activité indisponible"
-            description="Les statistiques de ce dépôt seront disponibles à la prochaine actualisation."
-          />
-        </section>
       </div>
 
       <aside

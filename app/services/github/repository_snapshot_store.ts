@@ -1,5 +1,6 @@
 import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
+import { ulid } from "ulid";
 import type { RepositorySnapshot } from "#services/github/github_adapter";
 import Contributor from "#models/contributor";
 import Project from "#models/project";
@@ -39,6 +40,7 @@ export async function storeRepositorySnapshot(
       pushedAt: repository.pushedAt ? DateTime.fromISO(repository.pushedAt) : stored.pushedAt,
       githubCreatedAt: DateTime.fromISO(repository.createdAt),
       detailsFetchedAt: fetchedAt,
+      detailsRetryAfter: null,
     });
     await stored.save();
 
@@ -51,17 +53,34 @@ export async function storeRepositorySnapshot(
     }
     await previousContributors.delete();
 
-    for (const contributor of contributors) {
-      await Contributor.updateOrCreate(
-        { projectId, githubUserId: contributor.id },
-        {
-          login: contributor.login,
-          avatarUrl: contributor.avatarUrl,
-          profileUrl: contributor.profileUrl,
-          contributions: contributor.contributions,
-        },
-        { client: trx },
-      );
+    if (contributors.length === 0) {
+      return;
     }
+    const writtenAt = fetchedAt.toJSDate();
+    await trx
+      .insertQuery()
+      .table(Contributor.table)
+      .knexQuery.insert(
+        contributors.map((contributor) => ({
+          id: ulid(),
+          project_id: projectId,
+          github_user_id: contributor.id,
+          login: contributor.login,
+          avatar_url: contributor.avatarUrl,
+          profile_url: contributor.profileUrl,
+          contributions: contributor.contributions,
+          created_at: writtenAt,
+          updated_at: writtenAt,
+        })),
+      )
+      .onConflict(["project_id", "github_user_id"])
+      .merge(["login", "avatar_url", "profile_url", "contributions", "updated_at"]);
   });
+}
+
+export async function postponeRepositorySnapshot(
+  projectId: Project["id"],
+  retryAfter: DateTime,
+): Promise<void> {
+  await Project.query().where("id", projectId).update({ detailsRetryAfter: retryAfter.toJSDate() });
 }

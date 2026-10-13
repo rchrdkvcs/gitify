@@ -51,6 +51,7 @@ PostgreSQL (18 dans Docker Compose). Tous les modèles utilisent des **ULID** co
 | `latest_release`           | `string \| null`    | Tag de la dernière release GitHub (`v1.2.3`)                                                                                                                |
 | `total_contributors_count` | `integer \| null`   | Total inféré via le header `Link` de l'API GitHub                                                                                                           |
 | `details_fetched_at`       | `timestamp \| null` | Horodatage du dernier enrichissement — null = jamais chargé                                                                                                 |
+| `details_retry_after`      | `timestamp \| null` | Prochain essai d'enrichissement après un échec GitHub — null = aucun report en cours                                                                        |
 | `insights`                 | `jsonb \| null`     | Instantané GitHub de la fiche, dont `contributorActivity` pour le score d'accueil                                                                           |
 | `is_archived`              | `boolean`           | Dépôt archivé sur GitHub, écrit avec l'instantané `insights` ; exclu des listes                                                                             |
 | `newcomer_score`           | `smallint \| null`  | Score d'accueil des débutants (0–100), seule source du score, indexé pour le tri ; null = non évalué                                                        |
@@ -160,6 +161,8 @@ liste précédente. La migration reprend les appartenances des projets historiqu
 Un index `(stars DESC)` permet un parcours trié compatible avec les recherches
 par appartenance, dont le langage peut différer du langage principal du dépôt.
 Sa mesure est décrite dans [le relevé PostgreSQL](project-index-measurement-2026-10-12.md).
+Un index d'expression `(lower(owner_name), lower(name))` sert la recherche
+insensible à la casse de la page projet.
 
 ### Exécution
 

@@ -5,7 +5,7 @@ import ProjectNotFoundException from "#exceptions/project_not_found_exception";
 import { parseExploreFilters } from "#feed_criteria/explore_criteria";
 import { parseIssueFilters } from "#feed_criteria/issue_criteria";
 import IssueFeed from "#services/feeds/issue_feed";
-import { popularTopics } from "#services/feeds/popular_topics";
+import { PopularTopics } from "#services/feeds/popular_topics";
 import ProjectCatalogue from "#services/feeds/project_catalogue";
 import ProjectDetailReader from "#services/feeds/project_detail";
 import { favoritePage } from "#services/feeds/project_favorites";
@@ -35,6 +35,7 @@ export default class PagesController {
     private readonly catalogue: ProjectCatalogue,
     private readonly issueFeed: IssueFeed,
     private readonly projectDetail: ProjectDetailReader,
+    private readonly topics: PopularTopics,
   ) {}
 
   async home({ inertia }: HttpContext) {
@@ -51,7 +52,7 @@ export default class PagesController {
         request.input("page", 1),
         this.credentials.readerFor(auth.user),
       ),
-      popularTopics(filters),
+      this.topics.list(filters),
     ]);
     return inertia.render("explore", {
       projects: inertia.scroll(
@@ -98,14 +99,19 @@ export default class PagesController {
 
   async project({ auth, request, inertia }: HttpContext) {
     const { params } = await request.validateUsing(projectSlugValidator);
-    const project = await this.projectDetail.read(
+    const page = await this.projectDetail.read(
       params.owner,
       params.name,
       this.credentials.readerFor(auth.user),
     );
-    if (!project) {
+    if (!page) {
       throw new ProjectNotFoundException();
     }
-    return inertia.render("projects/show", { project });
+    const deferDetails = page.detailsPending || inertia.requestInfo().isPartialRequest;
+    return inertia.render("projects/show", {
+      project: page.project,
+      detailsPending: page.detailsPending,
+      ...(deferDetails ? { details: inertia.defer(page.details, { rescue: true }) } : {}),
+    });
   }
 }

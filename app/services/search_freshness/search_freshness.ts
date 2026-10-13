@@ -1,6 +1,10 @@
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
+import {
+  type BackgroundRefreshes,
+  backgroundRefreshes,
+} from "#services/search_freshness/background_refreshes";
 import { retryAfterFailure } from "#services/search_freshness/retry_cooldown";
 import { type SearchPermits, searchPermits } from "#services/search_freshness/search_permits";
 
@@ -42,6 +46,7 @@ export class SearchFreshnessPolicy {
   constructor(
     private readonly now: () => DateTime = () => DateTime.now(),
     private readonly permits: SearchPermits = searchPermits,
+    private readonly background: BackgroundRefreshes = backgroundRefreshes,
   ) {}
 
   async ensureFresh(refresh: SnapshotRefresh): Promise<SearchFreshness> {
@@ -51,6 +56,20 @@ export class SearchFreshnessPolicy {
     if (!this.permits.tryAcquire()) {
       return { status: "pending" };
     }
+    return this.importWithPermit(refresh);
+  }
+
+  async revalidate(refresh: SnapshotRefresh): Promise<SearchFreshness> {
+    if (this.isSettled(refresh, await refresh.store.read())) {
+      return { status: "fresh" };
+    }
+    if (!this.background.isRunning(refresh.key) && this.permits.tryAcquire()) {
+      this.background.run(refresh.key, () => this.importWithPermit(refresh));
+    }
+    return { status: "pending" };
+  }
+
+  private async importWithPermit(refresh: SnapshotRefresh): Promise<SearchFreshness> {
     try {
       return await db.transaction(async (trx) => {
         if (!(await tryLock(refresh.key, trx))) {

@@ -7,6 +7,7 @@ import ProjectCatalogue from "#services/feeds/project_catalogue";
 import ProjectShowcase from "#services/feeds/project_showcase";
 import { GitHubRateLimitError, GitHubUnavailableError } from "#services/github/github_errors";
 import GitHubSyncService from "#services/github/github_sync_service";
+import { backgroundRefreshes } from "#services/search_freshness/background_refreshes";
 import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 
@@ -26,15 +27,16 @@ test.group("Project search refresh", (group) => {
     await sync.fetchAndStore("typescript", "expert", token);
     clock = now.plus({ hours: 24 });
     github.repos = [githubRepository({ id: 8100, name: "new-snapshot" })];
-    const feed = await feedFor(
-      new ProjectCatalogue(sync),
-      "no-user",
-      {
-        difficulty: "expert",
-        languages: [" TypeScript ", "typescript", "RUST", "invalid"],
-      },
-      token,
-    );
+    const catalogue = new ProjectCatalogue(sync);
+    const criteria = {
+      difficulty: "expert" as const,
+      languages: [" TypeScript ", "typescript", "RUST", "invalid"],
+    };
+    const stale = await feedFor(catalogue, "no-user", criteria, token);
+    assert.equal(stale.refreshState, "refreshing");
+    assert.equal(stale.available, 30);
+    await backgroundRefreshes.settled();
+    const feed = await feedFor(catalogue, "no-user", criteria, token);
     assert.deepEqual(
       github.searchCalls.map((call) => call.language),
       ["typescript", "typescript", "rust"],
@@ -68,6 +70,7 @@ test.group("Project search refresh", (group) => {
       });
     }
     await new ProjectShowcase(sync).languages(token);
+    await backgroundRefreshes.settled();
     const result = await feedFor(
       new ProjectCatalogue(sync),
       "no-user",
@@ -95,6 +98,8 @@ test.group("Project search refresh", (group) => {
     github.searchCalls = [];
     clock = now.plus({ hours: 24 });
     github.searchError = new GitHubRateLimitError(403, null);
+    await feedFor(feed, "no-user", preferences, token);
+    await backgroundRefreshes.settled();
     for (let index = 0; index < 2; index++) {
       const result = await feedFor(feed, "no-user", preferences, token);
       assert.equal(result.refreshState, "degraded");
@@ -114,6 +119,8 @@ test.group("Project search refresh", (group) => {
     clock = clock.plus({ seconds: 60 });
     github.searchError = undefined;
     github.repos = [githubRepository({ id: 9501, name: "recovered-search" })];
+    await feedFor(feed, "no-user", preferences, token);
+    await backgroundRefreshes.settled();
     const recovered = await feedFor(feed, "no-user", preferences, token);
     assert.equal(recovered.refreshState, "ready");
     assert.equal(recovered.projects[0].name, "recovered-search");
