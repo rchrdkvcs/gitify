@@ -19,14 +19,41 @@ Le catalogue et les pages projet sont publics : aucune connexion n’est requise
 
 Connexion via GitHub OAuth, nécessaire uniquement pour les favoris et les préférences. Aucun mot de passe, aucun JWT stocké côté client. La session est gérée par AdonisJS dans un cookie HTTP-Only — elle n’est jamais exposée à JavaScript.
 
+### Onboarding guidé (`GET /onboarding`)
+
+Après sa première connexion GitHub, l’utilisateur est redirigé vers un parcours en quatre questions, une par écran, suivi d’un écran de fin (« Ton compte est prêt ») :
+
+1. **Niveau** : première contribution, quelques contributions ou contributeur aguerri
+2. **Façons de contribuer** : code, documentation, tests, traduction, design, triage (au moins une) ; coder n’est pas obligatoire
+3. **Langages** : facultatif, pré-sélectionnés d’après les langages de ses propres dépôts GitHub
+4. **Centres d’intérêt** : sujets GitHub facultatifs
+
+Chaque réponse confirmée est enregistrée aussitôt. « Plus tard » interrompt le parcours sans le perdre : la connexion suivante mène au catalogue, qui affiche un bandeau pour reprendre à la première question sans réponse. Les comptes existants (préférences historiques) se voient proposer le parcours à leur prochaine connexion, pré-rempli. Le parcours reste accessible depuis le profil et les préférences pour revoir ses réponses.
+
 ### Préférences utilisateur
 
-L’utilisateur connecté peut enregistrer :
+L’utilisateur connecté peut modifier sur `/preferences` les mêmes réponses que dans l’onboarding :
 
-- **Difficulté** : `beginner` (projets avec "good first issues") ou `expert` (projets populaires avec "help wanted")
-- **Langages** : un ou plusieurs parmi les langages supportés
+- **Niveau** : `first_contribution`, `some_contributions` (recherches « good first issue ») ou `experienced` (projets populaires « help wanted »). Les anciennes valeurs `beginner` et `expert` ont été migrées vers `first_contribution` et `experienced`.
+- **Façons de contribuer**, **langages** et **sujets** : une liste vide signifie « pas de préférence ».
 
-Elles servent de filtres par défaut à sa première visite du catalogue.
+Elles fixent les filtres par défaut du catalogue : langages, niveau de recherche, tri « Plus accueillants » pour une première contribution, et sujets favoris en tête des raccourcis. Elles sont exposées par `shared/preferences.ts` aux autres fonctionnalités (par exemple un fil d’issues filtré par niveau, langages et étiquettes associées aux façons de contribuer).
+
+### Score d’accueil des débutants
+
+Chaque projet reçoit un score sur 100 qui mesure sa capacité à accueillir une première contribution. Il est calculé à chaque enrichissement des détails du projet (cache de 12 heures) à partir de cinq signaux GitHub :
+
+| Signal                             | Poids | Plein score                                              |
+| ---------------------------------- | ----- | -------------------------------------------------------- |
+| Délai de première réponse          | 25    | médiane ≤ 24 h, 0 au-delà de 30 jours (échelle log)      |
+| PR externes fusionnées             | 20    | ≥ 80 % (au moins 3 PR tranchées)                         |
+| Issues « good first issue » libres | 20    | ≥ 5 non assignées                                        |
+| Guide du contributeur              | 15    | CONTRIBUTING, modèles d’issue et de PR, code de conduite |
+| Activité des mainteneurs           | 20    | dernier commit ou PR fusionnée ≤ 14 jours, 0 après un an |
+
+Les contributions « externes » excluent le propriétaire, les membres, les collaborateurs et les bots. Un signal indisponible n’est pas compté comme nul : le score est recalculé sur les signaux connus et marqué comme estimation (`partial`, `coverage`). En dessous de 50 % du poids connu, aucun score n’est affiché. Un dépôt archivé vaut 0 et disparaît du catalogue.
+
+Le score apparaît sur les cartes du catalogue, dans la colonne latérale de la fiche projet, avec le détail de chaque signal dans l’onglet « Contribuer ». Le catalogue peut être trié par score (`sort=welcome`) et filtré par score minimal (`score=50`).
 
 ### Vitrine (`GET /`)
 
@@ -40,9 +67,26 @@ Catalogue public paginé (24 projets par page, défilement infini). Filtres en q
 - `topic` — sujet GitHub exact ; les sujets les plus fréquents pour les filtres courants sont proposés en raccourci
 - `language` — liste séparée par des virgules
 - `level` — `all`, `beginner` ou `expert`
-- `sort` — `stars` (défaut), `recent` (dernier push) ou `issues`
+- `sort` — `stars` (défaut), `recent` (dernier push), `issues` ou `welcome` (score d’accueil)
+- `score` — score d’accueil minimal (1 à 100)
 
-Sans paramètre, les préférences du lecteur connecté s’appliquent. La première page rafraîchit les recherches GitHub expirées pour les langages sélectionnés.
+Sans paramètre, les préférences du lecteur connecté s’appliquent. Les dépôts archivés sont exclus. La première page rafraîchit les recherches GitHub expirées pour les langages sélectionnés.
+
+### Issues pour moi (`GET /issues`)
+
+Fil public d’issues ouvertes, tous dépôts confondus (24 par page, défilement infini) : l’action concrète de contribution est de choisir une issue. Chaque carte affiche le titre (lien vers l’issue GitHub), le dépôt (lien vers la page projet Gitify), son langage, l’ancienneté, le nombre de commentaires, les étoiles du dépôt, les labels et les signaux « good first issue », « help wanted », non assignée et sans PR liée.
+
+Filtres en query string :
+
+- `q` — recherche dans le titre de l’issue, le nom et le propriétaire du dépôt
+- `language` — liste séparée par des virgules
+- `label` — `good-first-issue`, `help-wanted` ou `documentation` (toutes par défaut)
+- `unassigned` — actif par défaut ; `unassigned=0` affiche aussi les issues déjà assignées
+- `sort` — `recent` (défaut, plus récentes), `comments` (moins commentées d’abord) ou `stars` (dépôts les plus étoilés)
+
+Sans paramètre, les préférences du lecteur connecté s’appliquent : ses langages, et `good-first-issue` pour le niveau débutant ou `help-wanted` pour le niveau confirmé. Les mêmes règles d’accès que le catalogue s’appliquent (token serveur pour les visiteurs, quota personnel pour les utilisateurs connectés).
+
+Les issues proviennent de la recherche GraphQL GitHub (`is:issue is:open is:public archived:false -linked:pr language:X label:"…"`), une recherche par couple langage × type. Les issues des dépôts archivés ou privés et celles déjà liées à une pull request ouverte sont écartées. Chaque recherche est mise en cache 6 heures ; un échec GitHub conserve l’instantané précédent. Les dépôts découverts ainsi sont enregistrés comme projets, pour que leur page Gitify soit accessible, sans entrer dans le catalogue `/explore`.
 
 ### Favoris
 
@@ -68,4 +112,6 @@ Ces données proviennent de l’API GraphQL GitHub (statistiques, issues, PR, la
 
 ## Langages supportés
 
-TypeScript, JavaScript, Python, Rust, Go, C++, PHP, Java, Kotlin, Swift, Dart, Ruby
+La liste de référence est `languageCatalog` dans `shared/preferences.ts` : JavaScript, TypeScript, Python, Java, C, C++, C#, Go, Rust, PHP, Ruby, Swift, Kotlin, Dart, Objective-C, Scala, Elixir, Erlang, Haskell, OCaml, Clojure, Zig, Lua, Shell, Perl, R, Julia, Nix, HTML, CSS, Vue, Svelte.
+
+La vitrine de l’accueil suit un sous-ensemble de 12 langages (`config/gitify.ts`).

@@ -1,6 +1,7 @@
 import type {
   GitHubAdapter,
   GitHubContributor,
+  GitHubIssue,
   GitHubRepo,
   ProjectDetails,
   RepositoryInsightsResult,
@@ -8,16 +9,27 @@ import type {
 import type {
   CommunityFiles,
   Difficulty,
+  IssueKind,
   RepositoryIssue,
   RepositoryPullRequest,
 } from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
+import {
+  type ActivitySampleItem,
+  summarizeContributorActivity,
+} from "#services/github/contributor_activity";
+import { issueKindLabel } from "#shared/issues";
 export type { GitHubRepo, ProjectDetails } from "#services/github/github_adapter";
 
 const ISSUE_FIELDS = `number title url createdAt
   author { login avatarUrl }
   comments { totalCount }
   labels(first: 6) { nodes { name color } }`;
+
+// Who answered outside contributors, and when: comments and reviews carry the association.
+const ACTIVITY_FIELDS = `createdAt state authorAssociation
+  author { __typename }
+  comments(first: 10) { nodes { createdAt authorAssociation } }`;
 
 const contributingAliases = gitifyConfig.github.insights.contributingPaths
   .map(
@@ -26,7 +38,7 @@ const contributingAliases = gitifyConfig.github.insights.contributingPaths
   )
   .join("\n");
 
-const INSIGHTS_QUERY = `query RepositoryInsights($owner: String!, $name: String!, $issues: Int!, $pullRequests: Int!, $languages: Int!) {
+const INSIGHTS_QUERY = `query RepositoryInsights($owner: String!, $name: String!, $issues: Int!, $pullRequests: Int!, $languages: Int!, $activity: Int!) {
   repository(owner: $owner, name: $name) {
     createdAt pushedAt homepageUrl isArchived diskUsage stargazerCount forkCount
     owner { avatarUrl }
@@ -51,7 +63,16 @@ const INSIGHTS_QUERY = `query RepositoryInsights($owner: String!, $name: String!
       nodes { ${ISSUE_FIELDS} }
     }
     beginnerIssues: issues(first: $issues, states: OPEN, labels: ["good first issue"], orderBy: { field: CREATED_AT, direction: DESC }) {
-      nodes { ${ISSUE_FIELDS} }
+      nodes { ${ISSUE_FIELDS} assignees { totalCount } }
+    }
+    activityIssues: issues(first: $activity, orderBy: { field: CREATED_AT, direction: DESC }) {
+      nodes { ${ACTIVITY_FIELDS} }
+    }
+    activityPullRequests: pullRequests(first: $activity, orderBy: { field: CREATED_AT, direction: DESC }) {
+      nodes { ${ACTIVITY_FIELDS} mergedAt reviews(first: 5) { nodes { createdAt authorAssociation } } }
+    }
+    lastMergedPullRequest: pullRequests(first: 1, states: MERGED, orderBy: { field: UPDATED_AT, direction: DESC }) {
+      nodes { mergedAt }
     }
     recentPullRequests: pullRequests(first: $pullRequests, states: OPEN, orderBy: { field: CREATED_AT, direction: DESC }) {
       nodes { isDraft ${ISSUE_FIELDS} }
@@ -59,6 +80,69 @@ const INSIGHTS_QUERY = `query RepositoryInsights($owner: String!, $name: String!
     ${contributingAliases}
   }
 }`;
+
+// Search results are a union; non-issue nodes come back as empty objects.
+const ISSUE_SEARCH_QUERY = `query IssueSearch($query: String!, $first: Int!, $labels: Int!, $topics: Int!) {
+  search(type: ISSUE, query: $query, first: $first) {
+    nodes {
+      ... on Issue {
+        databaseId number title url createdAt
+        comments { totalCount }
+        assignees { totalCount }
+        closedByPullRequestsReferences(first: 1, includeClosedPrs: false) { totalCount }
+        labels(first: $labels) { nodes { name color } }
+        repository {
+          databaseId name url description homepageUrl pushedAt createdAt
+          isArchived isPrivate stargazerCount forkCount
+          owner { login avatarUrl }
+          primaryLanguage { name }
+          licenseInfo { spdxId name }
+          repositoryTopics(first: $topics) { nodes { topic { name } } }
+          issues(states: OPEN) { totalCount }
+          pullRequests(states: OPEN) { totalCount }
+        }
+      }
+    }
+  }
+}`;
+
+type GraphQLSearchIssue = {
+  databaseId?: number;
+  number: number;
+  title: string;
+  url: string;
+  createdAt: string;
+  comments: { totalCount: number };
+  assignees: { totalCount: number };
+  closedByPullRequestsReferences: { totalCount: number } | null;
+  labels: { nodes: { name: string; color: string }[] };
+  repository: {
+    databaseId: number;
+    name: string;
+    url: string;
+    description: string | null;
+    homepageUrl: string | null;
+    pushedAt: string | null;
+    createdAt: string | null;
+    isArchived: boolean;
+    isPrivate: boolean;
+    stargazerCount: number;
+    forkCount: number;
+    owner: { login: string; avatarUrl: string | null };
+    primaryLanguage: { name: string } | null;
+    licenseInfo: { spdxId: string | null; name: string } | null;
+    repositoryTopics: { nodes: { topic: { name: string } }[] };
+    issues: { totalCount: number };
+    pullRequests: { totalCount: number };
+  };
+};
+
+function licenseName(license: { spdxId: string | null; name: string } | null): string | null {
+  if (!license) {
+    return null;
+  }
+  return license.spdxId && license.spdxId !== "NOASSERTION" ? license.spdxId : license.name;
+}
 
 type GraphQLIssue = {
   number: number;
@@ -69,6 +153,19 @@ type GraphQLIssue = {
   comments: { totalCount: number };
   labels: { nodes: { name: string; color: string }[] };
   isDraft?: boolean;
+  assignees?: { totalCount: number };
+};
+
+type GraphQLReply = { createdAt: string; authorAssociation: string };
+
+type GraphQLActivityItem = {
+  createdAt: string;
+  state: "OPEN" | "CLOSED" | "MERGED";
+  authorAssociation: string;
+  author: { __typename: string } | null;
+  comments: { nodes: GraphQLReply[] };
+  mergedAt?: string | null;
+  reviews?: { nodes: GraphQLReply[] };
 };
 
 type GraphQLRepository = {
@@ -98,6 +195,10 @@ type GraphQLRepository = {
   recentIssues: { nodes: GraphQLIssue[] };
   beginnerIssues: { nodes: GraphQLIssue[] };
   recentPullRequests: { nodes: GraphQLIssue[] };
+  // Optional so a partial answer degrades the newcomer score instead of failing the snapshot.
+  activityIssues?: { nodes: GraphQLActivityItem[] };
+  activityPullRequests?: { nodes: GraphQLActivityItem[] };
+  lastMergedPullRequest?: { nodes: { mergedAt: string | null }[] };
 } & Record<`contributing${number}`, { text?: string | null } | null>;
 
 function toIssue(issue: GraphQLIssue): RepositoryIssue {
@@ -116,10 +217,23 @@ function toPullRequest(pullRequest: GraphQLIssue): RepositoryPullRequest {
   return { ...toIssue(pullRequest), isDraft: pullRequest.isDraft ?? false };
 }
 
+function toActivityItem(kind: "issue" | "pull", item: GraphQLActivityItem): ActivitySampleItem {
+  return {
+    kind,
+    createdAt: item.createdAt,
+    authorAssociation: item.authorAssociation,
+    automated: !item.author || item.author.__typename === "Bot",
+    state: item.state,
+    mergedAt: item.mergedAt ?? null,
+    replies: [...item.comments.nodes, ...(item.reviews?.nodes ?? [])],
+  };
+}
+
 export class GitHubApiClient implements GitHubAdapter {
   constructor(
     private readonly request: typeof fetch = globalThis.fetch,
     private readonly timeoutMs = 10_000,
+    private readonly now: () => Date = () => new Date(),
   ) {}
 
   buildHeaders(token: string): Record<string, string> {
@@ -156,6 +270,79 @@ export class GitHubApiClient implements GitHubAdapter {
       throw new Error("Invalid GitHub response: repositories");
     }
     return data.items as GitHubRepo[];
+  }
+
+  /** Open public issues of active repositories, without a pull request that already closes them. */
+  buildIssueSearchQuery(language: string, kind: IssueKind): string {
+    return `is:issue is:open is:public archived:false -linked:pr language:${language} label:"${issueKindLabel(kind)}" sort:created-desc`;
+  }
+
+  async searchIssues(
+    language: string,
+    kind: IssueKind,
+    token: string,
+    perPage: number = gitifyConfig.github.issues.searchPerPage,
+  ): Promise<GitHubIssue[]> {
+    const result = await this.requestJson(
+      gitifyConfig.github.graphqlUrl,
+      this.buildHeaders(token),
+      {
+        body: {
+          query: ISSUE_SEARCH_QUERY,
+          variables: {
+            query: this.buildIssueSearchQuery(language, kind),
+            first: perPage,
+            labels: gitifyConfig.github.issues.labelsLimit,
+            topics: gitifyConfig.github.issues.topicsLimit,
+          },
+        },
+      },
+    );
+    const payload = result!.data as {
+      data?: { search?: { nodes?: unknown } | null };
+      errors?: { message?: string }[];
+    };
+    const nodes = payload?.data?.search?.nodes;
+    if (!Array.isArray(nodes)) {
+      const reason = payload?.errors?.[0]?.message ?? "missing search";
+      throw new Error(`Invalid GitHub response: issues (${reason})`);
+    }
+
+    return (nodes as GraphQLSearchIssue[])
+      .filter((node) => typeof node?.databaseId === "number" && node.repository)
+      .map((issue) => {
+        const repo = issue.repository;
+        return {
+          id: issue.databaseId!,
+          number: issue.number,
+          title: issue.title,
+          url: issue.url,
+          createdAt: issue.createdAt,
+          comments: issue.comments.totalCount,
+          assignees: issue.assignees.totalCount,
+          linkedPullRequests: issue.closedByPullRequestsReferences?.totalCount ?? 0,
+          labels: issue.labels.nodes.map((label) => ({ name: label.name, color: label.color })),
+          repository: {
+            id: repo.databaseId,
+            name: repo.name,
+            ownerLogin: repo.owner.login,
+            ownerAvatarUrl: repo.owner.avatarUrl,
+            url: repo.url,
+            description: repo.description,
+            stars: repo.stargazerCount,
+            forksCount: repo.forkCount,
+            openIssuesCount: repo.issues.totalCount + repo.pullRequests.totalCount,
+            language: repo.primaryLanguage?.name ?? null,
+            topics: repo.repositoryTopics.nodes.map((node) => node.topic.name),
+            homepageUrl: repo.homepageUrl || null,
+            license: licenseName(repo.licenseInfo),
+            pushedAt: repo.pushedAt,
+            createdAt: repo.createdAt,
+            isArchived: repo.isArchived,
+            isPrivate: repo.isPrivate,
+          },
+        };
+      });
   }
 
   async getProjectDetails(
@@ -265,6 +452,7 @@ export class GitHubApiClient implements GitHubAdapter {
             issues: limits.issuesLimit,
             pullRequests: limits.pullRequestsLimit,
             languages: limits.languagesLimit,
+            activity: limits.activitySampleSize,
           },
         },
       }),
@@ -316,16 +504,28 @@ export class GitHubApiClient implements GitHubAdapter {
       (await this.fetchCommunityFile(files.contributing, headers));
 
     const target = repo.defaultBranchRef?.target;
+    const contributorActivity =
+      repo.activityIssues && repo.activityPullRequests
+        ? summarizeContributorActivity(
+            [
+              ...repo.activityIssues.nodes.map((item) => toActivityItem("issue", item)),
+              ...repo.activityPullRequests.nodes.map((item) => toActivityItem("pull", item)),
+            ],
+            {
+              lastMergedPullRequestAt: repo.lastMergedPullRequest?.nodes[0]?.mergedAt ?? null,
+              unassignedGoodFirstIssues: repo.beginnerIssues.nodes.filter(
+                (issue) => issue.assignees?.totalCount === 0,
+              ).length,
+            },
+            this.now(),
+          )
+        : null;
     return {
       contributing,
       metadata: {
         ownerAvatarUrl: repo.owner.avatarUrl,
         homepageUrl: repo.homepageUrl || null,
-        license: repo.licenseInfo
-          ? repo.licenseInfo.spdxId && repo.licenseInfo.spdxId !== "NOASSERTION"
-            ? repo.licenseInfo.spdxId
-            : repo.licenseInfo.name
-          : null,
+        license: licenseName(repo.licenseInfo),
         pushedAt: repo.pushedAt,
         createdAt: repo.createdAt,
         stars: repo.stargazerCount,
@@ -356,8 +556,23 @@ export class GitHubApiClient implements GitHubAdapter {
         issues: repo.recentIssues.nodes.map(toIssue),
         beginnerIssues: repo.beginnerIssues.nodes.map(toIssue),
         pullRequests: repo.recentPullRequests.nodes.map(toPullRequest),
+        contributorActivity,
       },
     };
+  }
+
+  /** Primary languages of the user's own repositories, most recently pushed first. */
+  async listUserRepositoryLanguages(token: string): Promise<(string | null)[]> {
+    const result = await this.requestJson(
+      `${gitifyConfig.github.userReposUrl}?affiliation=owner&sort=pushed&per_page=${gitifyConfig.github.userRepositoriesLimit}`,
+      this.buildHeaders(token),
+    );
+    if (!Array.isArray(result!.data)) {
+      throw new Error("Invalid GitHub response: user repositories");
+    }
+    return (result!.data as { language?: unknown; fork?: unknown }[])
+      .filter((repo) => repo && repo.fork !== true)
+      .map((repo) => (typeof repo.language === "string" ? repo.language : null));
   }
 
   /**

@@ -8,7 +8,7 @@ const steps = [
     number: "01",
     title: "Dis-nous où tu en es",
     description:
-      "Choisis ton niveau et tes langages. Débutant : des projets avec des good first issues. Confirmé : des projets populaires qui cherchent de l’aide.",
+      "Ton niveau, ce que tu aimes faire et tes langages. Gitify devine tes langages depuis ton profil GitHub : tu n’as qu’à ajuster.",
     illustration: IllustrationLanguages,
   },
   {

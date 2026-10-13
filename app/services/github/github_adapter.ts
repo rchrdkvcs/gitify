@@ -1,4 +1,4 @@
-import type { Difficulty, RepositoryInsights } from "#shared/types/index";
+import type { Difficulty, IssueKind, RepositoryInsights } from "#shared/types/index";
 
 export interface GitHubContributor {
   id: number;
@@ -50,7 +50,49 @@ export interface RepositoryInsightsResult {
   };
 }
 
+/** Repository fields returned with each issue search result. */
+export interface GitHubIssueRepository {
+  id: number;
+  name: string;
+  ownerLogin: string;
+  ownerAvatarUrl: string | null;
+  url: string;
+  description: string | null;
+  stars: number;
+  forksCount: number;
+  /** Open issues plus open pull requests, like the REST `open_issues_count`. */
+  openIssuesCount: number;
+  language: string | null;
+  topics: string[];
+  homepageUrl: string | null;
+  license: string | null;
+  pushedAt: string | null;
+  createdAt: string | null;
+  isArchived: boolean;
+  isPrivate: boolean;
+}
+
+export interface GitHubIssue {
+  id: number;
+  number: number;
+  title: string;
+  url: string;
+  createdAt: string;
+  comments: number;
+  assignees: number;
+  /** Open pull requests that will close the issue (Development sidebar or closing keyword). */
+  linkedPullRequests: number;
+  labels: { name: string; color: string }[];
+  repository: GitHubIssueRepository;
+}
+
 export interface GitHubAdapter {
+  searchIssues(
+    language: string,
+    kind: IssueKind,
+    token: string,
+    perPage?: number,
+  ): Promise<GitHubIssue[]>;
   searchRepositories(
     language: string,
     difficulty: Difficulty,
@@ -63,4 +105,6 @@ export interface GitHubAdapter {
     repoName: string,
     token: string,
   ): Promise<RepositoryInsightsResult>;
+  /** Primary language of each repository owned by the token's user (forks excluded). */
+  listUserRepositoryLanguages(token: string): Promise<(string | null)[]>;
 }

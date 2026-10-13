@@ -8,6 +8,7 @@ import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
 import GitHubApiClient from "#services/github/github_api_client";
+import { computeNewcomerScore, newcomerScoreInputFromInsights } from "#shared/newcomer_score";
 
 export type SearchCriteria = {
   language: string;
@@ -25,8 +26,21 @@ export class SearchRetryDeferredError extends Error {
   }
 }
 
-// Shared by every synchronization instance; permits are taken before reserving a DB connection.
+// Shared by every synchronization instance, repository and issue searches alike;
+// permits are taken before reserving a DB connection.
 let activeSearches = 0;
+
+export function tryAcquireSearchPermit(): boolean {
+  if (activeSearches >= gitifyConfig.cache.maxConcurrentSearches) {
+    return false;
+  }
+  activeSearches++;
+  return true;
+}
+
+export function releaseSearchPermit(): void {
+  activeSearches--;
+}
 
 export class GitHubSyncService {
   constructor(
@@ -80,10 +94,9 @@ export class GitHubSyncService {
       return { status: "fresh" };
     }
     this.assertRetryAllowed(cache);
-    if (activeSearches >= gitifyConfig.cache.maxConcurrentSearches) {
+    if (!tryAcquireSearchPermit()) {
       return { status: "pending" };
     }
-    activeSearches++;
     try {
       return await db.transaction(async (trx) => {
         const lock = await trx.rawQuery(
@@ -108,7 +121,7 @@ export class GitHubSyncService {
       }
       throw error;
     } finally {
-      activeSearches--;
+      releaseSearchPermit();
     }
   }
 
@@ -218,6 +231,12 @@ export class GitHubSyncService {
       this.github.getRepositoryInsights(project.ownerName, project.name, token),
     ]);
 
+    // Scored with the snapshot it describes, so both always refresh together.
+    const newcomerScore = computeNewcomerScore(
+      newcomerScoreInputFromInsights(insights, metadata.pushedAt),
+      this.now().toJSDate(),
+    );
+
     await db.transaction(async (trx) => {
       // Keep the caller's model untouched until the entire snapshot commits.
       const stored = await Project.query({ client: trx })
@@ -230,6 +249,8 @@ export class GitHubSyncService {
         latestRelease: details.latestRelease,
         totalContributorsCount: details.totalContributorsCount,
         insights,
+        newcomerScore: newcomerScore.score,
+        newcomerScoreDetails: newcomerScore,
         contributing,
         stars: metadata.stars,
         forksCount: metadata.forksCount,

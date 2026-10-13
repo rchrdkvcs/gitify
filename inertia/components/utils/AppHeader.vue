@@ -6,6 +6,7 @@ const isLoading = ref(false);
 
 const navigationItems = computed<NavigationMenuItem[]>(() => [
   { label: "Explorer", to: "/explore" },
+  { label: "Issues", to: "/issues" },
   ...(authStore.isAuthenticated ? [{ label: "Favoris", to: "/favorites" }] : []),
 ]);
 

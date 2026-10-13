@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TabsItem } from "@nuxt/ui";
 import type { ProjectDetail } from "@shared/types/index";
-import { Head } from "@inertiajs/vue3";
+import { Head, usePage } from "@inertiajs/vue3";
 import type { ProjectTab } from "~/types/project";
 
 const props = defineProps<{ project: ProjectDetail }>();
@@ -11,7 +11,9 @@ const insights = computed(() => props.project.insights);
 type Tab = ProjectTab;
 const tabIds: Tab[] = ["overview", "contributing", "issues", "pulls", "contributors", "activity"];
 
-const initialTab = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+// Read the tab from the page URL so the server render and hydration agree.
+const query = usePage().url.split("?")[1] ?? "";
+const initialTab = new URLSearchParams(query).get("tab") as Tab | null;
 const activeTab = ref<Tab>(initialTab && tabIds.includes(initialTab) ? initialTab : "overview");
 
 // Tabs are client-side panels; keep the choice shareable without a server visit.
@@ -59,6 +61,11 @@ const tabs = computed<TabsItem[]>(() => [
   },
   { label: "Activité", value: "activity", icon: "lucide:chart-column" },
 ]);
+
+function explainScore() {
+  activeTab.value = "contributing";
+  nextTick(() => document.getElementById("newcomer-breakdown")?.scrollIntoView({ block: "start" }));
+}
 
 const issueFilter = ref<"recent" | "beginner">("recent");
 const issues = computed(() =>
@@ -188,6 +195,8 @@ const communityChecklist = computed(() => {
           </p>
 
           <ProjectGettingStarted :repository-url="project.repositoryUrl" :name="project.name" />
+
+          <ProjectNewcomerBreakdown :score="project.newcomerScoreDetails" />
 
           <section
             v-if="communityChecklist.length"
@@ -336,7 +345,7 @@ const communityChecklist = computed(() => {
         class="order-first border-b border-default lg:order-none lg:border-b-0"
       >
         <div class="lg:sticky lg:top-(--ui-header-height)">
-          <ProjectSidebar :project="project" />
+          <ProjectSidebar :project="project" @explain-score="explainScore" />
         </div>
       </aside>
     </div>

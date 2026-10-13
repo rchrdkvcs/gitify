@@ -10,6 +10,9 @@ export default class UserTransformer extends BaseTransformer<User> {
       "avatarUrl",
       "isVerified",
       "preferences",
+      "onboardedAt",
+      "onboardingSkippedAt",
+      "onboardingStep",
       "createdAt",
       "updatedAt",
     ]);

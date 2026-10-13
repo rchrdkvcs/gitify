@@ -70,6 +70,91 @@ export class GithubFetchCacheSchema extends BaseModel {
   declare updatedAt: DateTime | null;
 }
 
+export class IssueSearchCacheSchema extends BaseModel {
+  static $columns = [
+    "createdAt",
+    "fetchedAt",
+    "id",
+    "kind",
+    "language",
+    "retryAfter",
+    "totalStored",
+    "updatedAt",
+  ] as const;
+  $columns = IssueSearchCacheSchema.$columns;
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null;
+  @column.dateTime()
+  declare fetchedAt: DateTime | null;
+  @column({ isPrimary: true })
+  declare id: string;
+  @column()
+  declare kind: string;
+  @column()
+  declare language: string;
+  @column.dateTime()
+  declare retryAfter: DateTime | null;
+  @column()
+  declare totalStored: number;
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null;
+}
+
+export class IssueSearchMembershipSchema extends BaseModel {
+  static $columns = ["id", "issueId", "kind", "language"] as const;
+  $columns = IssueSearchMembershipSchema.$columns;
+  @column({ isPrimary: true })
+  declare id: string;
+  @column()
+  declare issueId: string;
+  @column()
+  declare kind: string;
+  @column()
+  declare language: string;
+}
+
+export class ProjectIssueSchema extends BaseModel {
+  static $columns = [
+    "assigneesCount",
+    "commentsCount",
+    "createdAt",
+    "githubCreatedAt",
+    "githubIssueId",
+    "id",
+    "labels",
+    "number",
+    "projectId",
+    "title",
+    "updatedAt",
+    "url",
+  ] as const;
+  $columns = ProjectIssueSchema.$columns;
+  @column()
+  declare assigneesCount: number;
+  @column()
+  declare commentsCount: number;
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null;
+  @column.dateTime()
+  declare githubCreatedAt: DateTime | null;
+  @column()
+  declare githubIssueId: bigint | number;
+  @column({ isPrimary: true })
+  declare id: string;
+  @column()
+  declare labels: any;
+  @column()
+  declare number: number;
+  @column()
+  declare projectId: string;
+  @column()
+  declare title: string;
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null;
+  @column()
+  declare url: string;
+}
+
 export class ProjectSearchMembershipSchema extends BaseModel {
   static $columns = ["difficulty", "id", "language", "projectId"] as const;
   $columns = ProjectSearchMembershipSchema.$columns;
@@ -101,6 +186,8 @@ export class ProjectSchema extends BaseModel {
     "latestRelease",
     "license",
     "name",
+    "newcomerScore",
+    "newcomerScoreDetails",
     "openIssuesCount",
     "ownerAvatarUrl",
     "ownerName",
@@ -145,6 +232,10 @@ export class ProjectSchema extends BaseModel {
   declare license: string | null;
   @column()
   declare name: string;
+  @column()
+  declare newcomerScore: number | null;
+  @column()
+  declare newcomerScoreDetails: any | null;
   @column()
   declare openIssuesCount: number;
   @column()
@@ -192,6 +283,9 @@ export class UserSchema extends BaseModel {
     "id",
     "isVerified",
     "name",
+    "onboardedAt",
+    "onboardingSkippedAt",
+    "onboardingStep",
     "preferences",
     "updatedAt",
   ] as const;
@@ -212,6 +306,12 @@ export class UserSchema extends BaseModel {
   declare isVerified: boolean | null;
   @column()
   declare name: string | null;
+  @column.dateTime()
+  declare onboardedAt: DateTime | null;
+  @column.dateTime()
+  declare onboardingSkippedAt: DateTime | null;
+  @column()
+  declare onboardingStep: number;
   @column()
   declare preferences: any | null;
   @column.dateTime({ autoCreate: true, autoUpdate: true })

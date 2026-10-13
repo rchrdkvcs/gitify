@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Project, ShowcaseProject } from "@shared/types/index";
+import { newcomerScoreTier } from "@shared/newcomer_score";
 
 const props = defineProps<{
   project: Project | ShowcaseProject;
@@ -12,6 +13,24 @@ const emit = defineEmits<{
 const difficulty = computed(() =>
   "difficulty" in props.project ? props.project.difficulty : null,
 );
+
+// Showcase cards carry no score; catalogue cards show "not rated yet" instead.
+const welcome = computed(() =>
+  "newcomerScore" in props.project ? (props.project.newcomerScore ?? null) : undefined,
+);
+const welcomeLabel = computed(() => {
+  const value = welcome.value;
+  if (!value || value.score === null) return "Non évalué";
+  if (value.archived) return "Archivé";
+  return `${value.partial ? "≈ " : ""}${value.score}/100`;
+});
+const welcomeTitle = computed(() => {
+  const value = welcome.value;
+  if (!value || value.score === null)
+    return "Score calculé à la première ouverture de la fiche du projet.";
+  const tier = newcomerScoreTier(value.score).label;
+  return value.partial ? `${tier}, estimation sur une partie des signaux` : tier;
+});
 
 const stats = computed(() => {
   const project = props.project;
@@ -104,6 +123,21 @@ const { isFavorite, pending, toggleFavorite } = useFavorite(
     </div>
 
     <dl class="mt-auto flex flex-col gap-1.5 border-t border-default pt-4 text-sm">
+      <div v-if="welcome !== undefined" class="flex items-center gap-2" :title="welcomeTitle">
+        <dt class="text-muted">Accueil</dt>
+        <span
+          class="mb-1.5 flex-1 self-end border-b border-dotted border-accented"
+          aria-hidden="true"
+        />
+        <NewcomerScoreMeter v-if="welcome?.score != null" :score="welcome.score" />
+        <dd
+          class="font-mono text-xs tabular-nums"
+          :class="welcome?.score != null ? 'text-highlighted' : 'text-dimmed'"
+        >
+          {{ welcomeLabel }}
+          <span class="sr-only">, {{ welcomeTitle }}</span>
+        </dd>
+      </div>
       <div v-for="stat in stats" :key="stat.label" class="flex items-baseline gap-2">
         <dt class="text-muted">{{ stat.label }}</dt>
         <span class="flex-1 border-b border-dotted border-accented" aria-hidden="true" />

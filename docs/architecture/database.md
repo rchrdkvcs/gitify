@@ -10,18 +10,23 @@ PostgreSQL (18 dans Docker Compose). Tous les modèles utilisent des **ULID** co
 
 ### `users`
 
-| Colonne               | Type                | Description                                                                                            |
-| --------------------- | ------------------- | ------------------------------------------------------------------------------------------------------ |
-| `id`                  | `string` (ULID, PK) | Identifiant interne                                                                                    |
-| `email`               | `string`            | Adresse e-mail GitHub (unique) ; change seulement vers un email vérifié libre                          |
-| `github_user_id`      | `string \| null`    | Identité GitHub stable et unique ; null pour un compte historique jusqu'à sa liaison par email vérifié |
-| `name`                | `string \| null`    | Nom d'affichage (login GitHub si absent)                                                               |
-| `avatar_url`          | `string \| null`    | URL de l'avatar GitHub                                                                                 |
-| `github_access_token` | `string \| null`    | Token OAuth courant — **jamais exposé en réponse API**                                                 |
-| `is_verified`         | `boolean \| null`   | État de vérification e-mail GitHub                                                                     |
-| `preferences`         | `jsonb \| null`     | `{ difficulty: "beginner"\|"expert", languages: string[] }`                                            |
-| `created_at`          | `timestamp`         |                                                                                                        |
-| `updated_at`          | `timestamp`         |                                                                                                        |
+| Colonne                 | Type                | Description                                                                                            |
+| ----------------------- | ------------------- | ------------------------------------------------------------------------------------------------------ |
+| `id`                    | `string` (ULID, PK) | Identifiant interne                                                                                    |
+| `email`                 | `string`            | Adresse e-mail GitHub (unique) ; change seulement vers un email vérifié libre                          |
+| `github_user_id`        | `string \| null`    | Identité GitHub stable et unique ; null pour un compte historique jusqu'à sa liaison par email vérifié |
+| `name`                  | `string \| null`    | Nom d'affichage (login GitHub si absent)                                                               |
+| `avatar_url`            | `string \| null`    | URL de l'avatar GitHub                                                                                 |
+| `github_access_token`   | `string \| null`    | Token OAuth courant — **jamais exposé en réponse API**                                                 |
+| `is_verified`           | `boolean \| null`   | État de vérification e-mail GitHub                                                                     |
+| `preferences`           | `jsonb \| null`     | `{ level, languages, contributionTypes, topics }` (voir ci-dessous)                                    |
+| `onboarded_at`          | `timestamp \| null` | Fin du parcours guidé ; null tant qu'il n'est pas terminé, y compris pour les comptes historiques      |
+| `onboarding_skipped_at` | `timestamp \| null` | Dernier « Plus tard » : la connexion ne redirige plus vers l'onboarding                                |
+| `onboarding_step`       | `smallint`          | Dernière question confirmée (0 à 4), pour reprendre le parcours                                        |
+| `created_at`            | `timestamp`         |                                                                                                        |
+| `updated_at`            | `timestamp`         |                                                                                                        |
+
+`preferences.level` vaut `first_contribution`, `some_contributions` ou `experienced`. Les trois listes contiennent des identifiants canoniques (`shared/preferences.ts`) ; vide signifie « pas de préférence ». La migration `1791800000007` convertit l'ancien format `{ difficulty, languages }` (`beginner` → `first_contribution`, `expert` → `experienced`, `contributionTypes: ["code"]`) et le rétablit au rollback. Le modèle `User` normalise aussi les valeurs lues, quel que soit leur format.
 
 ---
 
@@ -46,6 +51,9 @@ PostgreSQL (18 dans Docker Compose). Tous les modèles utilisent des **ULID** co
 | `latest_release`           | `string \| null`    | Tag de la dernière release GitHub (`v1.2.3`)                                            |
 | `total_contributors_count` | `integer \| null`   | Total inféré via le header `Link` de l'API GitHub                                       |
 | `details_fetched_at`       | `timestamp \| null` | Horodatage du dernier enrichissement — null = jamais chargé                             |
+| `insights`                 | `jsonb \| null`     | Instantané GitHub de la fiche, dont `contributorActivity` pour le score d'accueil       |
+| `newcomer_score`           | `smallint \| null`  | Score d'accueil des débutants (0–100), indexé pour le tri ; null = non évalué           |
+| `newcomer_score_details`   | `jsonb \| null`     | Détail du score : signaux, poids, couverture, `partial`, `archived`, date de calcul     |
 | `created_at`               | `timestamp`         |                                                                                         |
 | `updated_at`               | `timestamp`         |                                                                                         |
 
@@ -97,6 +105,44 @@ Trace les appels GitHub Search API par couple `(language, difficulty)` pour évi
 | `updated_at`   | `timestamp`         |                                                                         |
 
 ---
+
+### `project_issues`
+
+Issues ouvertes retenues par le fil `/issues`. Chaque issue référence le dépôt enregistré dans `projects` ; un dépôt découvert par une issue est créé sans appartenance de recherche, il reste hors du catalogue mais sa page projet existe.
+
+| Colonne             | Type                | Description                                     |
+| ------------------- | ------------------- | ----------------------------------------------- |
+| `id`                | `string` (ULID, PK) |                                                 |
+| `project_id`        | `string` (FK)       | Référence `projects.id`, suppression cascade    |
+| `github_issue_id`   | `bigint`            | ID GitHub de l'issue — **clé d'upsert**, unique |
+| `number`            | `integer`           | Numéro de l'issue dans son dépôt                |
+| `title`             | `text`              |                                                 |
+| `url`               | `string`            | URL GitHub de l'issue                           |
+| `labels`            | `jsonb`             | `[{ name, color }]`, 10 premiers labels         |
+| `comments_count`    | `integer`           |                                                 |
+| `assignees_count`   | `integer`           | 0 = non assignée (filtre par défaut)            |
+| `github_created_at` | `timestamp \| null` | Date d'ouverture sur GitHub, tri par défaut     |
+| `created_at`        | `timestamp`         |                                                 |
+| `updated_at`        | `timestamp`         |                                                 |
+
+### `issue_search_memberships`
+
+Associe une issue à un critère `(language, kind)` ; `kind` vaut `good-first-issue`, `help-wanted` ou `documentation`. `(language, kind, issue_id)` est unique, `issue_id` référence `project_issues.id` avec suppression en cascade. Une recherche réussie remplace ses appartenances dans une transaction, puis supprime les issues qui n'en ont plus.
+
+### `issue_search_caches`
+
+Fraîcheur des recherches d'issues, sur le modèle de `github_fetch_caches`, unique par `(language, kind)`.
+
+| Colonne        | Type                | Description                                            |
+| -------------- | ------------------- | ------------------------------------------------------ |
+| `id`           | `string` (ULID, PK) |                                                        |
+| `language`     | `string`            | Langage en minuscules                                  |
+| `kind`         | `string`            | Type d'issue recherché                                 |
+| `total_stored` | `integer`           | Issues retenues lors du dernier import                 |
+| `fetched_at`   | `timestamp \| null` | Dernière recherche réussie ; null si aucune n'a réussi |
+| `retry_after`  | `timestamp \| null` | Prochaine tentative autorisée après un échec distant   |
+| `created_at`   | `timestamp`         |                                                        |
+| `updated_at`   | `timestamp`         |                                                        |
 
 ## Gestion des migrations
 

@@ -30,6 +30,13 @@ export default class ProjectTransformer extends BaseTransformer<Project> {
       isFavorite: this.reader.isFavorite,
       latestRelease: project.latestRelease,
       pushedAt: project.pushedAt?.toISO() ?? null,
+      newcomerScore: project.newcomerScoreDetails
+        ? {
+            score: project.newcomerScoreDetails.score,
+            partial: project.newcomerScoreDetails.partial,
+            archived: project.newcomerScoreDetails.archived,
+          }
+        : null,
     };
   }
 }

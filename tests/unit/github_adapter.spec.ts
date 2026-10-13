@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 import { GitHubApiClient } from "#services/github/github_api_client";
-import { graphqlRepository } from "#tests/helpers/fake_github_adapter";
+import { graphqlActivityItem, graphqlRepository } from "#tests/helpers/fake_github_adapter";
 
 test.group("GitHub HTTP adapter", () => {
   test("uses independent transports and credentials without replacing global fetch", async ({
@@ -134,6 +134,80 @@ test.group("GitHub HTTP adapter", () => {
     assert.isTrue(result.insights.health?.files.contributing);
     assert.isFalse(result.insights.health?.files.license);
     assert.equal(result.contributing, "# Help");
+  });
+
+  test("summarises outside contributor activity for the newcomer score", async ({ assert }) => {
+    const answer = (createdAt: string) => [{ createdAt, authorAssociation: "MEMBER" }];
+    const client = new GitHubApiClient(
+      async (input) => {
+        const url = String(input);
+        if (url.endsWith("/graphql")) {
+          const payload = graphqlRepository();
+          const repository = payload.data.repository;
+          const issue = (assigned: number) => ({
+            number: assigned + 1,
+            title: "Fix typo",
+            url: "https://github.com/owner/repo/issues/1",
+            createdAt: "2026-10-01T00:00:00Z",
+            author: null,
+            comments: { totalCount: 0 },
+            labels: { nodes: [] },
+            assignees: { totalCount: assigned },
+          });
+          repository.beginnerIssues = { nodes: [issue(0), issue(1)] } as never;
+          repository.activityIssues.nodes = [
+            graphqlActivityItem({
+              createdAt: "2026-10-01T00:00:00Z",
+              replies: answer("2026-10-01T04:00:00Z"),
+            }),
+            graphqlActivityItem({ createdAt: "2026-10-01T00:00:00Z", authorAssociation: "OWNER" }),
+          ];
+          repository.activityPullRequests.nodes = [
+            graphqlActivityItem({
+              createdAt: "2026-10-02T00:00:00Z",
+              state: "MERGED",
+              mergedAt: "2026-10-02T12:00:00Z",
+            }),
+            graphqlActivityItem({
+              createdAt: "2026-10-03T00:00:00Z",
+              state: "CLOSED",
+              replies: answer("2026-10-03T08:00:00Z"),
+            }),
+            graphqlActivityItem({ state: "MERGED", bot: true, mergedAt: "2026-10-03T00:00:00Z" }),
+          ];
+          repository.lastMergedPullRequest.nodes = [{ mergedAt: "2026-10-02T12:00:00Z" }];
+          return Response.json(payload);
+        }
+        return new Response(null, { status: url.endsWith("/commit_activity") ? 202 : 404 });
+      },
+      10_000,
+      () => new Date("2026-10-12T00:00:00Z"),
+    );
+
+    const { insights } = await client.getRepositoryInsights("owner", "repo", "token");
+    assert.deepEqual(insights.contributorActivity, {
+      sampledItems: 3,
+      respondedItems: 3,
+      medianFirstResponseHours: 8,
+      externalPullRequestsMerged: 1,
+      externalPullRequestsClosed: 1,
+      lastMergedPullRequestAt: "2026-10-02T12:00:00Z",
+      unassignedGoodFirstIssues: 1,
+    });
+  });
+
+  test("lists the languages of the user's own repositories, forks excluded", async ({ assert }) => {
+    const urls: string[] = [];
+    const client = new GitHubApiClient(async (input) => {
+      urls.push(String(input));
+      return Response.json([
+        { language: "Rust", fork: false },
+        { language: "Go", fork: true },
+        { language: null, fork: false },
+      ]);
+    });
+    assert.deepEqual(await client.listUserRepositoryLanguages("token"), ["Rust", null]);
+    assert.include(urls[0], "/user/repos?affiliation=owner&sort=pushed");
   });
 
   test("rejects GraphQL answers without a repository", async ({ assert }) => {

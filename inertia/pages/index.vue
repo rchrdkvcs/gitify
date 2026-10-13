@@ -18,7 +18,7 @@ const stats = computed(() => [
     label: "projets en vitrine",
   },
   { value: String(props.languages?.length ?? 0), label: "langages suivis" },
-  { value: "2", label: "niveaux : débutant et confirmé" },
+  { value: "3", label: "niveaux d’expérience" },
   { value: "24 h", label: "entre deux synchronisations GitHub" },
 ]);
 </script>
