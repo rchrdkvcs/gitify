@@ -11,7 +11,6 @@ export default class extends BaseSchema {
   }
 
   async down() {
-    // Never-successful criteria have no search snapshot to preserve on rollback.
     this.defer(async (db) => {
       await db.from(this.tableName).whereNull("fetched_at").delete();
     });

@@ -18,7 +18,7 @@ Configurer `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` et `DB_DATABASE` pour 
 
 Dans GitHub, créer une OAuth App avec la page d'accueil `http://localhost:3333` et le callback `http://localhost:3333/auth/github/callback`. Copier ses identifiants dans `GITHUB_CLIENT_ID` et `GITHUB_CLIENT_SECRET`. `GITHUB_CALLBACK_URL` doit correspondre à l'origine utilisée dans le navigateur.
 
-`GITHUB_SERVER_TOKEN` est facultatif : il permet d'alimenter la vitrine publique depuis GitHub. Les utilisateurs connectés utilisent leur jeton OAuth pour les recherches personnalisées. Ne jamais publier `.env`.
+`GITHUB_SERVER_TOKEN` est facultatif : c'est un jeton d'accès personnel GitHub sans scope particulier (dépôts publics uniquement), requis par le seeder de vitrine et le chargement paresseux de la vitrine publique depuis GitHub. Les utilisateurs connectés utilisent leur jeton OAuth pour les recherches personnalisées. Ne jamais publier `.env`.
 
 ## Développement local
 
