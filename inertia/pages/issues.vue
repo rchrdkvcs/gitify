@@ -7,7 +7,9 @@ import type {
   IssueSort,
   PaginationMeta,
 } from "@shared/types/index";
-import { Head, InfiniteScroll, router } from "@inertiajs/vue3";
+import { Head } from "@inertiajs/vue3";
+import type { FeedStatusCopy } from "~/components/feed/FeedStatus.vue";
+import { issueFilterSchema } from "~/lib/feed-filter-schemas";
 
 const props = defineProps<{
   issues: { data: FeedIssue[]; meta: PaginationMeta };
@@ -18,15 +20,9 @@ const props = defineProps<{
   refreshState: FeedRefreshState;
 }>();
 
-const searchQuery = ref(props.filters.q);
-const languages = ref<string[]>([...props.filters.languages]);
-const kind = ref<IssueKind | "all">(props.filters.kind);
-const unassigned = ref(props.filters.unassigned);
-const sort = ref<IssueSort>(props.filters.sort);
-
-const kindItems = computed<{ label: string; value: IssueKind | "all" }[]>(() => [
+const kindItems = computed<{ label: string; value: IssueKind | "all"; mono?: boolean }[]>(() => [
   { label: "Toutes", value: "all" },
-  ...props.kindOptions,
+  ...props.kindOptions.map((option) => ({ ...option, mono: true })),
 ]);
 
 const sortItems: { label: string; value: IssueSort }[] = [
@@ -35,58 +31,36 @@ const sortItems: { label: string; value: IssueSort }[] = [
   { label: "Dépôts les plus étoilés", value: "stars" },
 ];
 
-function applyFilters() {
-  router.get(
-    "/issues",
-    {
-      q: searchQuery.value.trim() || undefined,
-      language: languages.value.length ? languages.value.join(",") : undefined,
-      // Always explicit, so "all kinds" is not replaced by the reader's preferences.
-      label: kind.value,
-      unassigned: unassigned.value ? undefined : "0",
-      sort: sort.value === "recent" ? undefined : sort.value,
-    },
-    {
-      preserveState: true,
-      preserveScroll: true,
-      replace: true,
-      // Resetting a scroll prop implies a partial reload; ask for every filter-dependent prop.
-      only: ["issues", "total", "filters", "refreshState"],
-      reset: ["issues"],
-    },
-  );
-}
+const statusCopy: FeedStatusCopy = {
+  degraded:
+    "Certaines issues n’ont pas pu être actualisées. Celles affichées viennent du dernier relevé.",
+  refreshing: "Une partie des issues sera actualisée au prochain chargement.",
+  unavailable: {
+    title: "Les issues sont momentanément indisponibles",
+    description:
+      "Impossible de récupérer les issues depuis GitHub. Réessaie dans quelques instants.",
+  },
+  preparing: {
+    icon: "lucide:list-todo",
+    title: "Les issues se préparent",
+    description:
+      "On récupère des issues depuis GitHub pour ces langages. Recharge la page dans quelques instants.",
+  },
+};
 
-let searchTimer: ReturnType<typeof setTimeout> | undefined;
-watch(searchQuery, () => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(applyFilters, 300);
+const { filters, hasActiveFilters, reload, resetFilters } = useFilteredFeed({
+  schema: issueFilterSchema,
+  source: props.filters,
+  debounced: ["q"],
+  visit: inertiaFeedVisit("/issues", {
+    scroll: "issues",
+    dependents: ["total", "filters", "refreshState"],
+  }),
 });
-watch([languages, kind, unassigned, sort], applyFilters, { deep: true });
-
-const search = useTemplateRef<{ inputRef: HTMLInputElement | null }>("search");
-defineShortcuts({ "/": () => search.value?.inputRef?.focus() });
 
 const resultLabel = computed(() =>
   props.total === 1 ? "1 issue" : `${props.total.toLocaleString("fr-FR")} issues`,
 );
-
-const hasActiveFilters = computed(
-  () =>
-    searchQuery.value.trim() !== "" ||
-    languages.value.length > 0 ||
-    kind.value !== "all" ||
-    !unassigned.value ||
-    sort.value !== "recent",
-);
-
-function resetFilters() {
-  searchQuery.value = "";
-  languages.value = [];
-  kind.value = "all";
-  unassigned.value = true;
-  sort.value = "recent";
-}
 </script>
 
 <template>
@@ -103,72 +77,34 @@ function resetFilters() {
     description="Des issues ouvertes dans tous les projets, sans pull request en cours. Prends-en une, lis le contexte et lance-toi."
   >
     <template #actions>
-      <UInput
-        ref="search"
-        v-model="searchQuery"
-        icon="lucide:search"
+      <FeedSearchInput
+        v-model="filters.q"
         size="lg"
-        type="search"
         placeholder="Titre ou dépôt…"
         aria-label="Rechercher une issue par titre ou par dépôt"
         class="w-full md:w-80"
-      >
-        <template #trailing>
-          <UButton
-            v-if="searchQuery"
-            icon="lucide:x"
-            aria-label="Effacer la recherche"
-            color="neutral"
-            variant="link"
-            size="sm"
-            @click="searchQuery = ''"
-          />
-          <UKbd v-else value="/" />
-        </template>
-      </UInput>
+      />
     </template>
   </PageHeader>
 
-  <FrameSection class="sticky top-(--ui-header-height) z-20 bg-default/90 backdrop-blur">
-    <LanguageFilterTabs v-model="languages" :options="languageOptions" />
+  <FeedFilterBar
+    v-model:languages="filters.languages"
+    :language-options="languageOptions"
+    :result-label="resultLabel"
+    :can-reset="hasActiveFilters"
+    @reset="resetFilters"
+  >
+    <SegmentedControl v-model="filters.kind" label="Type d’issue" :items="kindItems" />
+    <USwitch
+      v-model="filters.unassigned"
+      label="Non assignées"
+      size="sm"
+      :ui="{ label: 'text-xs' }"
+    />
 
-    <div class="flex flex-wrap items-center gap-3 px-4 py-2.5 sm:px-5">
-      <div class="flex border border-default" role="group" aria-label="Type d’issue">
-        <button
-          v-for="item in kindItems"
-          :key="item.value"
-          type="button"
-          :aria-pressed="kind === item.value"
-          class="cursor-pointer border-e border-default px-3 py-1.5 text-xs transition-colors last:border-e-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
-          :class="[
-            kind === item.value
-              ? 'bg-elevated text-highlighted'
-              : 'text-muted hover:text-highlighted',
-            item.value === 'all' ? '' : 'font-mono',
-          ]"
-          @click="kind = item.value"
-        >
-          {{ item.label }}
-        </button>
-      </div>
-
-      <USwitch v-model="unassigned" label="Non assignées" size="sm" :ui="{ label: 'text-xs' }" />
-
-      <UButton
-        v-if="hasActiveFilters"
-        label="Réinitialiser"
-        color="neutral"
-        variant="link"
-        size="sm"
-        class="text-muted"
-        @click="resetFilters"
-      />
-
-      <p class="ms-auto font-mono text-xs whitespace-nowrap text-muted" role="status">
-        {{ resultLabel }}
-      </p>
+    <template #trailing>
       <USelect
-        v-model="sort"
+        v-model="filters.sort"
         :items="sortItems"
         size="sm"
         color="neutral"
@@ -176,77 +112,42 @@ function resetFilters() {
         aria-label="Trier les issues"
         class="w-52"
       />
-    </div>
-  </FrameSection>
+    </template>
+  </FeedFilterBar>
 
   <FrameSection>
-    <p
-      v-if="issues.data.length && refreshState === 'degraded'"
-      role="status"
-      class="border-b border-default px-4 py-3 text-sm text-muted sm:px-5"
+    <FeedStatus
+      :refresh-state="refreshState"
+      :has-items="issues.data.length > 0"
+      :copy="statusCopy"
+      @retry="reload"
     >
-      Certaines issues n’ont pas pu être actualisées. Celles affichées viennent du dernier relevé.
-    </p>
+      <FeedGrid data="issues" :items="issues.data">
+        <template #item="{ item }"><IssueCard :issue="item" /></template>
+        <template #skeleton><IssueCardSkeleton /></template>
+      </FeedGrid>
 
-    <p
-      v-if="issues.data.length && refreshState === 'refreshing'"
-      role="status"
-      class="border-b border-default px-4 py-3 text-sm text-muted sm:px-5"
-    >
-      Une partie des issues sera actualisée au prochain chargement.
-    </p>
-
-    <InfiniteScroll v-if="issues.data.length" data="issues" :buffer="600">
-      <ProjectGrid>
-        <ProjectGridItem v-for="issue in issues.data" :key="issue.id">
-          <IssueCard :issue="issue" />
-        </ProjectGridItem>
-      </ProjectGrid>
-      <template #loading>
-        <ProjectGrid>
-          <ProjectGridItem v-for="n in 3" :key="n">
-            <IssueCardSkeleton />
-          </ProjectGridItem>
-        </ProjectGrid>
+      <template #empty>
+        <EmptyState
+          v-if="!hasActiveFilters"
+          icon="lucide:languages"
+          title="Choisis un langage pour commencer"
+          description="Sélectionne un ou plusieurs langages : on va chercher les issues ouvertes de leurs projets."
+        />
+        <EmptyState
+          v-else
+          icon="lucide:search-x"
+          title="Aucune issue ne correspond"
+          description="Élargis ta recherche, change de langage ou réinitialise les filtres."
+        >
+          <UButton
+            label="Réinitialiser les filtres"
+            color="neutral"
+            variant="outline"
+            @click="resetFilters"
+          />
+        </EmptyState>
       </template>
-    </InfiniteScroll>
-
-    <EmptyState
-      v-else-if="refreshState === 'unavailable'"
-      icon="lucide:wifi-off"
-      title="Les issues sont momentanément indisponibles"
-      description="Impossible de récupérer les issues depuis GitHub. Réessaie dans quelques instants."
-    >
-      <UButton label="Réessayer" color="neutral" variant="outline" @click="applyFilters" />
-    </EmptyState>
-
-    <EmptyState
-      v-else-if="refreshState === 'refreshing'"
-      icon="lucide:list-todo"
-      title="Les issues se préparent"
-      description="On récupère des issues depuis GitHub pour ces langages. Recharge la page dans quelques instants."
-    />
-
-    <EmptyState
-      v-else-if="!hasActiveFilters"
-      icon="lucide:languages"
-      title="Choisis un langage pour commencer"
-      description="Sélectionne un ou plusieurs langages : on va chercher les issues ouvertes de leurs projets."
-    />
-
-    <EmptyState
-      v-else
-      icon="lucide:search-x"
-      title="Aucune issue ne correspond"
-      description="Élargis ta recherche, change de langage ou réinitialise les filtres."
-    >
-      <UButton
-        v-if="hasActiveFilters"
-        label="Réinitialiser les filtres"
-        color="neutral"
-        variant="outline"
-        @click="resetFilters"
-      />
-    </EmptyState>
+    </FeedStatus>
   </FrameSection>
 </template>
