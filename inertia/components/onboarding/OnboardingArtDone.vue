@@ -1,4 +1,3 @@
-<!-- The user's branch draws in, then merges into main: their first PR, ready to happen. -->
 <template>
   <svg viewBox="0 0 320 180" class="ill h-auto w-full" aria-hidden="true">
     <text x="20" y="62" font-size="10" class="ill-text">main</text>

@@ -1,10 +1,12 @@
+const graphiteRampTypedAsTailwindNeutral = "graphite" as "neutral";
+const preventIosFocusZoomOnMobile = "max-sm:text-base";
+
 export default {
   ui: {
     colors: {
       primary: "mint",
       success: "mint",
-      // Custom ramp defined in main.css; the type only lists Tailwind neutrals.
-      neutral: "graphite" as "neutral",
+      neutral: graphiteRampTypedAsTailwindNeutral,
     },
     button: {
       slots: {
@@ -45,8 +47,7 @@ export default {
     },
     input: {
       slots: {
-        // 16px on mobile so iOS Safari does not zoom on focus.
-        base: "bg-default max-sm:text-base",
+        base: `bg-default ${preventIosFocusZoomOnMobile}`,
       },
     },
     tooltip: {

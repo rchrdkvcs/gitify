@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { ExperienceLevel } from "@shared/types/index";
 
-// A path climbing three steps; the accent stroke draws up to the chosen level.
 const props = defineProps<{ level: ExperienceLevel | null }>();
 
 const nodes = [

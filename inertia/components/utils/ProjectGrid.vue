@@ -1,7 +1,4 @@
 <script setup lang="ts">
-// Grid of cells separated by single hairlines. Each cell draws only its
-// trailing and bottom borders; the grid overhangs its frame by 1px on those
-// sides so the last column and row merge into the frame's own borders.
 withDefaults(defineProps<{ columns?: "2" | "3" }>(), { columns: "3" });
 </script>
 

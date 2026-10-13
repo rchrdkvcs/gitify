@@ -38,7 +38,6 @@ const inertiaVisit: FavoritePageVisit = (page, callbacks) => {
   );
 };
 
-/** Reconcile favorite mutations with the canonical page returned by the visit transport. */
 export function useFavoritePage(
   source: FavoritePageSource,
   visit: FavoritePageVisit = inertiaVisit,
@@ -115,7 +114,6 @@ export function useFavoritePage(
     removedIds.add(projectId);
     projects.value = projects.value.filter((project) => project.id !== projectId);
     meta.value.total = Math.max(0, meta.value.total - 1);
-    // The server refills this page or clamps it when its last item was removed.
     goToPage(meta.value.currentPage);
   }
 

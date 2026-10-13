@@ -20,7 +20,7 @@ Le catalogue filtre et trie côté serveur ; `explore.vue` pousse les filtres da
 
 `pages/onboarding.vue` pose une question par écran : grandes cartes sélectionnables (groupes de boutons radio ou de cases natives), stepper numéroté (`OnboardingStepper`, étapes terminées, courante et à venir, les étapes atteintes restent cliquables), pied de page Retour / Continuer collant sur mobile. Chaque réponse confirmée part en arrière-plan (`PATCH /api/onboarding`) sans bloquer la transition. Au changement d'étape, le focus passe au titre de la question pour les lecteurs d'écran ; les erreurs sont annoncées dans une région `aria-live`.
 
-Chaque étape a son illustration SVG en ligne (`components/onboarding/OnboardingArt*.vue`), dans le vocabulaire du landing (`.ill`, filets de 1,5 px, carrés, accent menthe) et réactive aux choix : le chemin se trace jusqu'au niveau choisi, les étiquettes et puces sélectionnées s'allument. Le mouvement reste court (`.ill-draw`, `.ill-pop`, `.ill-pulse` limité à trois cycles, dans `main.css`) ; les transitions entre étapes durent 120 à 220 ms, orientées selon le sens de navigation, et se réduisent à un fondu sous `prefers-reduced-motion`. L'écran de fin lance une courte salve de confettis carrés (`lib/confetti.ts`, canvas, retirée après 4 s), uniquement depuis `onMounted` et jamais sous mouvement réduit.
+Chaque étape a son illustration SVG en ligne (`components/onboarding/OnboardingArt*.vue`), dans le vocabulaire du landing (`.ill`, filets de 1,5 px, carrés, accent menthe) et réactive aux choix : le chemin se trace jusqu'au niveau choisi, les étiquettes et puces sélectionnées s'allument. Le mouvement reste court (`.ill-draw`, `.ill-pop`, `.ill-pulse` limité à trois cycles, dans `assets/styles/illustration-motion.css`) ; les transitions entre étapes durent 120 à 220 ms, orientées selon le sens de navigation, et se réduisent à un fondu sous `prefers-reduced-motion`. L'écran de fin lance une courte salve de confettis carrés (`lib/confetti.ts`, canvas, retirée après 4 s), uniquement depuis `onMounted` et jamais sous mouvement réduit.
 
 ## Score d'accueil
 
@@ -28,7 +28,7 @@ Chaque étape a son illustration SVG en ligne (`components/onboarding/Onboarding
 
 ## Composants et styles
 
-Les composants applicatifs, les composables Vue et les utilitaires sont importés automatiquement par le plugin Vite de Nuxt UI. La configuration visuelle réside dans `inertia/app.config.ts`, et les styles Tailwind dans `inertia/assets/styles/main.css`. Les README sont rendus avec le composant Markdown de Comark pour Vue ; son rendu est asynchrone et doit rester dans un `<Suspense>`.
+Les composants applicatifs, les composables Vue et les utilitaires sont importés automatiquement par le plugin Vite de Nuxt UI. La configuration visuelle réside dans `inertia/app.config.ts`, et les styles Tailwind dans `inertia/assets/styles/main.css`, qui importe dans l'ordre de cascade des fichiers par responsabilité (`tokens`, `base`, `components`, `illustration-*`, `readme`, etc.). Les README sont rendus avec le composant Markdown de Comark pour Vue ; son rendu est asynchrone et doit rester dans un `<Suspense>`.
 
 ### Direction artistique
 
@@ -37,4 +37,4 @@ Les composants applicatifs, les composables Vue et les utilitaires sont importé
 - Angles droits partout (`--ui-radius: 0`), aucun dégradé décoratif. La structure passe par des filets d'1px.
 - Polices : Geist pour le texte, Geist Mono pour les libellés techniques, chiffres et code.
 - Les pages s'empilent en bandes `FrameSection` : un filet horizontal entre chaque bande et deux rails verticaux qui bornent le conteneur. Les grilles de cartes (`ProjectGrid`) partagent leurs filets avec ces rails.
-- Le hero de l'accueil (`HeroCommitGraph`) dessine sur un canvas un graphe de commits Git qui défile lentement ; les branches menthe portent un numéro de PR. Il ne s'anime que lorsqu'il est visible et affiche une image fixe sous `prefers-reduced-motion`.
+- Le hero de l'accueil (`HeroCommitGraph`) dessine sur un canvas un graphe de commits Git qui défile lentement ; les branches menthe portent un numéro de PR. Il ne s'anime que lorsqu'il est visible et affiche une image fixe sous `prefers-reduced-motion`. Le monde du graphe (`lib/hero-graph-world.ts`), son rendu canvas (`lib/hero-graph-renderer.ts`), l'ordonnancement des images (`lib/hero-animation.ts`) et le câblage DOM (`composables/useHeroCommitGraph.ts`) sont séparés.

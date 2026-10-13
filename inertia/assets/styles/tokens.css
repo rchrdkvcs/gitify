@@ -1,0 +1,52 @@
+@theme {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+}
+
+@theme static {
+  --color-mint-50: oklch(0.98 0.022 166);
+  --color-mint-100: oklch(0.955 0.05 165);
+  --color-mint-200: oklch(0.915 0.09 165);
+  --color-mint-300: oklch(0.87 0.135 164);
+  --color-mint-400: oklch(0.83 0.16 163);
+  --color-mint-500: oklch(0.75 0.155 163);
+  --color-mint-600: oklch(0.63 0.13 163);
+  --color-mint-700: oklch(0.52 0.105 164);
+  --color-mint-800: oklch(0.43 0.085 165);
+  --color-mint-900: oklch(0.36 0.068 166);
+  --color-mint-950: oklch(0.26 0.048 167);
+
+  --color-graphite-50: oklch(0.985 0.002 165);
+  --color-graphite-100: oklch(0.965 0.003 165);
+  --color-graphite-200: oklch(0.925 0.004 165);
+  --color-graphite-300: oklch(0.87 0.005 165);
+  --color-graphite-400: oklch(0.72 0.006 165);
+  --color-graphite-500: oklch(0.6 0.007 165);
+  --color-graphite-600: oklch(0.5 0.007 165);
+  --color-graphite-700: oklch(0.36 0.007 165);
+  --color-graphite-800: oklch(0.255 0.006 165);
+  --color-graphite-900: oklch(0.2 0.005 165);
+  --color-graphite-950: oklch(0.155 0.004 165);
+}
+
+:root {
+  --ui-radius: 0rem;
+  --ui-container: 76rem;
+  --ui-header-height: 3.75rem;
+}
+
+.dark {
+  color-scheme: dark;
+  --ui-bg: var(--ui-color-neutral-950);
+  --ui-bg-muted: var(--ui-color-neutral-900);
+  --ui-bg-elevated: var(--ui-color-neutral-900);
+  --ui-bg-accented: var(--ui-color-neutral-800);
+  --ui-border: var(--ui-color-neutral-800);
+  --ui-border-muted: var(--ui-color-neutral-900);
+  --ui-border-accented: var(--ui-color-neutral-600);
+  --ui-text-dimmed: var(--ui-color-neutral-500);
+  --ui-text-muted: var(--ui-color-neutral-400);
+  --ui-text-toned: var(--ui-color-neutral-300);
+  --ui-text: var(--ui-color-neutral-200);
+  --ui-text-highlighted: var(--ui-color-neutral-50);
+}

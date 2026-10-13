@@ -7,7 +7,6 @@ const props = withDefaults(
     ownerName: string;
     name: string;
     branch?: string | null;
-    /** Collapse long documents behind a "show more" control. */
     collapsible?: boolean;
   }>(),
   { branch: null, collapsible: false },
@@ -25,7 +24,6 @@ const value = computed(() =>
 
 <template>
   <div>
-    <!-- Expanded documents scroll inside a fixed frame so the page keeps its rhythm. -->
     <div
       class="relative"
       :class="
@@ -36,7 +34,6 @@ const value = computed(() =>
             : 'max-h-[24rem] overflow-hidden'
       "
     >
-      <!-- Markdown parses asynchronously, so it needs a Suspense boundary. -->
       <Suspense>
         <Markdown :value="value" class="readme-body" />
         <template #fallback>

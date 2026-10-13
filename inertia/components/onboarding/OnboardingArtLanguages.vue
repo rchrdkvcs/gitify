@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { languageCatalog } from "@shared/preferences";
 
-// Nine language chips: the chosen ones first, then the most common others.
 const props = defineProps<{ selected: string[] }>();
 
 const chips = computed(() => {
