@@ -9,6 +9,7 @@ import type { InferSharedProps, InferFlashData } from '@adonisjs/inertia/types'
 import type IssueTransformer from '#transformers/issue_transformer'
 import type ProjectDetailTransformer from '#transformers/project_detail_transformer'
 import type ProjectTransformer from '#transformers/project_transformer'
+import type ShowcaseProjectTransformer from '#transformers/showcase_project_transformer'
 import type UserTransformer from '#transformers/user_transformer'
 import type InertiaMiddleware from '#middleware/inertia_middleware'
 
@@ -24,6 +25,10 @@ export namespace Data {
   export type Project = InferData<ProjectTransformer>
   export namespace Project {
     export type Variants = InferVariants<ProjectTransformer>
+  }
+  export type ShowcaseProject = InferData<ShowcaseProjectTransformer>
+  export namespace ShowcaseProject {
+    export type Variants = InferVariants<ShowcaseProjectTransformer>
   }
   export type User = InferData<UserTransformer>
   export namespace User {

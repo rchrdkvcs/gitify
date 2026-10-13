@@ -3,9 +3,9 @@ import db from "@adonisjs/lucid/services/db";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import User from "#models/user";
+import { ProjectCatalogue } from "#services/feeds/project_catalogue";
 import { GitHubUnavailableError } from "#services/github/github_errors";
 import { GitHubSyncService } from "#services/github/github_sync_service";
-import { ProjectFeedService } from "#services/project_feed_service";
 import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 
@@ -21,7 +21,7 @@ test.group("Degraded project feed", (group) => {
     github.repos = [githubRepository()];
     let clock = now;
     const sync = new GitHubSyncService(github, () => clock);
-    const feed = new ProjectFeedService(sync);
+    const feed = new ProjectCatalogue(sync);
     const preferences = { difficulty: "beginner" as const, languages: ["typescript"] };
     await sync.ensureSearchFresh({ ...preferences, language: "typescript", token });
     clock = now.plus({ days: 2 });
@@ -63,7 +63,7 @@ test.group("Degraded project feed", (group) => {
     }
     const mixed = new MixedGitHub();
     mixed.repos = github.repos;
-    const feed = new ProjectFeedService(new GitHubSyncService(mixed, () => clock));
+    const feed = new ProjectCatalogue(new GitHubSyncService(mixed, () => clock));
 
     const result = await feedFor(
       feed,
@@ -90,7 +90,7 @@ test.group("Degraded project feed", (group) => {
     const github = new FakeGitHubAdapter();
     github.searchError = new GitHubUnavailableError(null, "GitHub unavailable");
     let clock = now;
-    const feed = new ProjectFeedService(new GitHubSyncService(github, () => clock));
+    const feed = new ProjectCatalogue(new GitHubSyncService(github, () => clock));
     const preferences = { difficulty: "beginner" as const, languages: ["typescript"] };
 
     const unavailable = await feedFor(feed, user.id, preferences, token);
@@ -114,7 +114,7 @@ test("feed reports an ongoing refresh without calling GitHub again", async ({ as
       "project-search:rust:beginner",
     ]);
     const github = new FakeGitHubAdapter();
-    const feed = new ProjectFeedService(new GitHubSyncService(github, () => now));
+    const feed = new ProjectCatalogue(new GitHubSyncService(github, () => now));
     const result = await feedFor(
       feed,
       null as unknown as string,
