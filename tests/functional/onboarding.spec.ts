@@ -84,6 +84,14 @@ test.group("Onboarding", (group) => {
       .json({ step: 3, languages: ["klingon"] });
     invalid.assertStatus(422);
 
+    const mismatched = await client
+      .patch("/api/onboarding")
+      .loginAs(user)
+      .withCsrfToken()
+      .headers(json)
+      .json({ step: 4, level: "experienced" });
+    mismatched.assertStatus(422);
+
     await user.refresh();
     assert.deepEqual(user.preferences, {
       level: "some_contributions",
@@ -140,7 +148,7 @@ test.group("Onboarding", (group) => {
     assert.deepEqual(await service.suggestLanguages(user), ["rust", "go"]);
     assert.deepEqual(github.userRepositoryCalls, ["user-token"]);
 
-    await service.saveProgress(user, { step: 3, languages: ["python"] });
+    await service.saveAnswer(user, { step: 3, languages: ["python"] });
     assert.deepEqual(await service.suggestLanguages(user), []);
     const failing = new FakeGitHubAdapter();
     failing.userRepositoriesError = new Error("GitHub down");

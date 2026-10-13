@@ -5,11 +5,14 @@ import type { GitHubAdapter } from "#services/github/github_adapter";
 import type { PreferenceLanguage } from "#shared/preferences";
 import type { UserPreferences } from "#shared/types/index";
 import GitHubApiClient from "#services/github/github_api_client";
-import { defaultUserPreferences, inferPreferredLanguages } from "#shared/preferences";
-
-export const onboardingSteps = ["level", "contributionTypes", "languages", "topics"] as const;
-
-export type OnboardingProgress = Partial<UserPreferences> & { step: number };
+import { inferPreferredLanguages } from "#shared/language_inference";
+import {
+  lastOnboardingStep,
+  recordOnboardingAnswer,
+  type OnboardingProgress,
+  type OnboardingRecord,
+} from "#shared/onboarding";
+import { defaultUserPreferences } from "#shared/preferences";
 
 export class OnboardingService {
   constructor(
@@ -21,27 +24,20 @@ export class OnboardingService {
     return user.onboardedAt || user.onboardingSkippedAt ? "/explore" : "/onboarding";
   }
 
-  resumeStep(user: Pick<User, "onboardedAt" | "onboardingStep">): number {
-    if (user.onboardedAt) {
-      return 1;
-    }
-    return Math.min(Math.max(user.onboardingStep ?? 0, 0) + 1, onboardingSteps.length);
-  }
-
-  async saveProgress(user: User, { step, ...answers }: OnboardingProgress): Promise<void> {
-    const defined = Object.fromEntries(
-      Object.entries(answers).filter(([, value]) => value !== undefined),
+  async saveAnswer(user: User, progress: OnboardingProgress): Promise<void> {
+    const record = recordOnboardingAnswer(
+      {
+        preferences: user.preferences ?? defaultUserPreferences,
+        answeredSteps: user.onboardingStep,
+      },
+      progress,
     );
-    user.preferences = { ...(user.preferences ?? defaultUserPreferences), ...defined };
-    user.onboardingStep = Math.max(user.onboardingStep ?? 0, step);
-    await user.save();
+    await this.persist(user, record);
   }
 
-  async complete(user: User, preferences: UserPreferences): Promise<void> {
-    user.preferences = preferences;
-    user.onboardingStep = onboardingSteps.length;
+  async completeWith(user: User, preferences: UserPreferences): Promise<void> {
     user.onboardedAt ??= this.now();
-    await user.save();
+    await this.persist(user, { preferences, answeredSteps: lastOnboardingStep });
   }
 
   async skip(user: User): Promise<void> {
@@ -61,6 +57,12 @@ export class OnboardingService {
       logger.warn({ err: error, userId: user.id }, "Language suggestions failed");
       return [];
     }
+  }
+
+  private async persist(user: User, record: OnboardingRecord): Promise<void> {
+    user.preferences = record.preferences;
+    user.onboardingStep = record.answeredSteps;
+    await user.save();
   }
 }
 

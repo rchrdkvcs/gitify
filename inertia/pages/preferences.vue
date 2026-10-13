@@ -1,7 +1,27 @@
 <script setup lang="ts">
 import { Head } from "@inertiajs/vue3";
 
-const { form, toggle, submitting, savePreferences } = usePreferences();
+const authStore = useAuth();
+const toast = useToast();
+const {
+  draft: form,
+  toggle,
+  submitting,
+  submit,
+} = usePreferenceDraft({ stored: authStore.user?.preferences ?? null });
+
+function savePreferences() {
+  submit("/auth/preferences", {
+    onSuccess: () =>
+      toast.add({ title: "Préférences enregistrées.", icon: "lucide:check", color: "success" }),
+    onError: () =>
+      toast.add({
+        title: "Impossible d’enregistrer tes préférences.",
+        description: "Vérifie tes choix et réessaie.",
+        color: "error",
+      }),
+  });
+}
 
 const sections = [
   {

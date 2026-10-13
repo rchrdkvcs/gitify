@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import type { UserPreferences } from "@shared/types/index";
-import {
-  contributionTypeCatalog,
-  experienceLevelCatalog,
-  formatLanguageName,
-} from "@shared/preferences";
+import { summarizePreferences } from "@shared/preference_summary";
 import { confettiBurst } from "~/lib/confetti";
 
 const props = defineProps<{ preferences: UserPreferences }>();
@@ -13,31 +9,15 @@ const heading = useTemplateRef<HTMLElement>("heading");
 const canvas = useTemplateRef<HTMLCanvasElement>("canvas");
 const showConfetti = ref(true);
 
-const summary = computed(() => [
-  {
-    label: "Niveau",
-    value: experienceLevelCatalog.find((item) => item.id === props.preferences.level)?.title,
-  },
-  {
-    label: "Contributions",
-    value: props.preferences.contributionTypes.length
-      ? contributionTypeCatalog
-          .filter((item) => props.preferences.contributionTypes.includes(item.id))
-          .map((item) => item.title)
-          .join(", ")
-      : "Toutes",
-  },
-  {
-    label: "Langages",
-    value: props.preferences.languages.length
-      ? props.preferences.languages.map(formatLanguageName).join(", ")
-      : "Tous",
-  },
-  {
-    label: "Sujets",
-    value: props.preferences.topics.length ? props.preferences.topics.join(", ") : "Aucun",
-  },
-]);
+const summary = computed(() => {
+  const { level, contributionTypes, languages, topics } = summarizePreferences(props.preferences);
+  return [
+    { label: "Niveau", value: level?.title },
+    { label: "Contributions", value: contributionTypes.text },
+    { label: "Langages", value: languages.text },
+    { label: "Sujets", value: topics.text },
+  ];
+});
 
 let cancel: (() => void) | undefined;
 let hideTimer: ReturnType<typeof setTimeout> | undefined;
