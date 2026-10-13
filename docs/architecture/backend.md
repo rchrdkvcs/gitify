@@ -14,7 +14,7 @@ Seules les routes `/api/projects/:id/favorite` (ajout et retrait d'un favori) et
 
 ## Onboarding et préférences
 
-`shared/preferences.ts` est la source unique des choix possibles : `languageCatalog`, `experienceLevelCatalog` (avec le niveau de recherche GitHub associé), `contributionTypeCatalog` (avec les étiquettes d'issue usuelles, `issueLabels`) et `topicSuggestions`. Il fournit aussi `normalizeUserPreferences` (lit l'ancien et le nouveau format), `difficultyForLevel` et `inferPreferredLanguages`. Toute fonctionnalité qui a besoin du niveau, des langages ou des façons de contribuer d'un utilisateur lit `user.preferences` (déjà normalisé par le modèle) et ces helpers.
+`shared/preferences.ts` est la source unique des choix possibles : `languageCatalog`, `experienceLevelCatalog` (avec le niveau de recherche GitHub associé), `contributionTypeCatalog` et `topicSuggestions`. Il fournit aussi `normalizeUserPreferences` (lit l'ancien et le nouveau format), `difficultyForLevel` et `inferPreferredLanguages`. Toute fonctionnalité qui a besoin du niveau, des langages ou des façons de contribuer d'un utilisateur lit `user.preferences` (déjà normalisé par le modèle) et ces helpers.
 
 `OnboardingController` et `OnboardingService` gèrent le parcours :
 
@@ -23,7 +23,7 @@ Seules les routes `/api/projects/:id/favorite` (ajout et retrait d'un favori) et
 - `PUT /onboarding` valide toutes les réponses, les enregistre et renseigne `onboarded_at`.
 - `POST /onboarding/skip` renseigne `onboarding_skipped_at` et redirige vers le catalogue.
 
-`PUT /auth/preferences` valide les mêmes champs avec Vine, enregistre les préférences, termine l'onboarding s'il ne l'était pas et redirige vers l'exploration. Les validators normalisent, dédupliquent et bornent les choix ; les identifiants inconnus sont refusés. `parseExploreFilters` dérive les filtres par défaut du catalogue des préférences.
+`PUT /auth/preferences` valide les mêmes champs avec Vine, enregistre les préférences, termine l'onboarding s'il ne l'était pas et redirige vers l'exploration. Les validators normalisent, dédupliquent et bornent les choix ; les identifiants inconnus sont refusés. Les critères des fils (`app/feed_criteria/`) dérivent les filtres par défaut des préférences.
 
 ## Score d'accueil des débutants
 
@@ -41,7 +41,7 @@ La vitrine utilise la même politique de fraîcheur quand un jeton serveur exist
 
 ## Fil d'issues
 
-`IssueFeedService` sert `/issues`. `parseIssueFilters` (`app/validators/issue_filters.ts`) applique la même règle que le catalogue : des paramètres explicites remplacent les préférences du lecteur. Le catalogue `shared/issues.ts` définit les types d'issue (`good-first-issue`, `help-wanted`, `documentation`), le label GitHub recherché pour chacun et la lecture des signaux depuis les labels. Les langages viennent de `shared/preferences.ts`.
+`IssueFeedService` sert `/issues`. `parseIssueFilters` (`app/feed_criteria/issue_criteria.ts`) et `parseExploreFilters` (`explore_criteria.ts`) sont deux configurations de `defineFeedCriteria` (`feed_criteria.ts`) : un descripteur par filtre (paramètre, lecture, valeur issue des préférences). Un filtre présent dans la query string, même vide, remplace la préférence correspondante ; un filtre absent la reprend. Le catalogue `shared/issues.ts` définit les types d'issue (`good-first-issue`, `help-wanted`, `documentation`), le label GitHub recherché pour chacun, le type de contribution et le niveau qu'il sert (`defaultIssueKind`), et la lecture des signaux depuis les labels. Les langages viennent de `shared/preferences.ts`.
 
 `GitHubIssueSyncService` reprend la politique de fraîcheur des recherches de dépôts pour chaque couple `(language, kind)` : TTL de 6 heures (`cache.issueFetchTtlHours`), verrou consultatif PostgreSQL, budget de recherches distantes partagé avec `GitHubSyncService` (`tryAcquireSearchPermit`) et report de 60 secondes après un échec. L'adapter appelle `searchIssues`, une recherche GraphQL qui renvoie l'issue et son dépôt. L'import écarte les dépôts archivés ou privés et les issues fermées par une pull request ouverte (`closedByPullRequestsReferences`), enregistre ou met à jour le dépôt sous le même verrou d'identité que les recherches de dépôts, puis remplace les appartenances du critère. Les issues qu'aucune recherche ne liste plus sont supprimées ; les verrous par issue empêchent un autre critère de les rattacher pendant ce nettoyage. Seule la première page déclenche ces actualisations ; `refreshState` a la même signification que pour le catalogue. `IssueTransformer` définit la carte transmise au navigateur.
 
