@@ -1,5 +1,6 @@
 import type { ApplicationService } from "@adonisjs/core/types";
 import IssueFeed from "#services/feeds/issue_feed";
+import { PopularTopics } from "#services/feeds/popular_topics";
 import ProjectCatalogue from "#services/feeds/project_catalogue";
 import ProjectDetailReader from "#services/feeds/project_detail";
 import ProjectShowcase from "#services/feeds/project_showcase";
@@ -38,6 +39,7 @@ export default class AppProvider {
       async (resolver) => new OnboardingService(await resolver.make(GitHubAdapter)),
     );
 
+    container.singleton(PopularTopics, () => new PopularTopics());
     container.bind(
       ProjectCatalogue,
       async (resolver) => new ProjectCatalogue(await resolver.make(GitHubSyncService)),

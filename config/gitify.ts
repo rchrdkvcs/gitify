@@ -45,6 +45,8 @@ const gitifyConfig = {
   feed: {
     pageSize: 24,
     favoritePageLimit: 20,
+    popularTopicsTtlSeconds: 300,
+    popularTopicsCacheSize: 100,
   },
   issues: {
     pageSize: 24,

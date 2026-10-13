@@ -4,6 +4,7 @@ import Project from "#models/project";
 import UserProjectFavorite from "#models/user_project_favorite";
 import { paginationMeta } from "#services/feeds/feed_query";
 import { displayedDifficulties } from "#services/feeds/project_reader_state";
+import { projectCardColumns } from "#services/feeds/visible_projects";
 import { normalizePage } from "#shared/pagination";
 import ProjectTransformer from "#transformers/project_transformer";
 
@@ -16,7 +17,7 @@ function favoritesOf(userId: string) {
     .where("userId", userId)
     .orderBy("createdAt", "desc")
     .orderBy("id", "desc")
-    .preload("project");
+    .preload("project", (project) => project.select(projectCardColumns));
 }
 
 async function lastPageOf(userId: string): Promise<number> {

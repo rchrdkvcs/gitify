@@ -161,6 +161,8 @@ liste précédente. La migration reprend les appartenances des projets historiqu
 Un index `(stars DESC)` permet un parcours trié compatible avec les recherches
 par appartenance, dont le langage peut différer du langage principal du dépôt.
 Sa mesure est décrite dans [le relevé PostgreSQL](project-index-measurement-2026-10-12.md).
+Un index d'expression `(lower(owner_name), lower(name))` sert la recherche
+insensible à la casse de la page projet.
 
 ### Exécution
 
