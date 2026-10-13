@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import type User from "#models/user";
 import type { PaginationMeta } from "#shared/types/index";
+import ProjectNotFoundException from "#exceptions/project_not_found_exception";
 import IssueFeedService from "#services/issue_feed_service";
 import ProjectFeedService from "#services/project_feed_service";
 import { issueKindCatalog } from "#shared/issues";
@@ -10,7 +11,6 @@ import { parseExploreFilters } from "#validators/explore_filters";
 import { parseIssueFilters } from "#validators/issue_filters";
 import { projectSlugValidator } from "#validators/project_id_validator";
 
-/** Guests browse with the server token; signed-in readers spend their own quota. */
 function readerOf(user: User | undefined) {
   return {
     userId: user?.id ?? null,
@@ -18,7 +18,6 @@ function readerOf(user: User | undefined) {
   };
 }
 
-/** Inertia infinite scroll metadata shared by the paginated feeds. */
 function scrollPages(meta: PaginationMeta) {
   return {
     pageName: "page",
@@ -51,7 +50,6 @@ export default class PagesController {
       ),
       total: result.meta.total,
       filters,
-      // The reader's interests come first among the topic shortcuts.
       topicOptions: [...new Set([...(preferences?.topics ?? []), ...popularTopics])],
       preferredTopics: preferences?.topics ?? [],
       languageOptions: languageOptions(),
@@ -88,7 +86,7 @@ export default class PagesController {
     });
   }
 
-  async project({ auth, request, inertia, response }: HttpContext) {
+  async project({ auth, request, inertia }: HttpContext) {
     const { params } = await request.validateUsing(projectSlugValidator);
     const project = await ProjectFeedService.getProject(
       params.owner,
@@ -96,7 +94,7 @@ export default class PagesController {
       readerOf(auth.user),
     );
     if (!project) {
-      return response.notFound("Projet introuvable");
+      throw new ProjectNotFoundException();
     }
     return inertia.render("projects/show", { project });
   }

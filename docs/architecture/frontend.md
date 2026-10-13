@@ -6,7 +6,7 @@ Les pages Vue vivent dans `inertia/pages/`. Le premier chargement reçoit le doc
 
 ## Données et session
 
-La vitrine, le fil, les favoris et le détail de projet sont chargés par `PagesController`. Le middleware Inertia partage le profil public de l'utilisateur et les erreurs de validation. `useAuth` expose ces props de façon réactive ; aucune requête `/auth/me` ni store Pinia n'est nécessaire.
+La vitrine, le fil, les favoris et le détail de projet sont chargés par `PagesController`. Le middleware Inertia partage le profil public de l'utilisateur et les erreurs de validation, et transmet le message d'erreur flashé (`flash.error`) que le layout affiche en toast. Les erreurs HTTP passent par `app/exceptions/handler.ts` : page Inertia `errors/not_found` ou `errors/error`, JSON `{ error: { code, message } }` pour `/api/*`, redirection vers `/` avec message flashé pour les échecs OAuth. `useAuth` expose ces props de façon réactive ; aucune requête `/auth/me` ni store Pinia n'est nécessaire.
 
 Les formulaires de préférences et de déconnexion utilisent le routeur Inertia. `usePreferences` fournit une copie éditable des préférences ; les champs (`components/preferences/`) sont partagés par l'onboarding et la page de préférences. Le serveur valide les données puis redirige vers une page. Les liens Nuxt UI utilisent son intégration Inertia.
 
