@@ -1,4 +1,3 @@
-import { formatLanguageName } from "@shared/preferences";
 const rtf = new Intl.RelativeTimeFormat("fr", { numeric: "auto" });
 
 const timeAgo = (dateString: string) => {
@@ -12,11 +11,6 @@ const timeAgo = (dateString: string) => {
 
 export const formatCompact = (n: number) => {
   return new Intl.NumberFormat("en", { notation: "compact" }).format(n).toLowerCase();
-};
-
-export const formatLanguage = (language: string | null) => {
-  if (!language) return "";
-  return formatLanguageName(language);
 };
 
 export const projectPath = (project: { ownerName: string; name: string }) =>

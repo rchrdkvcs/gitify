@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Project, ShowcaseProject } from "@shared/types/index";
 import { describeNewcomerScore } from "@shared/newcomer_score_display";
+import { formatLanguageName } from "@shared/preferences";
 import { difficultyLabel } from "~/lib/project-facts";
 
 const props = defineProps<{
@@ -96,7 +97,7 @@ const { isFavorite, pending, toggleFavorite } = useFavorite(
         class="inline-flex items-center gap-1.5 border border-accented px-1.5 py-0.5 text-toned"
       >
         <span class="size-1.5 bg-current" aria-hidden="true" />
-        {{ formatLanguage(project.language) }}
+        {{ formatLanguageName(project.language) }}
       </span>
       <span v-if="difficulty" class="border border-accented px-1.5 py-0.5 text-toned">
         {{ difficultyLabel(difficulty) }}
