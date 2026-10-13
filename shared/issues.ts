@@ -53,6 +53,12 @@ export function defaultIssueKind(
   return (chosen ?? forCode)?.id ?? "all";
 }
 
+export function codeIssueKindFor(difficulty: Difficulty): IssueKind {
+  return issueKindCatalog.find(
+    (kind) => kind.contributionType === "code" && kind.difficulty === difficulty,
+  )!.id;
+}
+
 export function issueKindLabel(kind: IssueKind): string {
   return issueKindCatalog.find((entry) => entry.id === kind)!.label;
 }

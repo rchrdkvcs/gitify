@@ -4,7 +4,7 @@ import type {
   ProjectDetail,
   RepositoryInsights,
 } from "../../shared/types/index.js";
-import { issueKindForDifficulty, issueKindLabel } from "../../shared/issues.js";
+import { codeIssueKindFor, issueKindLabel } from "../../shared/issues.js";
 
 export type CommitSeries = {
   weeks: number[];
@@ -56,8 +56,7 @@ const communityFileLabels: readonly { file: keyof CommunityFiles; label: string 
 ];
 
 export function difficultyLabel(difficulty: Difficulty): string {
-  const kind = issueKindForDifficulty(difficulty);
-  return issueKindLabel(kind === "all" ? "help-wanted" : kind);
+  return issueKindLabel(codeIssueKindFor(difficulty));
 }
 
 export function commitSeries(weeks: readonly number[]): CommitSeries {
