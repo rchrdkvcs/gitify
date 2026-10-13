@@ -2,6 +2,8 @@
 
 Audit du 12 octobre 2026, sur le commit `3df6cac`, avec le skill `codebase-design`.
 
+> **Statut (13 octobre 2026) :** document historique. Tous les points sont traités ; les chemins et numéros de ligne cités ne correspondent plus au code. La revue d'architecture du 13 octobre (branche `refactor/architecture-review`) a ensuite unifié la politique de fraîcheur, découpé les fils, l'adapter GitHub et l'onboarding.
+
 Le projet possède une structure adaptée à sa taille : rendu Inertia, logique de sélection côté serveur, état de session partagé et chargement différé de Three.js. Les difficultés principales viennent des invariants que les interfaces ne prennent pas encore en charge : fraîcheur des données, appartenance des dépôts aux niveaux, cohérence des imports et durée de vie des opérations asynchrones.
 
 La priorité est de rendre ces invariants locaux à leurs modules. Une multiplication de dossiers ou d’interfaces génériques apporterait peu de profondeur.
