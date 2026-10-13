@@ -1,5 +1,6 @@
 import { test } from "@japa/runner";
 import { GitHubApiClient } from "#services/github/github_api_client";
+import { GitHubRateLimitError, GitHubUnavailableError } from "#services/github/github_errors";
 import { isContributable } from "#services/github/github_issue_sync_service";
 import { githubIssue } from "#tests/helpers/fake_github_adapter";
 
@@ -42,7 +43,6 @@ test.group("GitHub issue search", () => {
     const calls: { url: string; body: { variables: Record<string, unknown> } }[] = [];
     const client = new GitHubApiClient(async (input, init) => {
       calls.push({ url: String(input), body: JSON.parse(String(init?.body)) });
-      // Pull requests matched by the search union come back as empty objects.
       return Response.json({ data: { search: { nodes: [graphqlIssue(), {}] } } });
     });
 
@@ -83,6 +83,7 @@ test.group("GitHub issue search", () => {
           createdAt: "2020-01-01T00:00:00Z",
           isArchived: false,
           isPrivate: false,
+          hasIssues: true,
         },
       },
     ]);
@@ -97,7 +98,22 @@ test.group("GitHub issue search", () => {
       /Invalid GitHub response: issues \(rate limited\)/,
     );
     const failure = new GitHubApiClient(async () => new Response(null, { status: 502 }));
-    await assert.rejects(() => failure.searchIssues("go", "help-wanted", "token"), /502/);
+    const error = await failure.searchIssues("go", "help-wanted", "token").catch((e) => e);
+    assert.instanceOf(error, GitHubUnavailableError);
+    assert.equal(error.status, 502);
+  });
+
+  test("reports GraphQL rate limiting as a typed error with its reset", async ({ assert }) => {
+    const reset = Math.floor(Date.UTC(2026, 9, 13, 13) / 1000);
+    const client = new GitHubApiClient(async () =>
+      Response.json(
+        { errors: [{ type: "RATE_LIMITED", message: "API rate limit exceeded" }] },
+        { headers: { "x-ratelimit-reset": String(reset) } },
+      ),
+    );
+    const error = await client.searchIssues("go", "help-wanted", "token").catch((e) => e);
+    assert.instanceOf(error, GitHubRateLimitError);
+    assert.equal(error.resetAt.getTime(), reset * 1000);
   });
 
   test("keeps only issues of public active repositories without a linked pull request", ({

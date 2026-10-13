@@ -49,10 +49,7 @@ async function listedProject(githubRepoId: number, name: string, stars = 10) {
 
 async function enrich(project: Project, insights: Partial<RepositoryInsights>) {
   const github = new FakeGitHubAdapter();
-  github.insights = {
-    ...github.insights,
-    insights: { ...github.insights.insights, ...insights },
-  };
+  github.snapshot.insights = { ...github.snapshot.insights, ...insights };
   await new GitHubSyncService(github, () => now).fetchProjectDetails(project, "token");
 }
 
@@ -103,7 +100,6 @@ test.group("Newcomer score", (group) => {
       health: { percentage: 50, files: { ...files, codeOfConduct: false } },
       lastCommitAt: "2026-10-01T00:00:00Z",
     });
-    // Only community files and activity are known: 35 % of the weight, too little to score.
     assert.isNull(project.newcomerScore);
     assert.isTrue(project.newcomerScoreDetails?.partial);
     assert.equal(project.newcomerScoreDetails?.coverage, 0.35);

@@ -4,12 +4,16 @@ import { DateTime } from "luxon";
 import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
 import { GitHubSyncService } from "#services/github/github_sync_service";
-import { FakeGitHubAdapter, githubRepo } from "#tests/helpers/fake_github_adapter";
+import {
+  FakeGitHubAdapter,
+  githubRepository,
+  repositorySnapshot,
+} from "#tests/helpers/fake_github_adapter";
 
 function adapter(repoId: number, readme: string): FakeGitHubAdapter {
   const github = new FakeGitHubAdapter();
-  github.repos = [githubRepo({ id: repoId, name: `repo-${repoId}` })];
-  github.details = { ...github.details, readme, languages: { TypeScript: 100 } };
+  github.repos = [githubRepository({ id: repoId, name: `repo-${repoId}` })];
+  github.snapshot = repositorySnapshot({ readme, languages: { TypeScript: 100 } });
   return github;
 }
 
