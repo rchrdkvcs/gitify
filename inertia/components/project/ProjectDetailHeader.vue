@@ -3,11 +3,8 @@ import type { ProjectDetail } from "@shared/types/index";
 
 const props = defineProps<{
   project: ProjectDetail;
+  difficultyLabel: string;
 }>();
-
-const difficultyLabel = computed(() =>
-  props.project.difficulty === "beginner" ? "good first issue" : "help wanted",
-);
 
 const homepage = computed(() => {
   const url = props.project.homepageUrl;

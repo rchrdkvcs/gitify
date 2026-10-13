@@ -1,74 +1,12 @@
 <script setup lang="ts">
 import type { ProjectDetail } from "@shared/types/index";
+import type { ProjectFacts } from "~/lib/project-facts";
 
 const props = defineProps<{
   project: ProjectDetail;
+  facts: Pick<ProjectFacts, "counts" | "health">;
 }>();
 const emit = defineEmits<{ explainScore: [] }>();
-
-const insights = computed(() => props.project.insights);
-
-const health = computed(() => {
-  const value = insights.value?.health?.percentage;
-  if (value == null) return null;
-  const label = value >= 80 ? "Excellente" : value >= 50 ? "Correcte" : "À améliorer";
-  return `${value} % · ${label}`;
-});
-
-const stats = computed(() => {
-  const project = props.project;
-  const i = insights.value;
-  return [
-    { icon: "lucide:star", label: "Étoiles", value: formatNumber(project.stars) },
-    { icon: "lucide:git-fork", label: "Forks", value: formatNumber(project.forksCount) },
-    i && { icon: "lucide:eye", label: "Watchers", value: formatNumber(i.watchers) },
-    project.totalContributorsCount != null && {
-      icon: "lucide:users",
-      label: "Contributeurs",
-      value: formatNumber(project.totalContributorsCount),
-    },
-    {
-      icon: "lucide:circle-dot",
-      label: "Issues ouvertes",
-      value: formatNumber(i?.openIssues ?? project.openIssuesCount),
-    },
-    i && {
-      icon: "lucide:git-pull-request",
-      label: "PR ouvertes",
-      value: formatNumber(i.openPullRequests),
-    },
-    i?.commits != null && {
-      icon: "lucide:git-commit-horizontal",
-      label: "Commits",
-      value: formatNumber(i.commits),
-    },
-    i && { icon: "lucide:tag", label: "Releases", value: formatNumber(i.releases) },
-    i?.diskUsageKb != null && {
-      icon: "lucide:hard-drive",
-      label: "Taille",
-      value: formatSize(i.diskUsageKb),
-    },
-    (i?.lastCommitAt ?? project.pushedAt) && {
-      icon: "lucide:clock",
-      label: "Dernier commit",
-      value: timeSince(i?.lastCommitAt ?? project.pushedAt),
-    },
-    project.githubCreatedAt && {
-      icon: "lucide:calendar",
-      label: "Créé le",
-      value: new Date(project.githubCreatedAt).toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-    },
-    health.value && {
-      icon: "lucide:heart-pulse",
-      label: "Santé",
-      value: health.value,
-    },
-  ].filter((stat): stat is { icon: string; label: string; value: string } => !!stat);
-});
 
 const links = computed(() =>
   [
@@ -93,20 +31,7 @@ function projectLink(label: string, href: string, icon: string) {
   <div class="flex flex-col [&>section:last-child]:border-b-0">
     <ProjectNewcomerScore :score="project.newcomerScoreDetails" @explain="emit('explainScore')" />
 
-    <section aria-labelledby="stats-title" class="border-b border-default p-5">
-      <h2 id="stats-title" class="eyebrow mb-4">Statistiques</h2>
-      <dl class="flex flex-col gap-2.5 text-sm">
-        <div v-for="stat in stats" :key="stat.label" class="flex items-center gap-2.5">
-          <UIcon :name="stat.icon" class="size-4 shrink-0 text-dimmed" aria-hidden="true" />
-          <dt class="text-muted">{{ stat.label }}</dt>
-          <span
-            class="mb-1.5 flex-1 self-end border-b border-dotted border-accented"
-            aria-hidden="true"
-          />
-          <dd class="font-mono text-xs text-highlighted tabular-nums">{{ stat.value }}</dd>
-        </div>
-      </dl>
-    </section>
+    <ProjectStats :project="project" :facts="facts" />
 
     <section aria-labelledby="links-title" class="border-b border-default p-5">
       <h2 id="links-title" class="eyebrow mb-4">Liens</h2>
@@ -127,14 +52,14 @@ function projectLink(label: string, href: string, icon: string) {
     </section>
 
     <section
-      v-if="insights?.languages.length"
+      v-if="project.insights?.languages.length"
       aria-labelledby="stack-title"
       class="border-b border-default p-5"
     >
       <h2 id="stack-title" class="eyebrow mb-4">Stack technique</h2>
       <ul class="flex flex-wrap gap-1.5">
         <li
-          v-for="language in insights.languages"
+          v-for="language in project.insights.languages"
           :key="language.name"
           class="inline-flex items-center gap-1.5 border border-default px-2 py-1 font-mono text-xs text-toned"
         >

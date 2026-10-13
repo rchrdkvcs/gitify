@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Project, ShowcaseProject } from "@shared/types/index";
 import { newcomerScoreTier } from "@shared/newcomer_score";
+import { difficultyLabel } from "~/lib/project-facts";
 
 const props = defineProps<{
   project: Project | ShowcaseProject;
@@ -14,7 +15,6 @@ const difficulty = computed(() =>
   "difficulty" in props.project ? props.project.difficulty : null,
 );
 
-// Showcase cards carry no score; catalogue cards show "not rated yet" instead.
 const welcome = computed(() =>
   "newcomerScore" in props.project ? (props.project.newcomerScore ?? null) : undefined,
 );
@@ -111,7 +111,7 @@ const { isFavorite, pending, toggleFavorite } = useFavorite(
         {{ formatLanguage(project.language) }}
       </span>
       <span v-if="difficulty" class="border border-accented px-1.5 py-0.5 text-toned">
-        {{ difficulty === "beginner" ? "good first issue" : "help wanted" }}
+        {{ difficultyLabel(difficulty) }}
       </span>
       <span
         v-for="topic in (project.topics ?? []).slice(0, 2)"
