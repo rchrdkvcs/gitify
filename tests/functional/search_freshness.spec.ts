@@ -178,3 +178,75 @@ test.group("Search snapshot freshness", () => {
     assert.equal(otherImports, 0);
   });
 });
+
+test.group("Search snapshot revalidation", () => {
+  test("serves a fresh snapshot without importing", async ({ assert }) => {
+    const { key, remote, store, revalidate, background } = freshnessHarness();
+    await store.save({ fetchedAt: now, totalStored: 1, retryAfter: null });
+    assert.deepEqual(await revalidate(), { status: "fresh" });
+    assert.isFalse(background.isRunning(key));
+    await background.settled();
+    assert.equal(remote.imports, 0);
+  });
+
+  test("answers before a stale import finishes and imports once in the background", async ({
+    assert,
+  }) => {
+    const { key, store, remote, revalidate, background } = freshnessHarness();
+    const remoteCall = gate();
+    const slowImport = async () => {
+      remote.imports++;
+      await remoteCall.pass();
+      return 7;
+    };
+    try {
+      assert.deepEqual(
+        await within(revalidate({ importSnapshot: slowImport }), "revalidation waited for GitHub"),
+        { status: "pending" },
+      );
+      await within(remoteCall.arrived, "background import never started");
+      assert.isTrue(background.isRunning(key));
+      assert.deepEqual(await revalidate({ importSnapshot: slowImport }), { status: "pending" });
+    } finally {
+      remoteCall.open();
+      await background.settled();
+    }
+    assert.equal(remote.imports, 1);
+    assert.equal(store.snapshot?.totalStored, 7);
+    assert.deepEqual(await revalidate(), { status: "fresh" });
+  });
+
+  test("records a background failure and reports the deferred retry", async ({ assert }) => {
+    const { clock, key, store, remote, revalidate, background } = freshnessHarness();
+    remote.failure = new GitHubUnavailableError(503);
+    assert.deepEqual(await revalidate(), { status: "pending" });
+    await background.settled();
+    assert.equal(store.snapshot?.retryAfter?.toMillis(), now.plus({ seconds: 60 }).toMillis());
+    remote.failure = undefined;
+    await assert.rejects(() => revalidate(), SearchRetryDeferredError);
+    assert.isFalse(background.isRunning(key));
+    clock.now = now.plus({ seconds: 60 });
+    assert.deepEqual(await revalidate(), { status: "pending" });
+    await background.settled();
+    assert.equal(remote.imports, 2);
+    assert.isNull(store.snapshot?.retryAfter);
+  });
+
+  test("exhausted permits leave the refresh to a later request", async ({ assert }) => {
+    const permits = new SearchPermits(1);
+    const { remote, revalidate, background } = freshnessHarness(permits);
+    assert.isTrue(permits.tryAcquire());
+    try {
+      assert.deepEqual(await revalidate(), { status: "pending" });
+      await background.settled();
+      assert.equal(remote.imports, 0);
+    } finally {
+      permits.release();
+    }
+    assert.deepEqual(await revalidate(), { status: "pending" });
+    await background.settled();
+    assert.equal(remote.imports, 1);
+    assert.isTrue(permits.tryAcquire());
+    permits.release();
+  });
+});

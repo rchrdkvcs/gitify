@@ -1,5 +1,6 @@
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 import { DateTime } from "luxon";
+import { ulid } from "ulid";
 import type Project from "#models/project";
 import type { GitHubAdapter } from "#services/github/github_adapter";
 import type { Difficulty } from "#shared/types/index";
@@ -11,6 +12,7 @@ import { upsertRepositories } from "#services/repository_identity";
 import {
   type SearchFreshness,
   SearchFreshnessPolicy,
+  type SnapshotRefresh,
   type SnapshotStore,
 } from "#services/search_freshness/search_freshness";
 
@@ -32,26 +34,32 @@ export default class GitHubSyncService {
   }
 
   async ensureSearchFresh(criteria: SearchCriteria): Promise<SearchFreshness> {
-    return this.refreshSearch(criteria, false);
+    return this.freshness.ensureFresh(this.refreshSearch(criteria, false));
+  }
+
+  async revalidateSearch(criteria: SearchCriteria): Promise<SearchFreshness> {
+    return this.freshness.revalidate(this.refreshSearch(criteria, false));
   }
 
   async fetchAndStore(language: string, difficulty: Difficulty, token: string): Promise<number> {
-    const result = await this.refreshSearch({ language, difficulty, token }, true);
+    const result = await this.freshness.ensureFresh(
+      this.refreshSearch({ language, difficulty, token }, true),
+    );
     if (result.status !== "refreshed") {
       throw new Error("GitHub search refresh already in progress");
     }
     return result.totalStored;
   }
 
-  private refreshSearch(input: SearchCriteria, force: boolean): Promise<SearchFreshness> {
+  private refreshSearch(input: SearchCriteria, force: boolean): SnapshotRefresh {
     const criteria = { ...input, language: input.language.trim().toLowerCase() };
-    return this.freshness.ensureFresh({
+    return {
       key: `project-search:${criteria.language}:${criteria.difficulty}`,
       ttlHours: gitifyConfig.cache.fetchTtlHours,
       store: projectSearchStore(criteria),
       importSnapshot: (trx) => this.importSearch(criteria, trx),
       force,
-    });
+    };
   }
 
   private async importSearch(
@@ -69,17 +77,25 @@ export default class GitHubSyncService {
       .where("language", language)
       .where("difficulty", difficulty)
       .delete();
-    const projects = await upsertRepositories(
+    const projectIds = await upsertRepositories(
       searchable,
       { searchLanguage: language, legacyDifficulty: difficulty, topics: "refresh" },
       trx,
     );
-    for (const project of projects.values()) {
-      await ProjectSearchMembership.firstOrCreate(
-        { projectId: project.id, language, difficulty },
-        {},
-        { client: trx },
-      );
+    if (projectIds.size > 0) {
+      await trx
+        .knexQuery()
+        .table("project_search_memberships")
+        .insert(
+          [...projectIds.values()].map((projectId) => ({
+            id: ulid(),
+            project_id: projectId,
+            language,
+            difficulty,
+          })),
+        )
+        .onConflict(["language", "difficulty", "project_id"])
+        .ignore();
     }
     return searchable.length;
   }

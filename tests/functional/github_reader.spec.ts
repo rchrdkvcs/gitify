@@ -6,6 +6,7 @@ import ProjectSearchMembership from "#models/project_search_membership";
 import User from "#models/user";
 import { GitHubAdapter } from "#services/github/github_adapter";
 import { GitHubAuthError } from "#services/github/github_errors";
+import { backgroundRefreshes } from "#services/search_freshness/background_refreshes";
 import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { restoreGitHub, swapGitHub } from "#tests/helpers/github_container";
 
@@ -47,12 +48,16 @@ test.group("GitHub reader", (group) => {
   test("guests read GitHub with the server token", async ({ client, assert }) => {
     const github = swapGitHub({ serverToken: "server-token" });
     github.repos = [githubRepository()];
+    const refreshing = await client.get(explore).withInertia();
+    refreshing.assertInertiaPropsContains({ projects: { data: [] }, refreshState: "refreshing" });
+    await backgroundRefreshes.settled();
     const page = await client.get(explore).withInertia();
     page.assertInertiaPropsContains({
       projects: { data: [{ name: "repo-101" }] },
       refreshState: "ready",
     });
     await client.get("/").withInertia();
+    await backgroundRefreshes.settled();
     assert.deepEqual(searchTokens(github), ["server-token"]);
   });
 
@@ -61,6 +66,7 @@ test.group("GitHub reader", (group) => {
     const user = await reader("user-token");
     await client.get(explore).loginAs(user).withInertia();
     await client.get("/issues?label=help-wanted&language=go").loginAs(user).withInertia();
+    await backgroundRefreshes.settled();
     assert.deepEqual(searchTokens(github), ["user-token"]);
     assert.deepEqual(
       github.issueSearchCalls.map((call) => call.token),
@@ -73,6 +79,8 @@ test.group("GitHub reader", (group) => {
     github.repos = [githubRepository()];
     github.tokenErrors.set("revoked-token", new GitHubAuthError(401, "Unauthorized"));
     const user = await reader("revoked-token");
+    await client.get(explore).loginAs(user).withInertia();
+    await backgroundRefreshes.settled();
     const page = await client.get(explore).loginAs(user).withInertia();
     page.assertInertiaPropsContains({
       projects: { data: [{ name: "repo-101" }] },

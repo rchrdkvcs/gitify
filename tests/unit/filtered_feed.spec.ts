@@ -1,9 +1,10 @@
 import { test } from "@japa/runner";
-import { effectScope, nextTick } from "vue";
-import type { IssueFilters } from "#shared/types/index";
+import { effectScope, nextTick, ref } from "vue";
+import type { FeedRefreshState, IssueFilters } from "#shared/types/index";
 import type { FilterQuery } from "../../inertia/lib/feed-filters.js";
 import {
   useFilteredFeed,
+  useRefreshPolling,
   type FilteredFeedTimer,
 } from "../../inertia/composables/useFilteredFeed.js";
 import { issueFilterSchema } from "../../inertia/lib/feed-filter-schemas.js";
@@ -117,5 +118,66 @@ test.group("useFilteredFeed", () => {
     scope.stop();
     assert.equal(clock.pending.size, 0);
     assert.lengthOf(visits, 0);
+  });
+});
+
+function pollingHarness(initial: FeedRefreshState) {
+  const state = ref<FeedRefreshState>(initial);
+  const clock = fakeTimer();
+  const scope = effectScope();
+  const polls: (() => void)[] = [];
+  scope.run(() =>
+    useRefreshPolling({
+      refreshState: () => state.value,
+      poll: (finished) => polls.push(finished),
+      maxAttempts: 2,
+      timer: clock.timer,
+    }),
+  );
+  return { state, clock, scope, polls };
+}
+
+test.group("useRefreshPolling", () => {
+  test("reloads a refreshing feed until it settles", async ({ assert }) => {
+    const { state, clock, scope, polls } = pollingHarness("refreshing");
+    assert.equal([...clock.pending.values()][0].delay, 3000);
+    clock.flush();
+    assert.lengthOf(polls, 1);
+    polls[0]();
+    assert.equal(clock.pending.size, 1);
+    clock.flush();
+    state.value = "ready";
+    await nextTick();
+    polls[1]();
+    assert.equal(clock.pending.size, 0);
+    scope.stop();
+  });
+
+  test("stops after the bounded attempts and starts over on a new refresh", async ({ assert }) => {
+    const { state, clock, scope, polls } = pollingHarness("refreshing");
+    clock.flush();
+    polls[0]();
+    clock.flush();
+    polls[1]();
+    assert.equal(clock.pending.size, 0);
+    assert.lengthOf(polls, 2);
+    state.value = "degraded";
+    await nextTick();
+    state.value = "refreshing";
+    await nextTick();
+    assert.equal(clock.pending.size, 1);
+    scope.stop();
+  });
+
+  test("never polls a settled feed and stops with its scope", async ({ assert }) => {
+    const settled = pollingHarness("ready");
+    assert.equal(settled.clock.pending.size, 0);
+    settled.scope.stop();
+
+    const { clock, scope, polls } = pollingHarness("refreshing");
+    clock.flush();
+    scope.stop();
+    polls[0]();
+    assert.equal(clock.pending.size, 0);
   });
 });

@@ -6,6 +6,7 @@ import User from "#models/user";
 import ProjectCatalogue from "#services/feeds/project_catalogue";
 import { GitHubUnavailableError } from "#services/github/github_errors";
 import GitHubSyncService from "#services/github/github_sync_service";
+import { backgroundRefreshes } from "#services/search_freshness/background_refreshes";
 import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 
@@ -27,6 +28,13 @@ test.group("Degraded project feed", (group) => {
     clock = now.plus({ days: 2 });
     github.searchError = new GitHubUnavailableError(null, `Remote outage: ${token}`);
 
+    const refreshing = await feedFor(feed, user.id, preferences, token);
+    assert.equal(refreshing.refreshState, "refreshing");
+    assert.deepEqual(
+      refreshing.projects.map((project) => project.name),
+      ["repo-101"],
+    );
+    await backgroundRefreshes.settled();
     const result = await feedFor(feed, user.id, preferences, token);
 
     assert.deepEqual(
@@ -64,16 +72,11 @@ test.group("Degraded project feed", (group) => {
     const mixed = new MixedGitHub();
     mixed.repos = github.repos;
     const feed = new ProjectCatalogue(new GitHubSyncService(mixed, () => clock));
+    const criteria = { difficulty: "beginner" as const, languages: ["typescript", "rust"] };
 
-    const result = await feedFor(
-      feed,
-      user.id,
-      {
-        difficulty: "beginner",
-        languages: ["typescript", "rust"],
-      },
-      token,
-    );
+    await feedFor(feed, user.id, criteria, token);
+    await backgroundRefreshes.settled();
+    const result = await feedFor(feed, user.id, criteria, token);
 
     assert.deepEqual(
       result.projects.map((project) => project.name),
@@ -93,6 +96,10 @@ test.group("Degraded project feed", (group) => {
     const feed = new ProjectCatalogue(new GitHubSyncService(github, () => clock));
     const preferences = { difficulty: "beginner" as const, languages: ["typescript"] };
 
+    const preparing = await feedFor(feed, user.id, preferences, token);
+    assert.deepEqual(preparing.projects, []);
+    assert.equal(preparing.refreshState, "refreshing");
+    await backgroundRefreshes.settled();
     const unavailable = await feedFor(feed, user.id, preferences, token);
     assert.deepEqual(unavailable.projects, []);
     assert.equal(unavailable.available, 0);
@@ -100,6 +107,8 @@ test.group("Degraded project feed", (group) => {
 
     github.searchError = undefined;
     clock = clock.plus({ seconds: 60 });
+    await feedFor(feed, user.id, preferences, token);
+    await backgroundRefreshes.settled();
     const empty = await feedFor(feed, user.id, preferences, token);
     assert.deepEqual(empty.projects, []);
     assert.equal(empty.available, 0);

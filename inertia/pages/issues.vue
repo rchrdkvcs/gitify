@@ -34,7 +34,7 @@ const sortItems: { label: string; value: IssueSort }[] = [
 const statusCopy: FeedStatusCopy = {
   degraded:
     "Certaines issues n’ont pas pu être actualisées. Celles affichées viennent du dernier relevé.",
-  refreshing: "Une partie des issues sera actualisée au prochain chargement.",
+  refreshing: "Une partie des issues est en cours d’actualisation.",
   unavailable: {
     title: "Les issues sont momentanément indisponibles",
     description:
@@ -44,18 +44,22 @@ const statusCopy: FeedStatusCopy = {
     icon: "lucide:list-todo",
     title: "Les issues se préparent",
     description:
-      "On récupère des issues depuis GitHub pour ces langages. Recharge la page dans quelques instants.",
+      "On récupère des issues depuis GitHub pour ces langages. Elles s’afficheront dans quelques instants.",
   },
 };
+
+const feedProps = { scroll: "issues", dependents: ["total", "filters", "refreshState"] };
 
 const { filters, hasActiveFilters, reload, resetFilters } = useFilteredFeed({
   schema: issueFilterSchema,
   source: props.filters,
   debounced: ["q"],
-  visit: inertiaFeedVisit("/issues", {
-    scroll: "issues",
-    dependents: ["total", "filters", "refreshState"],
-  }),
+  visit: inertiaFeedVisit("/issues", feedProps),
+});
+
+useRefreshPolling({
+  refreshState: () => props.refreshState,
+  poll: inertiaFeedRefresh(feedProps),
 });
 
 const resultLabel = computed(() =>

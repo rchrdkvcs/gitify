@@ -1,5 +1,6 @@
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 import { DateTime } from "luxon";
+import { ulid } from "ulid";
 import type { GitHubAdapter, GitHubIssue } from "#services/github/github_adapter";
 import type { IssueKind } from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
@@ -10,6 +11,7 @@ import { upsertRepositories } from "#services/repository_identity";
 import {
   type SearchFreshness,
   SearchFreshnessPolicy,
+  type SnapshotRefresh,
   type SnapshotStore,
 } from "#services/search_freshness/search_freshness";
 import { issueKindCatalog } from "#shared/issues";
@@ -37,14 +39,22 @@ export default class GitHubIssueSyncService {
     this.freshness = freshness ?? new SearchFreshnessPolicy(now);
   }
 
-  async ensureIssuesFresh(input: IssueSearchCriteria): Promise<SearchFreshness> {
+  async ensureIssuesFresh(criteria: IssueSearchCriteria): Promise<SearchFreshness> {
+    return this.freshness.ensureFresh(this.refreshIssues(criteria));
+  }
+
+  async revalidateIssues(criteria: IssueSearchCriteria): Promise<SearchFreshness> {
+    return this.freshness.revalidate(this.refreshIssues(criteria));
+  }
+
+  private refreshIssues(input: IssueSearchCriteria): SnapshotRefresh {
     const criteria = { ...input, language: input.language.trim().toLowerCase() };
-    return this.freshness.ensureFresh({
+    return {
       key: `issue-search:${criteria.language}:${criteria.kind}`,
       ttlHours: gitifyConfig.cache.issueFetchTtlHours,
       store: issueSearchStore(criteria),
       importSnapshot: (trx) => this.importIssues(criteria, trx),
-    });
+    };
   }
 
   private async importIssues(
@@ -66,7 +76,7 @@ export default class GitHubIssueSyncService {
     const previousIds = previousMemberships.map((membership) => membership.issueId);
     await memberships.delete();
 
-    const projects = await upsertRepositories(
+    const projectIds = await upsertRepositories(
       issues.map((issue) => issue.repository),
       { searchLanguage: language, legacyDifficulty: legacyDifficultyFor(kind), topics: "keep" },
       trx,
@@ -79,32 +89,58 @@ export default class GitHubIssueSyncService {
       ...previous.map((issue) => Number(issue.githubIssueId)),
       ...issues.map((issue) => issue.id),
     ]);
-    for (const githubIssueId of [...issueLocks].sort((a, b) => a - b)) {
-      await trx.rawQuery("SELECT pg_advisory_xact_lock(hashtext(?))", [
-        `project-issue:${githubIssueId}`,
-      ]);
+    if (issueLocks.size > 0) {
+      await trx.rawQuery(
+        "SELECT pg_advisory_xact_lock(hashtext(lock.key)) FROM unnest(?::text[]) WITH ORDINALITY AS lock(key, position) ORDER BY lock.position",
+        [
+          [...issueLocks]
+            .sort((a, b) => a - b)
+            .map((githubIssueId) => `project-issue:${githubIssueId}`),
+        ],
+      );
     }
 
-    for (const issue of issues) {
-      const stored = await ProjectIssue.updateOrCreate(
-        { githubIssueId: issue.id },
-        {
-          projectId: projects.get(issue.repository.id)!.id,
-          number: issue.number,
-          title: issue.title,
-          url: issue.url,
-          labels: issue.labels,
-          commentsCount: issue.comments,
-          assigneesCount: issue.assignees,
-          githubCreatedAt: DateTime.fromISO(issue.createdAt),
-        },
-        { client: trx },
-      );
-      await IssueSearchMembership.firstOrCreate(
-        { issueId: stored.id, language, kind },
-        {},
-        { client: trx },
-      );
+    const uniqueIssues = [...new Map(issues.map((issue) => [issue.id, issue])).values()];
+    if (uniqueIssues.length > 0) {
+      const now = new Date();
+      const stored: { id: string }[] = await trx
+        .knexQuery()
+        .table("project_issues")
+        .insert(
+          uniqueIssues.map((issue) => ({
+            id: ulid(),
+            github_issue_id: issue.id,
+            project_id: projectIds.get(issue.repository.id)!,
+            number: issue.number,
+            title: issue.title,
+            url: issue.url,
+            labels: JSON.stringify(issue.labels),
+            comments_count: issue.comments,
+            assignees_count: issue.assignees,
+            github_created_at: issue.createdAt,
+            created_at: now,
+            updated_at: now,
+          })),
+        )
+        .onConflict("github_issue_id")
+        .merge([
+          "project_id",
+          "number",
+          "title",
+          "url",
+          "labels",
+          "comments_count",
+          "assignees_count",
+          "github_created_at",
+          "updated_at",
+        ])
+        .returning(["id"]);
+      await trx
+        .knexQuery()
+        .table("issue_search_memberships")
+        .insert(stored.map((issue) => ({ id: ulid(), issue_id: issue.id, language, kind })))
+        .onConflict(["language", "kind", "issue_id"])
+        .ignore();
     }
 
     if (previousIds.length) {

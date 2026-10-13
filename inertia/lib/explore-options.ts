@@ -26,7 +26,7 @@ export const exploreSortItems: { label: string; value: ExploreSort }[] = [
 export const exploreStatusCopy: FeedStatusCopy = {
   degraded:
     "Certains projets n’ont pas pu être actualisés. Tu peux explorer ceux déjà disponibles.",
-  refreshing: "Une partie du catalogue sera actualisée au prochain chargement.",
+  refreshing: "Une partie du catalogue est en cours d’actualisation.",
   unavailable: {
     title: "Les projets sont momentanément indisponibles",
     description: "Impossible de récupérer les projets. Réessaie dans quelques instants.",
@@ -35,6 +35,6 @@ export const exploreStatusCopy: FeedStatusCopy = {
     icon: "lucide:folder-search",
     title: "Le catalogue se prépare",
     description:
-      "On récupère des projets depuis GitHub pour ces langages. Recharge la page dans quelques instants.",
+      "On récupère des projets depuis GitHub pour ces langages. Ils s’afficheront dans quelques instants.",
   },
 };

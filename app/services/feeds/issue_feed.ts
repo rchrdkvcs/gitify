@@ -14,7 +14,7 @@ import { issueKinds } from "#shared/issues";
 import { normalizePage } from "#shared/pagination";
 import IssueTransformer from "#transformers/issue_transformer";
 
-type IssueSync = Pick<GitHubIssueSyncService, "ensureIssuesFresh">;
+type IssueSync = Pick<GitHubIssueSyncService, "revalidateIssues">;
 
 export type IssuePage = {
   issues: FeedIssue[];
@@ -49,7 +49,7 @@ export default class IssueFeed {
     }
     const kinds: IssueKind[] = filters.kind === "all" ? issueKinds : [filters.kind];
     return filters.languages.flatMap((language) =>
-      kinds.map((kind) => () => this.sync.ensureIssuesFresh({ language, kind, token })),
+      kinds.map((kind) => () => this.sync.revalidateIssues({ language, kind, token })),
     );
   }
 

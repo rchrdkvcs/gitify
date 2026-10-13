@@ -24,14 +24,21 @@ const props = defineProps<{
   refreshState: FeedRefreshState;
 }>();
 
+const feedProps = {
+  scroll: "projects",
+  dependents: ["total", "filters", "topicOptions", "refreshState"],
+};
+
 const { filters, hasActiveFilters, reload, resetFilters } = useFilteredFeed({
   schema: exploreFilterSchema,
   source: props.filters,
   debounced: ["q"],
-  visit: inertiaFeedVisit("/explore", {
-    scroll: "projects",
-    dependents: ["total", "filters", "topicOptions", "refreshState"],
-  }),
+  visit: inertiaFeedVisit("/explore", feedProps),
+});
+
+useRefreshPolling({
+  refreshState: () => props.refreshState,
+  poll: inertiaFeedRefresh(feedProps),
 });
 
 const { withFavorite, setFavorite } = useFavoriteOverrides();

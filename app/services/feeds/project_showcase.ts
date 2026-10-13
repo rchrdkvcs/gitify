@@ -8,7 +8,7 @@ import ShowcaseProjectTransformer from "#transformers/showcase_project_transform
 
 type ShowcaseSync = Pick<
   GitHubSyncService,
-  "ensureSearchFresh" | "needsDetailsFetch" | "fetchProjectDetails"
+  "revalidateSearch" | "needsDetailsFetch" | "fetchProjectDetails"
 >;
 
 export type RandomSource = () => number;
@@ -41,7 +41,7 @@ export default class ProjectShowcase {
 
   private async refreshSearch(language: string, token: string): Promise<void> {
     await this.sync
-      .ensureSearchFresh({ language, difficulty: gitifyConfig.showcase.seederDifficulty, token })
+      .revalidateSearch({ language, difficulty: gitifyConfig.showcase.seederDifficulty, token })
       .catch((error) => logger.error({ err: error, language }, "Showcase search refresh failed"));
   }
 

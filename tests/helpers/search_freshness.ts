@@ -1,5 +1,6 @@
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 import { DateTime } from "luxon";
+import { BackgroundRefreshes } from "#services/search_freshness/background_refreshes";
 import {
   SearchFreshnessPolicy,
   type SnapshotChanges,
@@ -34,7 +35,8 @@ let keys = 0;
 
 export function freshnessHarness(permits = new SearchPermits(2)) {
   const clock = { now: freshnessNow };
-  const policy = new SearchFreshnessPolicy(() => clock.now, permits);
+  const background = new BackgroundRefreshes();
+  const policy = new SearchFreshnessPolicy(() => clock.now, permits, background);
   const store = new MemorySnapshotStore();
   const key = `freshness-test:${process.pid}:${Date.now()}:${keys++}`;
   const remote = { imports: 0, stored: 1, failure: undefined as Error | undefined };
@@ -47,7 +49,9 @@ export function freshnessHarness(permits = new SearchPermits(2)) {
   };
   const refresh = (overrides: Partial<SnapshotRefresh> = {}) =>
     policy.ensureFresh({ key, ttlHours: 6, store, importSnapshot, ...overrides });
-  return { clock, policy, store, key, remote, refresh, permits };
+  const revalidate = (overrides: Partial<SnapshotRefresh> = {}) =>
+    policy.revalidate({ key, ttlHours: 6, store, importSnapshot, ...overrides });
+  return { clock, policy, store, key, remote, refresh, revalidate, background, permits };
 }
 
 export function gate() {

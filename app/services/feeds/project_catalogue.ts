@@ -15,7 +15,7 @@ import { listedProjects } from "#services/feeds/visible_projects";
 import { normalizePage } from "#shared/pagination";
 import ProjectTransformer from "#transformers/project_transformer";
 
-type CatalogueSync = Pick<GitHubSyncService, "ensureSearchFresh">;
+type CatalogueSync = Pick<GitHubSyncService, "revalidateSearch">;
 
 export type CatalogueReader = { userId: string | null; token: string | null };
 
@@ -59,9 +59,7 @@ export default class ProjectCatalogue {
     }
     const levels: Difficulty[] = filters.level === "all" ? ["beginner", "expert"] : [filters.level];
     return filters.languages.flatMap((language) =>
-      levels.map(
-        (difficulty) => () => this.sync.ensureSearchFresh({ language, difficulty, token }),
-      ),
+      levels.map((difficulty) => () => this.sync.revalidateSearch({ language, difficulty, token })),
     );
   }
 

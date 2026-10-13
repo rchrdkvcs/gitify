@@ -6,6 +6,7 @@ import ProjectIssue from "#models/project_issue";
 import ProjectSearchMembership from "#models/project_search_membership";
 import IssueFeed from "#services/feeds/issue_feed";
 import GitHubIssueSyncService from "#services/github/github_issue_sync_service";
+import { backgroundRefreshes } from "#services/search_freshness/background_refreshes";
 import { FakeGitHubAdapter, githubIssue } from "#tests/helpers/fake_github_adapter";
 import {
   issueFeedSetup as setup,
@@ -26,6 +27,10 @@ test.group("Issue feed", (group) => {
       githubIssue({ id: 5004, repository: { id: 203, name: "secret", isPrivate: true } }),
     ];
 
+    const preparing = await feed.explore(filters(), 1, { token });
+    assert.equal(preparing.refreshState, "refreshing");
+    assert.isEmpty(preparing.issues);
+    await backgroundRefreshes.settled();
     const result = await feed.explore(filters(), 1, { token });
 
     assert.deepEqual(github.issueSearchCalls, [
@@ -76,6 +81,7 @@ test.group("Issue feed", (group) => {
     github.issues = [githubIssue({ repository: { stars: 99, topics: ["truncated"] } })];
 
     await feed.explore(filters(), 1, { token });
+    await backgroundRefreshes.settled();
 
     await existing.refresh();
     assert.equal(existing.name, "repo-201");
@@ -136,9 +142,13 @@ test.group("Issue feed", (group) => {
     const { github, clock, feed } = setup();
     github.issues = [githubIssue({ title: "Cached issue" })];
     await feed.explore(filters(), 1, { token });
+    await backgroundRefreshes.settled();
 
     clock.now = now.plus({ hours: 7 });
     github.issueSearchError = new Error(`Remote outage ${token}`);
+    const refreshing = await feed.explore(filters(), 1, { token });
+    assert.equal(refreshing.refreshState, "refreshing");
+    await backgroundRefreshes.settled();
     const degraded = await feed.explore(filters(), 1, { token });
     assert.equal(degraded.refreshState, "degraded");
     assert.deepEqual(
@@ -158,6 +168,8 @@ test.group("Issue feed", (group) => {
     clock.now = clock.now.plus({ seconds: 60 });
     github.issueSearchError = undefined;
     github.issues = [githubIssue({ id: 5009, title: "Recovered" })];
+    await feed.explore(filters(), 1, { token });
+    await backgroundRefreshes.settled();
     const recovered = await feed.explore(filters(), 1, { token });
     assert.equal(recovered.refreshState, "ready");
     assert.deepEqual(
@@ -169,6 +181,8 @@ test.group("Issue feed", (group) => {
   test("reports an unavailable feed when no snapshot exists", async ({ assert }) => {
     const { github, feed } = setup();
     github.issueSearchError = new Error("GitHub unavailable");
+    await feed.explore(filters(), 1, { token });
+    await backgroundRefreshes.settled();
     const result = await feed.explore(filters(), 1, { token });
     assert.equal(result.refreshState, "unavailable");
     assert.isEmpty(result.issues);
@@ -182,6 +196,7 @@ test.group("Issue feed", (group) => {
     await feed.explore(filters(), 1, { token: null });
     assert.isEmpty(github.issueSearchCalls);
     const all = await feed.explore(filters({ kind: "all", languages: ["rust"] }), 1, { token });
+    await backgroundRefreshes.settled();
     assert.lengthOf(github.issueSearchCalls, 2);
     assert.equal(all.refreshState, "refreshing");
   });
