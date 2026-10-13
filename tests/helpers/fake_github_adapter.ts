@@ -139,6 +139,7 @@ export class FakeGitHubAdapter implements GitHubAdapter {
   issueSearchError?: GitHubError;
   snapshotError?: GitHubError;
   userRepositoriesError?: GitHubError;
+  tokenErrors = new Map<string, GitHubError>();
 
   async searchRepositories(
     language: string,
@@ -147,33 +148,32 @@ export class FakeGitHubAdapter implements GitHubAdapter {
     perPage?: number,
   ) {
     this.searchCalls.push({ language, difficulty, token, perPage });
-    if (this.searchError) {
-      throw this.searchError;
-    }
+    this.failFor(token, this.searchError);
     return structuredClone(this.repos);
   }
 
   async searchIssues(language: string, kind: IssueKind, token: string, perPage?: number) {
     this.issueSearchCalls.push({ language, kind, token, perPage });
-    if (this.issueSearchError) {
-      throw this.issueSearchError;
-    }
+    this.failFor(token, this.issueSearchError);
     return structuredClone(this.issues);
   }
 
   async getRepositorySnapshot(ownerName: string, repoName: string, token: string) {
     this.snapshotCalls.push({ ownerName, repoName, token });
-    if (this.snapshotError) {
-      throw this.snapshotError;
-    }
+    this.failFor(token, this.snapshotError);
     return structuredClone(this.snapshot);
   }
 
   async listUserRepositoryLanguages(token: string) {
     this.userRepositoryCalls.push(token);
-    if (this.userRepositoriesError) {
-      throw this.userRepositoriesError;
-    }
+    this.failFor(token, this.userRepositoriesError);
     return [...this.userRepositoryLanguages];
+  }
+
+  private failFor(token: string, error?: GitHubError) {
+    const failure = this.tokenErrors.get(token) ?? error;
+    if (failure) {
+      throw failure;
+    }
   }
 }

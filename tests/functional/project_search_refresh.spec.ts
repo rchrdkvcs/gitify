@@ -3,10 +3,10 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import gitifyConfig from "#config/gitify";
 import GithubFetchCache from "#models/github_fetch_cache";
-import { ProjectCatalogue } from "#services/feeds/project_catalogue";
-import { ProjectShowcase } from "#services/feeds/project_showcase";
+import ProjectCatalogue from "#services/feeds/project_catalogue";
+import ProjectShowcase from "#services/feeds/project_showcase";
 import { GitHubRateLimitError, GitHubUnavailableError } from "#services/github/github_errors";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 

@@ -4,7 +4,8 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import { upgradeStoredPreferences } from "#database/migrations/1791800000007_add_onboarding_to_users";
 import User from "#models/user";
-import { OnboardingService } from "#services/onboarding_service";
+import GitHubCredentials from "#services/github/github_credentials";
+import OnboardingService from "#services/onboarding_service";
 import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
 
 const json = { accept: "application/json" };
@@ -111,7 +112,7 @@ test.group("Onboarding", (group) => {
     skipped.assertHeader("location", "/explore");
     await user.refresh();
     assert.isNotNull(user.onboardingSkippedAt);
-    assert.equal(new OnboardingService().landingPath(user), "/explore");
+    assert.equal(new OnboardingService(new FakeGitHubAdapter()).landingPath(user), "/explore");
 
     const resumed = await client.get("/onboarding").loginAs(user).withInertia();
     resumed.assertInertiaPropsContains({ initialStep: 3 });
@@ -143,17 +144,31 @@ test.group("Onboarding", (group) => {
     const github = new FakeGitHubAdapter();
     github.userRepositoryLanguages = ["Rust", "Go", "Rust", null, "Brainfuck"];
     const service = new OnboardingService(github);
+    const credentials = new GitHubCredentials("server-token");
     const user = await newUser();
 
-    assert.deepEqual(await service.suggestLanguages(user), ["rust", "go"]);
+    assert.deepEqual(await service.suggestLanguages(user, credentials.readerFor(user)), [
+      "rust",
+      "go",
+    ]);
+    assert.deepEqual(github.userRepositoryCalls, ["user-token"]);
+
+    const tokenless = await newUser({ email: "tokenless@example.com", githubAccessToken: null });
+    assert.deepEqual(
+      await service.suggestLanguages(tokenless, credentials.readerFor(tokenless)),
+      [],
+    );
     assert.deepEqual(github.userRepositoryCalls, ["user-token"]);
 
     await service.saveAnswer(user, { step: 3, languages: ["python"] });
-    assert.deepEqual(await service.suggestLanguages(user), []);
+    assert.deepEqual(await service.suggestLanguages(user, credentials.readerFor(user)), []);
     const failing = new FakeGitHubAdapter();
     failing.userRepositoriesError = new Error("GitHub down");
     const other = await newUser({ email: "other@example.com" });
-    assert.deepEqual(await new OnboardingService(failing).suggestLanguages(other), []);
+    assert.deepEqual(
+      await new OnboardingService(failing).suggestLanguages(other, credentials.readerFor(other)),
+      [],
+    );
   });
 
   test("migrates legacy binary preferences to the new levels", async ({ assert }) => {

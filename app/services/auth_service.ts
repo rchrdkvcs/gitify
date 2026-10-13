@@ -25,7 +25,7 @@ function normalizeGitHubId(value: unknown): string {
 }
 
 export default class AuthService {
-  static async findOrCreateFromGitHub(driverUser: GitHubDriverUser): Promise<User> {
+  async findOrCreateFromGitHub(driverUser: GitHubDriverUser): Promise<User> {
     const githubUserId = normalizeGitHubId(driverUser.id);
     const verified = driverUser.emailVerificationState === "verified";
     const email = driverUser.email?.trim().toLowerCase() || null;

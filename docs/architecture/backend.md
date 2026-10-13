@@ -2,7 +2,7 @@
 
 ## Routes et rendu
 
-`PagesController` charge les données métier et rend les pages Inertia. `/`, `/explore`, `/issues` et `/projects/:owner/:name` sont publiques : les visiteurs utilisent le token serveur, les utilisateurs connectés leur propre token. `/favorites`, `/profil`, `/preferences` et `/onboarding` exigent une session ; les visiteurs sont redirigés vers `/`.
+`PagesController` charge les données métier et rend les pages Inertia. `/`, `/explore`, `/issues` et `/projects/:owner/:name` sont publiques ; le jeton GitHub utilisé est décrit dans « Composition et jetons GitHub ». `/favorites`, `/profil`, `/preferences` et `/onboarding` exigent une session ; les visiteurs sont redirigés vers `/`.
 
 Seules les routes `/api/projects/:id/favorite` (ajout et retrait d'un favori) et `/api/onboarding` (réponse enregistrée en arrière-plan) répondent en JSON ; le fil et les favoris sont des pages Inertia (`/explore`, `/favorites`). Elles utilisent la même session et la même protection CSRF que les pages. Il n'y a plus de configuration CORS ni de documentation OpenAPI pour une API séparée.
 
@@ -26,6 +26,14 @@ Seules les routes `/api/projects/:id/favorite` (ajout et retrait d'un favori) et
 - `POST /onboarding/skip` renseigne `onboarding_skipped_at` et redirige vers le catalogue.
 
 `PUT /auth/preferences` valide les mêmes champs avec Vine et passe par le même `OnboardingService.completeWith` que `PUT /onboarding` : il enregistre les préférences, termine l'onboarding s'il ne l'était pas et redirige vers l'exploration. Les validators normalisent, dédupliquent et bornent les choix ; les identifiants inconnus sont refusés. Les critères des fils (`app/feed_criteria/`) dérivent les filtres par défaut des préférences.
+
+## Composition et jetons GitHub
+
+`providers/app_provider.ts` est la racine de composition : il lie `GitHubAdapter` (classe abstraite, contrat de l'adapter) à `GitHubApiClient`, `GitHubCredentials` au jeton serveur, puis les synchronisations, les services de fil et `OnboardingService`. Aucun service n'est exporté comme instance ; les contrôleurs reçoivent leurs dépendances par `@inject()` et le seeder les résout via `app.container`. Les fichiers qui injectent par constructeur importent leurs dépendances comme valeurs (métadonnées de décorateur), d'où l'exception `consistent-type-imports` dans `oxlint.config.ts`.
+
+`GitHubCredentials` (`app/services/github/github_credentials.ts`) est le seul lecteur de `GITHUB_SERVER_TOKEN`. `readerFor(user)` construit le lecteur d'une requête : `{ userId, token, source }`, avec `source` à `user` (jeton de l'utilisateur connecté), `server` (visiteur ou utilisateur sans jeton) ou `none` (aucun jeton serveur : seules les données en cache sont servies, sans appel GitHub). `server()` sert la vitrine et le seeder. Les synchronisations reçoivent `CredentialFallbackAdapter`, qui décore l'adapter : si un appel avec un jeton utilisateur échoue par `GitHubAuthError` ou `GitHubRateLimitError`, il est rejoué une fois avec le jeton serveur. Les suggestions de l'onboarding n'utilisent que le jeton de l'utilisateur, sans repli.
+
+En test, `tests/bootstrap.ts` lie par défaut `GitHubAdapter` à un adapter factice et retire le jeton serveur : l'adapter de production n'est jamais atteint. `swapGitHub` et `restoreGitHub` (`tests/helpers/github_container.ts`) remplacent l'adapter et le jeton serveur d'un test HTTP via `app.container.swap`.
 
 ## Score d'accueil des débutants
 

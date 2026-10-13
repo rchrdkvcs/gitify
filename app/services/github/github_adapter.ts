@@ -61,23 +61,23 @@ export interface RepositorySnapshot {
   insights: RepositoryInsights;
 }
 
-export interface GitHubAdapter {
-  searchIssues(
+export abstract class GitHubAdapter {
+  abstract searchIssues(
     language: string,
     kind: IssueKind,
     token: string,
     perPage?: number,
   ): Promise<GitHubIssue[]>;
-  searchRepositories(
+  abstract searchRepositories(
     language: string,
     difficulty: Difficulty,
     token: string,
     perPage?: number,
   ): Promise<GitHubRepository[]>;
-  getRepositorySnapshot(
+  abstract getRepositorySnapshot(
     ownerName: string,
     repoName: string,
     token: string,
   ): Promise<RepositorySnapshot>;
-  listUserRepositoryLanguages(token: string): Promise<(string | null)[]>;
+  abstract listUserRepositoryLanguages(token: string): Promise<(string | null)[]>;
 }

@@ -8,10 +8,10 @@ import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
 import User from "#models/user";
-import { ProjectCatalogue } from "#services/feeds/project_catalogue";
-import { ProjectDetailReader } from "#services/feeds/project_detail";
+import ProjectCatalogue from "#services/feeds/project_catalogue";
+import ProjectDetailReader from "#services/feeds/project_detail";
 import { addFavorite, favoritePage } from "#services/feeds/project_favorites";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 

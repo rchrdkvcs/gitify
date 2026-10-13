@@ -2,7 +2,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import Project from "#models/project";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import {
   FakeGitHubAdapter,
   githubContributor as contributor,

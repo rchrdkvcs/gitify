@@ -4,7 +4,7 @@ import { DateTime } from "luxon";
 import type { ContributorActivity, RepositoryInsights } from "#shared/types/index";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
 
 const now = DateTime.utc(2026, 10, 12);

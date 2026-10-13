@@ -2,9 +2,9 @@ import logger from "@adonisjs/core/services/logger";
 import { DateTime } from "luxon";
 import type User from "#models/user";
 import type { GitHubAdapter } from "#services/github/github_adapter";
+import type { GitHubReader } from "#services/github/github_credentials";
 import type { PreferenceLanguage } from "#shared/preferences";
 import type { UserPreferences } from "#shared/types/index";
-import GitHubApiClient from "#services/github/github_api_client";
 import { inferPreferredLanguages } from "#shared/language_inference";
 import {
   lastOnboardingStep,
@@ -14,9 +14,9 @@ import {
 } from "#shared/onboarding";
 import { defaultUserPreferences } from "#shared/preferences";
 
-export class OnboardingService {
+export default class OnboardingService {
   constructor(
-    private readonly github: Pick<GitHubAdapter, "listUserRepositoryLanguages"> = GitHubApiClient,
+    private readonly github: Pick<GitHubAdapter, "listUserRepositoryLanguages">,
     private readonly now: () => DateTime = () => DateTime.now(),
   ) {}
 
@@ -45,16 +45,17 @@ export class OnboardingService {
     await user.save();
   }
 
-  async suggestLanguages(user: User): Promise<PreferenceLanguage[]> {
-    if (!user.githubAccessToken || user.preferences?.languages.length) {
+  async suggestLanguages(
+    user: Pick<User, "preferences">,
+    reader: GitHubReader,
+  ): Promise<PreferenceLanguage[]> {
+    if (reader.source !== "user" || !reader.token || user.preferences?.languages.length) {
       return [];
     }
     try {
-      return inferPreferredLanguages(
-        await this.github.listUserRepositoryLanguages(user.githubAccessToken),
-      );
+      return inferPreferredLanguages(await this.github.listUserRepositoryLanguages(reader.token));
     } catch (error) {
-      logger.warn({ err: error, userId: user.id }, "Language suggestions failed");
+      logger.warn({ err: error, userId: reader.userId }, "Language suggestions failed");
       return [];
     }
   }
@@ -65,5 +66,3 @@ export class OnboardingService {
     await user.save();
   }
 }
-
-export default new OnboardingService();

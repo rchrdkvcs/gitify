@@ -1,4 +1,5 @@
 import type Project from "#models/project";
+import type GitHubSyncService from "#services/github/github_sync_service";
 import type {
   Difficulty,
   ExploreFilters,
@@ -11,7 +12,6 @@ import { cachedFeedPage, type SearchRefresh } from "#services/feeds/cached_feed_
 import { containsPattern } from "#services/feeds/feed_query";
 import { displayedDifficulties, favoriteProjectIds } from "#services/feeds/project_reader_state";
 import { listedProjects } from "#services/feeds/visible_projects";
-import githubSync, { type GitHubSyncService } from "#services/github/github_sync_service";
 import { normalizePage } from "#shared/pagination";
 import ProjectTransformer from "#transformers/project_transformer";
 
@@ -25,8 +25,8 @@ export type CataloguePage = {
   refreshState: FeedRefreshState;
 };
 
-export class ProjectCatalogue {
-  constructor(private readonly sync: CatalogueSync = githubSync) {}
+export default class ProjectCatalogue {
+  constructor(private readonly sync: CatalogueSync) {}
 
   async explore(
     filters: ExploreFilters,
@@ -106,5 +106,3 @@ export class ProjectCatalogue {
     return new Map(projects.map((project) => [project.id, level]));
   }
 }
-
-export default new ProjectCatalogue();

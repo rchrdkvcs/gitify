@@ -6,7 +6,6 @@ import gitifyConfig from "#config/gitify";
 import IssueSearchCache from "#models/issue_search_cache";
 import IssueSearchMembership from "#models/issue_search_membership";
 import ProjectIssue from "#models/project_issue";
-import GitHubApiClient from "#services/github/github_api_client";
 import { upsertRepositories } from "#services/repository_identity";
 import {
   type SearchFreshness,
@@ -27,11 +26,11 @@ export function isContributable(issue: GitHubIssue): boolean {
   );
 }
 
-export class GitHubIssueSyncService {
+export default class GitHubIssueSyncService {
   private readonly freshness: SearchFreshnessPolicy;
 
   constructor(
-    private readonly github: GitHubAdapter = GitHubApiClient,
+    private readonly github: GitHubAdapter,
     now: () => DateTime = () => DateTime.now(),
     freshness?: SearchFreshnessPolicy,
   ) {
@@ -139,5 +138,3 @@ function issueSearchStore({ language, kind }: IssueSearchCriteria): SnapshotStor
     },
   };
 }
-
-export default new GitHubIssueSyncService();

@@ -1,4 +1,4 @@
-import type { ProjectCatalogue } from "#services/feeds/project_catalogue";
+import type ProjectCatalogue from "#services/feeds/project_catalogue";
 import type { Difficulty } from "#shared/types/index";
 import { normalizePreferenceLanguages } from "#shared/preferences";
 

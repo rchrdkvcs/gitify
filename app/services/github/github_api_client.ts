@@ -1,18 +1,18 @@
 import type {
-  GitHubAdapter,
   GitHubIssue,
   GitHubRepository,
   RepositorySnapshot,
 } from "#services/github/github_adapter";
 import type { Difficulty, IssueKind } from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
+import { GitHubAdapter } from "#services/github/github_adapter";
 import { GitHubInvalidResponseError } from "#services/github/github_errors";
 import { GitHubTransport } from "#services/github/github_transport";
 import { searchIssues } from "#services/github/issue_search";
 import { searchRepositories } from "#services/github/repository_search";
 import { assembleRepositorySnapshot } from "#services/github/repository_snapshot";
 
-export class GitHubApiClient implements GitHubAdapter {
+export default class GitHubApiClient extends GitHubAdapter {
   private readonly transport: GitHubTransport;
 
   constructor(
@@ -20,6 +20,7 @@ export class GitHubApiClient implements GitHubAdapter {
     timeoutMs = 10_000,
     private readonly now: () => Date = () => new Date(),
   ) {
+    super();
     this.transport = new GitHubTransport(request, timeoutMs, now);
   }
 
@@ -62,5 +63,3 @@ export class GitHubApiClient implements GitHubAdapter {
       .map((repo) => (typeof repo.language === "string" ? repo.language : null));
   }
 }
-
-export default new GitHubApiClient();

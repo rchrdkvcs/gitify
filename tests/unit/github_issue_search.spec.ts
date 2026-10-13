@@ -1,5 +1,5 @@
 import { test } from "@japa/runner";
-import { GitHubApiClient } from "#services/github/github_api_client";
+import GitHubApiClient from "#services/github/github_api_client";
 import { GitHubRateLimitError, GitHubUnavailableError } from "#services/github/github_errors";
 import { isContributable } from "#services/github/github_issue_sync_service";
 import { githubIssue } from "#tests/helpers/fake_github_adapter";

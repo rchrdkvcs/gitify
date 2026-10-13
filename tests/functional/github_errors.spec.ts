@@ -3,9 +3,9 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import Contributor from "#models/contributor";
 import Project from "#models/project";
-import { GitHubApiClient } from "#services/github/github_api_client";
+import GitHubApiClient from "#services/github/github_api_client";
 import { GitHubUnavailableError } from "#services/github/github_errors";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import { graphqlRepository, restDetailsTransport } from "#tests/helpers/github_payloads";
 
 test.group("GitHub details cache failure", (group) => {

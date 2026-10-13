@@ -4,12 +4,14 @@ import { DateTime } from "luxon";
 import IssueSearchCache from "#models/issue_search_cache";
 import User from "#models/user";
 import { githubIssue } from "#tests/helpers/fake_github_adapter";
+import { restoreGitHub, swapGitHub } from "#tests/helpers/github_container";
 import { issueFeedSetup as setup } from "#tests/helpers/issue_feed";
 
 const token = "issue-page-token";
 
 test.group("Issues page", (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction());
+  group.each.teardown(() => restoreGitHub());
 
   test("the page is public and applies the reader's preferences", async ({ client, assert }) => {
     const { github, sync } = setup();
@@ -17,13 +19,8 @@ test.group("Issues page", (group) => {
     await sync.ensureIssuesFresh({ language: "typescript", kind: "good-first-issue", token });
     github.issues = [githubIssue({ id: 5002, title: "Expert issue" })];
     await sync.ensureIssuesFresh({ language: "typescript", kind: "help-wanted", token });
-    await IssueSearchCache.create({
-      language: "typescript",
-      kind: "documentation",
-      totalStored: 0,
-      fetchedAt: DateTime.now(),
-    });
     await IssueSearchCache.query().update({ fetched_at: DateTime.now().toSQL() });
+    const remote = swapGitHub();
 
     const guest = await client.get("/issues").withInertia();
     guest.assertStatus(200);
@@ -65,5 +62,6 @@ test.group("Issues page", (group) => {
 
     const project = await client.get("/projects/owner/repo-201").withInertia();
     project.assertStatus(200);
+    assert.isEmpty(remote.issueSearchCalls);
   });
 });

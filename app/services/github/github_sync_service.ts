@@ -6,7 +6,6 @@ import type { Difficulty } from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
 import GithubFetchCache from "#models/github_fetch_cache";
 import ProjectSearchMembership from "#models/project_search_membership";
-import GitHubApiClient from "#services/github/github_api_client";
 import { storeRepositorySnapshot } from "#services/github/repository_snapshot_store";
 import { upsertRepositories } from "#services/repository_identity";
 import {
@@ -21,11 +20,11 @@ export type SearchCriteria = {
   token: string;
 };
 
-export class GitHubSyncService {
+export default class GitHubSyncService {
   private readonly freshness: SearchFreshnessPolicy;
 
   constructor(
-    private readonly github: GitHubAdapter = GitHubApiClient,
+    private readonly github: GitHubAdapter,
     private readonly now: () => DateTime = () => DateTime.now(),
     freshness?: SearchFreshnessPolicy,
   ) {
@@ -116,5 +115,3 @@ function projectSearchStore({ language, difficulty }: SearchCriteria): SnapshotS
     },
   };
 }
-
-export default new GitHubSyncService();

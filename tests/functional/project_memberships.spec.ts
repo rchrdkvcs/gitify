@@ -1,10 +1,10 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import User from "#models/user";
-import projectCatalogue from "#services/feeds/project_catalogue";
+import ProjectCatalogue from "#services/feeds/project_catalogue";
 import { addFavorite, favoritePage } from "#services/feeds/project_favorites";
 import { GitHubUnavailableError } from "#services/github/github_errors";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 
@@ -22,7 +22,7 @@ test.group("Project search memberships", (group) => {
     const sync = new GitHubSyncService(github);
     await sync.fetchAndStore("typescript", "beginner", token);
     const first = await feedFor(
-      projectCatalogue,
+      new ProjectCatalogue(sync),
       user.id,
       { languages: ["typescript"], difficulty: "beginner" },
       token,
@@ -31,7 +31,7 @@ test.group("Project search memberships", (group) => {
     await sync.fetchAndStore("typescript", "expert", token);
     for (const difficulty of ["beginner", "expert"] as const) {
       const feed = await feedFor(
-        projectCatalogue,
+        new ProjectCatalogue(sync),
         user.id,
         { languages: ["typescript"], difficulty },
         token,
@@ -53,7 +53,7 @@ test.group("Project search memberships", (group) => {
     await sync.fetchAndStore("TypeScript", "expert", token);
     await sync.fetchAndStore("javascript", "expert", token);
     const feed = await feedFor(
-      projectCatalogue,
+      new ProjectCatalogue(sync),
       "not-a-user",
       {
         languages: ["typescript", "javascript"],
@@ -66,7 +66,7 @@ test.group("Project search memberships", (group) => {
     assert.equal(feed.projects[0].language, "javascript");
     await sync.fetchAndStore("typescript", "beginner", token);
     const expertFeed = await feedFor(
-      projectCatalogue,
+      new ProjectCatalogue(sync),
       "not-a-user",
       {
         languages: ["typescript"],
@@ -86,16 +86,16 @@ test.group("Project search memberships", (group) => {
     const sync = new GitHubSyncService(github);
     const preferences = { languages: ["typescript"], difficulty: "beginner" as const };
     await sync.fetchAndStore("typescript", "beginner", token);
-    const original = await feedFor(projectCatalogue, user.id, preferences, token);
+    const original = await feedFor(new ProjectCatalogue(sync), user.id, preferences, token);
     await addFavorite(user.id, original.projects[0].id);
     github.repos = [githubRepository({ id: 102, name: "replacement" })];
     await sync.fetchAndStore("typescript", "beginner", token);
-    const replacement = await feedFor(projectCatalogue, user.id, preferences, token);
+    const replacement = await feedFor(new ProjectCatalogue(sync), user.id, preferences, token);
     assert.equal(replacement.available, 1);
     assert.equal(replacement.projects[0].name, "replacement");
     github.repos = [];
     await sync.fetchAndStore("typescript", "beginner", token);
-    const empty = await feedFor(projectCatalogue, user.id, preferences, token);
+    const empty = await feedFor(new ProjectCatalogue(sync), user.id, preferences, token);
     assert.equal(empty.available, 0);
     assert.isEmpty(empty.projects);
     const favorites = await favoritePage(user.id, 1);
@@ -113,7 +113,7 @@ test.group("Project search memberships", (group) => {
       "GitHub unavailable",
     );
     const feed = await feedFor(
-      projectCatalogue,
+      new ProjectCatalogue(sync),
       "not-a-user",
       {
         languages: ["typescript"],
