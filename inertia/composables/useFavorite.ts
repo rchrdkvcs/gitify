@@ -1,3 +1,5 @@
+import { http } from "~/lib/http";
+
 interface FavoritableProject {
   id: string;
   isFavorite: boolean;
@@ -7,7 +9,6 @@ export function useFavorite(
   project: () => FavoritableProject,
   onChange?: (isFavorite: boolean) => void,
 ) {
-  const { http } = useHttp();
   const authStore = useAuth();
   const toast = useToast();
   const isFavorite = ref(project().isFavorite);
@@ -24,7 +25,6 @@ export function useFavorite(
     if (pending.value) {
       return;
     }
-    // Browsing is public; keeping a project is what requires an account.
     if (!authStore.isAuthenticated) {
       window.location.href = authStore.authenticate();
       return;

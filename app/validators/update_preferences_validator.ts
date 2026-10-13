@@ -1,5 +1,11 @@
 import vine from "@vinejs/vine";
 import {
+  answeredOnboardingField,
+  firstOnboardingStep,
+  lastOnboardingStep,
+  type OnboardingProgress,
+} from "#shared/onboarding";
+import {
   contributionTypes,
   experienceLevels,
   maxPreferenceLanguages,
@@ -8,7 +14,6 @@ import {
   topicPattern,
 } from "#shared/preferences";
 
-/** Trim, lowercase and deduplicate strings; oversized input stays intact for the length rule. */
 const canonicalList = (max: number) => (value: unknown) =>
   Array.isArray(value) && value.length <= max
     ? [
@@ -18,10 +23,8 @@ const canonicalList = (max: number) => (value: unknown) =>
       ]
     : value;
 
-/** Fresh schemas for each validator: Vine modifiers must not be shared. */
 const fields = () => ({
   level: vine.enum(experienceLevels),
-  // Empty lists mean "no preference": every language, every kind of contribution.
   languages: vine
     .array(vine.enum(supportedPreferenceLanguages))
     .parse(canonicalList(maxPreferenceLanguages))
@@ -36,17 +39,23 @@ const fields = () => ({
     .maxLength(maxPreferenceTopics),
 });
 
-/** Persist canonical identifiers once each; unsupported choices must be corrected by the caller. */
 export const updatePreferencesValidator = vine.create(vine.object(fields()));
 
-/** Onboarding saves one answered question at a time; other fields keep their stored value. */
+const answersItsOwnStep = vine.createRule((value, _options, field) => {
+  if (field.isValid && !answeredOnboardingField(value as OnboardingProgress)) {
+    field.report("The {{ field }} must answer the question of its step", "onboardingAnswer", field);
+  }
+});
+
 const progress = fields();
 export const onboardingProgressValidator = vine.create(
-  vine.object({
-    step: vine.number().withoutDecimals().range([1, 4]),
-    level: progress.level.optional(),
-    languages: progress.languages.optional(),
-    contributionTypes: progress.contributionTypes.optional(),
-    topics: progress.topics.optional(),
-  }),
+  vine
+    .object({
+      step: vine.number().withoutDecimals().range([firstOnboardingStep, lastOnboardingStep]),
+      level: progress.level.optional(),
+      languages: progress.languages.optional(),
+      contributionTypes: progress.contributionTypes.optional(),
+      topics: progress.topics.optional(),
+    })
+    .use(answersItsOwnStep()),
 );

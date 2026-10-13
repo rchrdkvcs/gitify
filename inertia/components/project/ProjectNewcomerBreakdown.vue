@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import type { NewcomerScore, NewcomerSignalKey } from "@shared/types/index";
-import {
-  newcomerScoreRules,
-  newcomerScoreWeights,
-  newcomerSignalCatalog,
-} from "@shared/newcomer_score";
+import { newcomerSignalCatalog } from "@shared/newcomer_score_display";
+import { newcomerScoreRules, newcomerScoreWeights } from "@shared/newcomer_score_rules";
 
-// Explains every signal of the newcomer score: what was measured and what it earned.
 const props = defineProps<{ score: NewcomerScore | null }>();
 
 const rules = newcomerScoreRules;

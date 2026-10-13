@@ -1,9 +1,11 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import User from "#models/user";
-import { GitHubSyncService } from "#services/github/github_sync_service";
-import ProjectFeedService from "#services/project_feed_service";
-import { FakeGitHubAdapter, githubRepo } from "#tests/helpers/fake_github_adapter";
+import ProjectCatalogue from "#services/feeds/project_catalogue";
+import { addFavorite, favoritePage } from "#services/feeds/project_favorites";
+import { GitHubUnavailableError } from "#services/github/github_errors";
+import GitHubSyncService from "#services/github/github_sync_service";
+import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 
 const token = "test-token";
@@ -16,20 +18,20 @@ test.group("Project search memberships", (group) => {
   }) => {
     const user = await User.create({ email: "membership@example.com", name: "Member" });
     const github = new FakeGitHubAdapter();
-    github.repos = [githubRepo()];
+    github.repos = [githubRepository()];
     const sync = new GitHubSyncService(github);
     await sync.fetchAndStore("typescript", "beginner", token);
     const first = await feedFor(
-      ProjectFeedService,
+      new ProjectCatalogue(sync),
       user.id,
       { languages: ["typescript"], difficulty: "beginner" },
       token,
     );
-    await ProjectFeedService.addFavorite(user.id, first.projects[0].id);
+    await addFavorite(user.id, first.projects[0].id);
     await sync.fetchAndStore("typescript", "expert", token);
     for (const difficulty of ["beginner", "expert"] as const) {
       const feed = await feedFor(
-        ProjectFeedService,
+        new ProjectCatalogue(sync),
         user.id,
         { languages: ["typescript"], difficulty },
         token,
@@ -38,7 +40,7 @@ test.group("Project search memberships", (group) => {
       assert.equal(feed.projects[0]?.id, first.projects[0].id);
       assert.isTrue(feed.projects[0]?.isFavorite);
     }
-    const favorites = await ProjectFeedService.getFavoriteProjects(user.id, 1);
+    const favorites = await favoritePage(user.id, 1);
     assert.equal(favorites.projects[0].difficulty, "beginner");
   });
 
@@ -46,12 +48,12 @@ test.group("Project search memberships", (group) => {
     assert,
   }) => {
     const github = new FakeGitHubAdapter();
-    github.repos = [githubRepo({ language: "JavaScript" })];
+    github.repos = [githubRepository({ language: "JavaScript" })];
     const sync = new GitHubSyncService(github);
     await sync.fetchAndStore("TypeScript", "expert", token);
     await sync.fetchAndStore("javascript", "expert", token);
     const feed = await feedFor(
-      ProjectFeedService,
+      new ProjectCatalogue(sync),
       "not-a-user",
       {
         languages: ["typescript", "javascript"],
@@ -64,7 +66,7 @@ test.group("Project search memberships", (group) => {
     assert.equal(feed.projects[0].language, "javascript");
     await sync.fetchAndStore("typescript", "beginner", token);
     const expertFeed = await feedFor(
-      ProjectFeedService,
+      new ProjectCatalogue(sync),
       "not-a-user",
       {
         languages: ["typescript"],
@@ -80,38 +82,38 @@ test.group("Project search memberships", (group) => {
   }) => {
     const user = await User.create({ email: "snapshots@example.com", name: "Member" });
     const github = new FakeGitHubAdapter();
-    github.repos = [githubRepo()];
+    github.repos = [githubRepository()];
     const sync = new GitHubSyncService(github);
     const preferences = { languages: ["typescript"], difficulty: "beginner" as const };
     await sync.fetchAndStore("typescript", "beginner", token);
-    const original = await feedFor(ProjectFeedService, user.id, preferences, token);
-    await ProjectFeedService.addFavorite(user.id, original.projects[0].id);
-    github.repos = [githubRepo({ id: 102, name: "replacement" })];
+    const original = await feedFor(new ProjectCatalogue(sync), user.id, preferences, token);
+    await addFavorite(user.id, original.projects[0].id);
+    github.repos = [githubRepository({ id: 102, name: "replacement" })];
     await sync.fetchAndStore("typescript", "beginner", token);
-    const replacement = await feedFor(ProjectFeedService, user.id, preferences, token);
+    const replacement = await feedFor(new ProjectCatalogue(sync), user.id, preferences, token);
     assert.equal(replacement.available, 1);
     assert.equal(replacement.projects[0].name, "replacement");
     github.repos = [];
     await sync.fetchAndStore("typescript", "beginner", token);
-    const empty = await feedFor(ProjectFeedService, user.id, preferences, token);
+    const empty = await feedFor(new ProjectCatalogue(sync), user.id, preferences, token);
     assert.equal(empty.available, 0);
     assert.isEmpty(empty.projects);
-    const favorites = await ProjectFeedService.getFavoriteProjects(user.id, 1);
+    const favorites = await favoritePage(user.id, 1);
     assert.equal(favorites.projects[0]?.id, original.projects[0].id);
   });
 
   test("failed searches preserve the previous searchable snapshot", async ({ assert }) => {
     const github = new FakeGitHubAdapter();
-    github.repos = [githubRepo()];
+    github.repos = [githubRepository()];
     const sync = new GitHubSyncService(github);
     await sync.fetchAndStore("typescript", "beginner", token);
-    github.searchError = new Error("GitHub unavailable");
+    github.searchError = new GitHubUnavailableError(null, "GitHub unavailable");
     await assert.rejects(
       () => sync.fetchAndStore("typescript", "beginner", token),
       "GitHub unavailable",
     );
     const feed = await feedFor(
-      ProjectFeedService,
+      new ProjectCatalogue(sync),
       "not-a-user",
       {
         languages: ["typescript"],

@@ -4,7 +4,7 @@ import { DateTime } from "luxon";
 import type { ContributorActivity, RepositoryInsights } from "#shared/types/index";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
-import { GitHubSyncService } from "#services/github/github_sync_service";
+import GitHubSyncService from "#services/github/github_sync_service";
 import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
 
 const now = DateTime.utc(2026, 10, 12);
@@ -49,10 +49,7 @@ async function listedProject(githubRepoId: number, name: string, stars = 10) {
 
 async function enrich(project: Project, insights: Partial<RepositoryInsights>) {
   const github = new FakeGitHubAdapter();
-  github.insights = {
-    ...github.insights,
-    insights: { ...github.insights.insights, ...insights },
-  };
+  github.snapshot.insights = { ...github.snapshot.insights, ...insights };
   await new GitHubSyncService(github, () => now).fetchProjectDetails(project, "token");
 }
 
@@ -70,6 +67,7 @@ test.group("Newcomer score", (group) => {
       lastCommitAt: "2026-10-11T00:00:00Z",
     });
     assert.equal(project.newcomerScore, 100);
+    assert.notProperty(project.newcomerScoreDetails, "score");
 
     const page = await client.get("/projects/gitify/welcoming").withInertia();
     page.assertStatus(200);
@@ -103,7 +101,6 @@ test.group("Newcomer score", (group) => {
       health: { percentage: 50, files: { ...files, codeOfConduct: false } },
       lastCommitAt: "2026-10-01T00:00:00Z",
     });
-    // Only community files and activity are known: 35 % of the weight, too little to score.
     assert.isNull(project.newcomerScore);
     assert.isTrue(project.newcomerScoreDetails?.partial);
     assert.equal(project.newcomerScoreDetails?.coverage, 0.35);
@@ -144,6 +141,7 @@ test.group("Newcomer score", (group) => {
     });
     await enrich(archived, { isArchived: true });
     assert.equal(archived.newcomerScore, 0);
+    assert.isTrue(archived.isArchived);
 
     const ids = (response: { inertiaProps: Record<string, any> }) =>
       response.inertiaProps.projects.data.map((project: { id: string }) => project.id);

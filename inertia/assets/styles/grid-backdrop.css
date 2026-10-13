@@ -1,0 +1,8 @@
+@layer components {
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, var(--ui-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--ui-border) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}

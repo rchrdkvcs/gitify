@@ -9,7 +9,6 @@ export const projectIdValidator = vine.create({
   }),
 });
 
-/** Public project URLs mirror GitHub: `/projects/:owner/:name`. */
 export const projectSlugValidator = vine.create({
   params: vine.object({
     owner: vine.string().regex(/^[A-Za-z0-9-]{1,39}$/),

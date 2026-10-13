@@ -1,0 +1,68 @@
+@layer components {
+  .eyebrow {
+    @apply inline-flex items-center gap-2 font-mono text-xs tracking-wider text-muted uppercase;
+  }
+
+  .display {
+    @apply text-4xl font-semibold tracking-tight text-highlighted sm:text-5xl lg:text-6xl;
+    line-height: 1.05;
+  }
+
+  .section-title {
+    @apply text-3xl font-semibold tracking-tight text-highlighted sm:text-4xl;
+    line-height: 1.1;
+  }
+
+  .frame-corners {
+    position: relative;
+  }
+
+  .frame-corners > .corner {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    pointer-events: none;
+    color: var(--ui-color-neutral-500);
+  }
+
+  .frame-corners > .corner::before,
+  .frame-corners > .corner::after {
+    content: "";
+    position: absolute;
+    background: currentColor;
+  }
+
+  .frame-corners > .corner::before {
+    left: 5px;
+    top: 0;
+    width: 1px;
+    height: 11px;
+  }
+
+  .frame-corners > .corner::after {
+    top: 5px;
+    left: 0;
+    width: 11px;
+    height: 1px;
+  }
+
+  .frame-corners > .corner-tl {
+    top: -6px;
+    left: -6px;
+  }
+
+  .frame-corners > .corner-tr {
+    top: -6px;
+    right: -6px;
+  }
+
+  .frame-corners > .corner-bl {
+    bottom: -6px;
+    left: -6px;
+  }
+
+  .frame-corners > .corner-br {
+    bottom: -6px;
+    right: -6px;
+  }
+}

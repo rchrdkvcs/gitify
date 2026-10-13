@@ -8,8 +8,10 @@ import GithubFetchCache from "#models/github_fetch_cache";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
 import User from "#models/user";
-import { GitHubSyncService } from "#services/github/github_sync_service";
-import { ProjectFeedService } from "#services/project_feed_service";
+import ProjectCatalogue from "#services/feeds/project_catalogue";
+import ProjectDetailReader from "#services/feeds/project_detail";
+import { addFavorite, favoritePage } from "#services/feeds/project_favorites";
+import GitHubSyncService from "#services/github/github_sync_service";
 import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 
@@ -57,9 +59,15 @@ async function fixture() {
     profileUrl: "https://github.com/contributor",
     contributions: 10,
   });
-  const feed = new ProjectFeedService(new GitHubSyncService(new FakeGitHubAdapter()));
-  await feed.addFavorite(user.id, project.id);
-  return { user, other, project, feed };
+  const sync = new GitHubSyncService(new FakeGitHubAdapter());
+  await addFavorite(user.id, project.id);
+  return {
+    user,
+    other,
+    project,
+    feed: new ProjectCatalogue(sync),
+    detail: new ProjectDetailReader(sync),
+  };
 }
 
 function assertList(assert: Assert, project: ProjectList) {
@@ -92,7 +100,7 @@ test.group("Project public read contracts", (group) => {
   test("projects reader state and requested feed level without exposing persistence", async ({
     assert,
   }) => {
-    const { user, other, project, feed } = await fixture();
+    const { user, other, project, feed, detail: reader } = await fixture();
     const criteria = { difficulty: "expert" as const, languages: user.preferences!.languages };
     const result = await feedFor(feed, user.id, criteria, "secret");
     assertList(assert, result.projects[0]);
@@ -100,7 +108,7 @@ test.group("Project public read contracts", (group) => {
     assert.isTrue(result.projects[0].isFavorite);
     const second = await feedFor(feed, other.id, criteria, "secret");
     assert.isFalse(second.projects[0].isFavorite);
-    const detail = await feed.getProject(project.ownerName, project.name, {
+    const detail = await reader.read(project.ownerName, project.name, {
       userId: user.id,
       token: "secret",
     });
@@ -109,7 +117,7 @@ test.group("Project public read contracts", (group) => {
     assert.equal(detail?.contributors[0].login, "contributor");
     assert.isString(detail?.detailsFetchedAt);
     assert.notProperty(detail, "githubRepoId");
-    const favorites = await feed.getFavoriteProjects(user.id, 1);
+    const favorites = await favoritePage(user.id, 1);
     assertList(assert, favorites.projects[0]);
     assert.isTrue(favorites.projects[0].isFavorite);
     assert.equal(favorites.projects[0].difficulty, "beginner");
@@ -118,7 +126,7 @@ test.group("Project public read contracts", (group) => {
     client,
     assert,
   }) => {
-    const { user, project, feed } = await fixture();
+    const { user, project, feed, detail: reader } = await fixture();
     const page = await client.get("/explore").loginAs(user).withInertia();
     page.assertStatus(200);
     const expected = await feed.explore(
@@ -150,7 +158,7 @@ test.group("Project public read contracts", (group) => {
     detail.assertStatus(200);
     assert.deepEqual(
       detail.inertiaProps.project,
-      await feed.getProject(project.ownerName, project.name, { userId: user.id, token: "secret" }),
+      await reader.read(project.ownerName, project.name, { userId: user.id, token: "secret" }),
     );
   });
 });

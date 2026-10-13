@@ -1,6 +1,4 @@
 <script setup lang="ts">
-// Horizontal language filter shared by the catalogue and the issue feed.
-// An empty selection means every language.
 defineProps<{ options: { value: string; label: string; icon: string }[] }>();
 const languages = defineModel<string[]>({ required: true });
 

@@ -4,9 +4,8 @@ import {
   computeNewcomerScore,
   type NewcomerScoreInput,
   newcomerScoreInputFromInsights,
-  newcomerScoreTier,
-  newcomerScoreWeights,
 } from "#shared/newcomer_score";
+import { newcomerScoreWeights } from "#shared/newcomer_score_rules";
 
 const now = new Date("2026-10-12T00:00:00Z");
 const daysAgo = (days: number) => new Date(now.getTime() - days * 86_400_000).toISOString();
@@ -70,7 +69,6 @@ test.group("Newcomer score", () => {
     const score = computeNewcomerScore(
       {
         ...ideal,
-        // Log scale between a day and a month: about 15 days earns a little over 15 %.
         medianFirstResponseHours: 360,
         externalPullRequests: { merged: 2, closed: 2 },
         unassignedGoodFirstIssues: 2,
@@ -111,7 +109,6 @@ test.group("Newcomer score", () => {
     );
     assert.isTrue(score.partial);
     assert.equal(score.coverage, 0.55);
-    // Unknown signals neither earn nor cost points.
     assert.equal(score.score, 100);
     assert.isNull(signal(score, "firstResponse").points);
     assert.isNull(signal(score, "firstResponse").value);
@@ -174,12 +171,5 @@ test.group("Newcomer score", () => {
       lastCommitAt: daysAgo(3),
       lastMergedPullRequestAt: null,
     });
-  });
-
-  test("tiers name score ranges", ({ assert }) => {
-    assert.equal(newcomerScoreTier(90).tier, "excellent");
-    assert.equal(newcomerScoreTier(50).tier, "good");
-    assert.equal(newcomerScoreTier(30).tier, "fair");
-    assert.equal(newcomerScoreTier(0).tier, "low");
   });
 });

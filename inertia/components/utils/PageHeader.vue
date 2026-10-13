@@ -1,6 +1,4 @@
 <script setup lang="ts">
-// Header band shared by every inner page: eyebrow, title, description and
-// optional actions on the trailing side.
 defineProps<{
   eyebrow?: string;
   title: string;

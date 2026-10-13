@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import type { ProjectDetail, RepositoryInsights } from "@shared/types/index";
+import type { RepositoryInsights } from "@shared/types/index";
+import type { ProjectFacts } from "~/lib/project-facts";
 
 const props = defineProps<{
-  project: ProjectDetail;
-  insights: RepositoryInsights;
+  insights: Pick<
+    RepositoryInsights,
+    "closedIssues" | "openIssues" | "mergedPullRequests" | "openPullRequests" | "languages"
+  >;
+  facts: Pick<ProjectFacts, "commits" | "resolvedRate">;
 }>();
 
-const weeks = computed(() => props.insights.weeklyCommits ?? []);
-const yearTotal = computed(() => weeks.value.reduce((sum, count) => sum + count, 0));
-const peak = computed(() => Math.max(1, ...weeks.value));
-const activeWeeks = computed(() => weeks.value.filter((count) => count > 0).length);
+const weeks = computed(() => props.facts.commits?.weeks ?? []);
+const yearTotal = computed(() => props.facts.commits?.total ?? 0);
+const peak = computed(() => props.facts.commits?.peak ?? 1);
 const hovered = ref<number | null>(null);
 
 const weekLabel = (index: number) => {
@@ -17,21 +20,15 @@ const weekLabel = (index: number) => {
   return ago === 0 ? "Cette semaine" : ago === 1 ? "La semaine dernière" : `Il y a ${ago} semaines`;
 };
 
-const ratio = (part: number, whole: number) =>
-  whole > 0 ? `${Math.floor((part / whole) * 100)} %` : "—";
-
 const summary = computed(() => [
   { label: "Commits sur 12 mois", value: weeks.value.length ? formatNumber(yearTotal.value) : "—" },
   {
     label: "Semaines actives",
-    value: weeks.value.length ? `${activeWeeks.value} / ${weeks.value.length}` : "—",
+    value: weeks.value.length ? `${props.facts.commits?.activeWeeks} / ${weeks.value.length}` : "—",
   },
   {
     label: "Issues résolues",
-    value: ratio(
-      props.insights.closedIssues,
-      props.insights.closedIssues + props.insights.openIssues,
-    ),
+    value: props.facts.resolvedRate != null ? `${props.facts.resolvedRate} %` : "—",
     hint: `${formatNumber(props.insights.closedIssues)} fermées · ${formatNumber(props.insights.openIssues)} ouvertes`,
   },
   {

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { FeedIssue } from "@shared/types/index";
 import { isSignalLabel } from "@shared/issues";
+import { formatLanguageName } from "@shared/preferences";
+import { labelSwatch } from "~/lib/label-swatch";
 
 const props = defineProps<{ issue: FeedIssue }>();
 
-// The kind labels already appear as signals; keep the remaining ones short.
 const otherLabels = computed(() =>
   props.issue.labels.filter((label) => !isSignalLabel(label.name)),
 );
@@ -16,9 +17,6 @@ const stats = computed(() => [
   { label: "Commentaires", value: formatNumber(props.issue.comments) },
   { label: "Étoiles du dépôt", value: formatNumber(props.issue.project.stars) },
 ]);
-
-// GitHub label colors are stored without '#'; draw them as a swatch, keep text neutral.
-const swatch = (color: string) => ({ backgroundColor: `#${color}` });
 </script>
 
 <template>
@@ -46,7 +44,7 @@ const swatch = (color: string) => ({ backgroundColor: `#${color}` });
         class="ms-auto inline-flex shrink-0 items-center gap-1.5 border border-accented px-1.5 py-0.5 font-mono text-[11px] text-toned"
       >
         <span class="size-1.5 bg-current" aria-hidden="true" />
-        {{ formatLanguage(issue.project.language) }}
+        {{ formatLanguageName(issue.project.language) }}
       </span>
     </header>
 
@@ -98,7 +96,7 @@ const swatch = (color: string) => ({ backgroundColor: `#${color}` });
         :key="label.name"
         class="inline-flex items-center gap-1.5 border border-default px-1.5 py-0.5 text-muted"
       >
-        <span class="size-2 rounded-full" :style="swatch(label.color)" aria-hidden="true" />
+        <span class="size-2 rounded-full" :style="labelSwatch(label.color)" aria-hidden="true" />
         {{ label.name }}
       </span>
       <span v-if="hiddenLabels" class="px-1 py-0.5 text-dimmed">+{{ hiddenLabels }}</span>

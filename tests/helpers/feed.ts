@@ -1,10 +1,9 @@
-import type { ProjectFeedService } from "#services/project_feed_service";
+import type ProjectCatalogue from "#services/feeds/project_catalogue";
 import type { Difficulty } from "#shared/types/index";
 import { normalizePreferenceLanguages } from "#shared/preferences";
 
-/** First catalogue page filtered on a GitHub search level and languages. */
 export async function feedFor(
-  service: ProjectFeedService,
+  service: Pick<ProjectCatalogue, "explore">,
   userId: string | null,
   criteria: { difficulty: Difficulty; languages: string[] },
   token: string,

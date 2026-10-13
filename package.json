@@ -10,6 +10,7 @@
     "#models/*": "./app/models/*.js",
     "#exceptions/*": "./app/exceptions/*.js",
     "#validators/*": "./app/validators/*.js",
+    "#feed_criteria/*": "./app/feed_criteria/*.js",
     "#database/*": "./database/*.js",
     "#start/*": "./start/*.js",
     "#tests/*": "./tests/*.js",
@@ -17,7 +18,8 @@
     "#generated/*": "./.adonisjs/server/*.js",
     "#transformers/*": "./app/transformers/*.js",
     "#shared/*": "./shared/*.js",
-    "#middleware/*": "./app/middleware/*.js"
+    "#middleware/*": "./app/middleware/*.js",
+    "#providers/*": "./providers/*.js"
   },
   "scripts": {
     "build": "node ace build",

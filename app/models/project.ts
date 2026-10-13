@@ -1,7 +1,12 @@
 import type { HasMany } from "@adonisjs/lucid/types/relations";
 import { beforeCreate, column, hasMany } from "@adonisjs/lucid/orm";
 import { ulid } from "ulid";
-import type { Difficulty, NewcomerScore, RepositoryInsights } from "#shared/types/index";
+import type {
+  Difficulty,
+  NewcomerScore,
+  NewcomerScoreBreakdown,
+  RepositoryInsights,
+} from "#shared/types/index";
 import { ProjectSchema } from "#database/schema";
 import Contributor from "#models/contributor";
 
@@ -30,11 +35,16 @@ export default class Project extends ProjectSchema {
   declare insights: RepositoryInsights | null;
 
   @column({
-    prepare: (value: NewcomerScore | null) => (value ? JSON.stringify(value) : null),
+    prepare: (value: NewcomerScoreBreakdown | null) => (value ? JSON.stringify(value) : null),
   })
-  declare newcomerScoreDetails: NewcomerScore | null;
+  declare newcomerScoreDetails: NewcomerScoreBreakdown | null;
 
-  /** GitHub serves its own avatar URL; owners imported before it was stored use the public alias. */
+  get newcomerScoreReport(): NewcomerScore | null {
+    return this.newcomerScoreDetails
+      ? { ...this.newcomerScoreDetails, score: this.newcomerScore }
+      : null;
+  }
+
   get avatarUrl(): string {
     return this.ownerAvatarUrl ?? `https://github.com/${this.ownerName}.png?size=96`;
   }

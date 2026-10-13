@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Project, ShowcaseProject } from "@shared/types/index";
-import { newcomerScoreTier } from "@shared/newcomer_score";
+import { describeNewcomerScore } from "@shared/newcomer_score_display";
+import { formatLanguageName } from "@shared/preferences";
+import { difficultyLabel } from "~/lib/project-facts";
 
 const props = defineProps<{
   project: Project | ShowcaseProject;
@@ -14,23 +16,10 @@ const difficulty = computed(() =>
   "difficulty" in props.project ? props.project.difficulty : null,
 );
 
-// Showcase cards carry no score; catalogue cards show "not rated yet" instead.
 const welcome = computed(() =>
   "newcomerScore" in props.project ? (props.project.newcomerScore ?? null) : undefined,
 );
-const welcomeLabel = computed(() => {
-  const value = welcome.value;
-  if (!value || value.score === null) return "Non évalué";
-  if (value.archived) return "Archivé";
-  return `${value.partial ? "≈ " : ""}${value.score}/100`;
-});
-const welcomeTitle = computed(() => {
-  const value = welcome.value;
-  if (!value || value.score === null)
-    return "Score calculé à la première ouverture de la fiche du projet.";
-  const tier = newcomerScoreTier(value.score).label;
-  return value.partial ? `${tier}, estimation sur une partie des signaux` : tier;
-});
+const welcomeDisplay = computed(() => describeNewcomerScore(welcome.value));
 
 const stats = computed(() => {
   const project = props.project;
@@ -108,10 +97,10 @@ const { isFavorite, pending, toggleFavorite } = useFavorite(
         class="inline-flex items-center gap-1.5 border border-accented px-1.5 py-0.5 text-toned"
       >
         <span class="size-1.5 bg-current" aria-hidden="true" />
-        {{ formatLanguage(project.language) }}
+        {{ formatLanguageName(project.language) }}
       </span>
       <span v-if="difficulty" class="border border-accented px-1.5 py-0.5 text-toned">
-        {{ difficulty === "beginner" ? "good first issue" : "help wanted" }}
+        {{ difficultyLabel(difficulty) }}
       </span>
       <span
         v-for="topic in (project.topics ?? []).slice(0, 2)"
@@ -123,19 +112,26 @@ const { isFavorite, pending, toggleFavorite } = useFavorite(
     </div>
 
     <dl class="mt-auto flex flex-col gap-1.5 border-t border-default pt-4 text-sm">
-      <div v-if="welcome !== undefined" class="flex items-center gap-2" :title="welcomeTitle">
+      <div
+        v-if="welcome !== undefined"
+        class="flex items-center gap-2"
+        :title="welcomeDisplay.title"
+      >
         <dt class="text-muted">Accueil</dt>
         <span
           class="mb-1.5 flex-1 self-end border-b border-dotted border-accented"
           aria-hidden="true"
         />
-        <NewcomerScoreMeter v-if="welcome?.score != null" :score="welcome.score" />
+        <NewcomerScoreMeter
+          v-if="!welcomeDisplay.unrated"
+          :filled="welcomeDisplay.filledSegments"
+        />
         <dd
           class="font-mono text-xs tabular-nums"
-          :class="welcome?.score != null ? 'text-highlighted' : 'text-dimmed'"
+          :class="welcomeDisplay.unrated ? 'text-dimmed' : 'text-highlighted'"
         >
-          {{ welcomeLabel }}
-          <span class="sr-only">, {{ welcomeTitle }}</span>
+          {{ welcomeDisplay.label }}
+          <span class="sr-only">, {{ welcomeDisplay.title }}</span>
         </dd>
       </div>
       <div v-for="stat in stats" :key="stat.label" class="flex items-baseline gap-2">

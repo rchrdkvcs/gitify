@@ -26,7 +26,6 @@ test.group("Contributor activity", () => {
   test("measures the first maintainer answer to outside contributors", ({ assert }) => {
     const activity = summarizeContributorActivity(
       [
-        // Answered by a member after 10 h; the author's own comment does not count.
         item({
           createdAt: hoursAgo(100),
           replies: [
@@ -34,16 +33,13 @@ test.group("Contributor activity", () => {
             { createdAt: hoursAgo(90), authorAssociation: "MEMBER" },
           ],
         }),
-        // Merged without comment after 20 h: merging is an answer.
         item({
           kind: "pull",
           createdAt: hoursAgo(200),
           state: "MERGED",
           mergedAt: hoursAgo(180),
         }),
-        // Never answered for 400 h: counted with its age.
         item({ kind: "pull", createdAt: hoursAgo(400), state: "CLOSED" }),
-        // Too recent to judge, maintainers' own work and bots are ignored.
         item({ createdAt: hoursAgo(10) }),
         item({ authorAssociation: "OWNER" }),
         item({ kind: "pull", automated: true, state: "MERGED", mergedAt: hoursAgo(1) }),

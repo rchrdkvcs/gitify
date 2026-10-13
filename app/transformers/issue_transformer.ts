@@ -3,7 +3,6 @@ import type ProjectIssue from "#models/project_issue";
 import type { FeedIssue } from "#shared/types/index";
 import { issueSignals } from "#shared/issues";
 
-/** Issue card projection; expects the `project` relation to be preloaded. */
 export default class IssueTransformer extends BaseTransformer<ProjectIssue> {
   toObject(): FeedIssue {
     const issue = this.resource;

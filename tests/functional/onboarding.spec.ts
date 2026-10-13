@@ -4,7 +4,8 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import { upgradeStoredPreferences } from "#database/migrations/1791800000007_add_onboarding_to_users";
 import User from "#models/user";
-import { OnboardingService } from "#services/onboarding_service";
+import GitHubCredentials from "#services/github/github_credentials";
+import OnboardingService from "#services/onboarding_service";
 import { FakeGitHubAdapter } from "#tests/helpers/fake_github_adapter";
 
 const json = { accept: "application/json" };
@@ -52,7 +53,6 @@ test.group("Onboarding", (group) => {
     page.assertStatus(200);
     page.assertInertiaComponent("onboarding");
     page.assertInertiaPropsContains({ initialStep: 1, user: { onboardedAt: null } });
-    // GitHub is only called once the page asks for the deferred prop.
     assert.notProperty(page.inertiaProps, "suggestedLanguages");
     assert.include(JSON.stringify(page.body()), "suggestedLanguages");
   });
@@ -85,6 +85,14 @@ test.group("Onboarding", (group) => {
       .json({ step: 3, languages: ["klingon"] });
     invalid.assertStatus(422);
 
+    const mismatched = await client
+      .patch("/api/onboarding")
+      .loginAs(user)
+      .withCsrfToken()
+      .headers(json)
+      .json({ step: 4, level: "experienced" });
+    mismatched.assertStatus(422);
+
     await user.refresh();
     assert.deepEqual(user.preferences, {
       level: "some_contributions",
@@ -104,9 +112,8 @@ test.group("Onboarding", (group) => {
     skipped.assertHeader("location", "/explore");
     await user.refresh();
     assert.isNotNull(user.onboardingSkippedAt);
-    assert.equal(new OnboardingService().landingPath(user), "/explore");
+    assert.equal(new OnboardingService(new FakeGitHubAdapter()).landingPath(user), "/explore");
 
-    // Coming back resumes on the first unanswered question.
     const resumed = await client.get("/onboarding").loginAs(user).withInertia();
     resumed.assertInertiaPropsContains({ initialStep: 3 });
 
@@ -129,7 +136,6 @@ test.group("Onboarding", (group) => {
     assert.equal(user.onboardingStep, 4);
     assert.deepEqual(user.preferences?.languages, ["elixir"]);
 
-    // A finished onboarding opens in review mode, from the first question.
     const review = await client.get("/onboarding").loginAs(user).withInertia();
     review.assertInertiaPropsContains({ initialStep: 1 });
   });
@@ -138,18 +144,31 @@ test.group("Onboarding", (group) => {
     const github = new FakeGitHubAdapter();
     github.userRepositoryLanguages = ["Rust", "Go", "Rust", null, "Brainfuck"];
     const service = new OnboardingService(github);
+    const credentials = new GitHubCredentials("server-token");
     const user = await newUser();
 
-    assert.deepEqual(await service.suggestLanguages(user), ["rust", "go"]);
+    assert.deepEqual(await service.suggestLanguages(user, credentials.readerFor(user)), [
+      "rust",
+      "go",
+    ]);
     assert.deepEqual(github.userRepositoryCalls, ["user-token"]);
 
-    // Chosen languages are never overridden, and GitHub failures mean no suggestion.
-    await service.saveProgress(user, { step: 3, languages: ["python"] });
-    assert.deepEqual(await service.suggestLanguages(user), []);
+    const tokenless = await newUser({ email: "tokenless@example.com", githubAccessToken: null });
+    assert.deepEqual(
+      await service.suggestLanguages(tokenless, credentials.readerFor(tokenless)),
+      [],
+    );
+    assert.deepEqual(github.userRepositoryCalls, ["user-token"]);
+
+    await service.saveAnswer(user, { step: 3, languages: ["python"] });
+    assert.deepEqual(await service.suggestLanguages(user, credentials.readerFor(user)), []);
     const failing = new FakeGitHubAdapter();
     failing.userRepositoriesError = new Error("GitHub down");
     const other = await newUser({ email: "other@example.com" });
-    assert.deepEqual(await new OnboardingService(failing).suggestLanguages(other), []);
+    assert.deepEqual(
+      await new OnboardingService(failing).suggestLanguages(other, credentials.readerFor(other)),
+      [],
+    );
   });
 
   test("migrates legacy binary preferences to the new levels", async ({ assert }) => {
@@ -160,14 +179,12 @@ test.group("Onboarding", (group) => {
     ] as const) {
       const user = await newUser({ email });
       ids.push(user.id);
-      // Written as raw JSON, exactly like rows saved before the migration.
       await db
         .from("users")
         .where("id", user.id)
         .update({ preferences: JSON.stringify(preferences) });
     }
 
-    // Reads are already safe before the data migration runs.
     const before = await User.findOrFail(ids[1]);
     assert.equal(before.preferences?.level, "experienced");
 
@@ -203,16 +220,20 @@ test.group("Onboarding", (group) => {
       topic: null,
       languages: ["rust"],
       level: "beginner",
-      // A first contribution starts with the most welcoming projects.
       sort: "welcome",
       minScore: null,
     });
     assert.equal(page.inertiaProps.topicOptions[0], "cli");
     assert.deepEqual(page.inertiaProps.preferredTopics, ["cli"]);
 
-    const explicit = await client.get("/explore?level=all&score=60").loginAs(user).withInertia();
-    assert.equal(explicit.inertiaProps.filters.sort, "stars");
+    const explicit = await client.get("/explore?sort=recent&score=60").loginAs(user).withInertia();
+    assert.equal(explicit.inertiaProps.filters.sort, "recent");
     assert.equal(explicit.inertiaProps.filters.minScore, 60);
-    assert.deepEqual(explicit.inertiaProps.filters.languages, []);
+    assert.equal(explicit.inertiaProps.filters.level, "beginner");
+    assert.deepEqual(explicit.inertiaProps.filters.languages, ["rust"]);
+
+    const cleared = await client.get("/explore?language=&level=all").loginAs(user).withInertia();
+    assert.deepEqual(cleared.inertiaProps.filters.languages, []);
+    assert.equal(cleared.inertiaProps.filters.level, "all");
   });
 });

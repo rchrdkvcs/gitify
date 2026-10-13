@@ -1,12 +1,8 @@
 import type { QueryClientContract } from "@adonisjs/lucid/types/database";
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import { difficultyForLevel, normalizeUserPreferences } from "#shared/preferences";
+import { difficultyForLevel } from "#shared/preferences";
+import { normalizeUserPreferences } from "#shared/stored_preferences";
 
-/**
- * `{ difficulty, languages }` becomes `{ level, languages, contributionTypes, topics }`:
- * beginner → first_contribution, expert → experienced, code contributions assumed.
- * Idempotent: rows already in the current shape are rewritten unchanged.
- */
 export async function upgradeStoredPreferences(db: QueryClientContract) {
   const rows = await db.from("users").whereNotNull("preferences").select("id", "preferences");
   for (const row of rows) {
@@ -23,10 +19,8 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.alterTable(this.tableName, (table) => {
-      // Null until the guided onboarding is finished: existing accounts are offered it too.
       table.timestamp("onboarded_at", { useTz: true }).nullable();
       table.timestamp("onboarding_skipped_at", { useTz: true }).nullable();
-      // Last confirmed question, so a skipped onboarding resumes where it stopped.
       table.smallint("onboarding_step").notNullable().defaultTo(0);
     });
     this.defer(upgradeStoredPreferences);

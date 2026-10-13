@@ -1,23 +1,32 @@
-/** Where the user stands in their open source journey. */
-export type ExperienceLevel = "first_contribution" | "some_contributions" | "experienced";
+import type {
+  contributionTypeCatalog,
+  experienceLevelCatalog,
+  PreferenceLanguage,
+} from "../preferences.js";
 
-/** Kinds of help the user wants to give; non-coders are first-class contributors. */
-export type ContributionType =
-  | "code"
-  | "documentation"
-  | "tests"
-  | "translation"
-  | "design"
-  | "triage";
+export type { PreferenceLanguage };
 
-/**
- * Stored search preferences. Empty lists mean "no preference" (every language,
- * every contribution type, no topic). Read them through `normalizeUserPreferences`
- * from `shared/preferences.ts` when the source may hold the legacy shape.
- */
+export type ExperienceLevel = (typeof experienceLevelCatalog)[number]["id"];
+
+export type ContributionType = (typeof contributionTypeCatalog)[number]["id"];
+
 export type UserPreferences = {
   level: ExperienceLevel;
-  languages: string[];
+  languages: PreferenceLanguage[];
   contributionTypes: ContributionType[];
   topics: string[];
+};
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+  isVerified: boolean | null;
+  preferences: UserPreferences | null;
+  onboardedAt: string | null;
+  onboardingSkippedAt: string | null;
+  onboardingStep: number;
+  createdAt: string | null;
+  updatedAt: string | null;
 };

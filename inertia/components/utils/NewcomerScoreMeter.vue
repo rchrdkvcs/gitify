@@ -1,14 +1,13 @@
 <script setup lang="ts">
-// Ten square segments filled by tenths of the newcomer score.
-const props = defineProps<{ score: number; size?: "sm" | "md" }>();
+import { newcomerScoreSegmentCount } from "@shared/newcomer_score_display";
 
-const filled = computed(() => Math.round(props.score / 10));
+defineProps<{ filled: number; size?: "sm" | "md" }>();
 </script>
 
 <template>
   <span class="inline-flex gap-0.5" aria-hidden="true">
     <span
-      v-for="n in 10"
+      v-for="n in newcomerScoreSegmentCount"
       :key="n"
       :class="[
         size === 'md' ? 'h-2 w-3' : 'h-1.5 w-1.5',

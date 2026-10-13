@@ -35,7 +35,6 @@ test.group("User preference updates", (group) => {
         },
       },
     });
-    // Answering every question from the preferences page completes the onboarding.
     assert.isString(profile.inertiaProps.user.onboardedAt);
   });
 

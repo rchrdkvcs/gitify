@@ -1,37 +1,30 @@
 <script setup lang="ts">
 import type { NewcomerScore } from "@shared/types/index";
-import { newcomerScoreTier, newcomerSignalCatalog } from "@shared/newcomer_score";
+import { describeNewcomerScore, newcomerSignalCatalog } from "@shared/newcomer_score_display";
 
-// Sidebar summary of the newcomer score, with one bar per signal.
 const props = defineProps<{ score: NewcomerScore | null }>();
 const emit = defineEmits<{ explain: [] }>();
 
-const tier = computed(() =>
-  props.score?.score != null ? newcomerScoreTier(props.score.score) : null,
-);
+const display = computed(() => describeNewcomerScore(props.score));
 </script>
 
 <template>
   <section aria-labelledby="newcomer-title" class="border-b border-default p-5">
     <h2 id="newcomer-title" class="eyebrow mb-4">Accueil des débutants</h2>
 
-    <template v-if="score?.score != null">
+    <template v-if="score && !display.unrated">
       <p class="flex items-baseline gap-2">
         <span class="font-mono text-3xl text-highlighted tabular-nums">
-          <span v-if="score.partial" aria-hidden="true">≈</span>{{ score.score }}
+          <span v-if="display.approximate" aria-hidden="true">≈</span>{{ display.score }}
         </span>
         <span class="font-mono text-xs text-dimmed">/ 100</span>
         <span class="ms-auto text-sm text-toned">
-          {{ score.archived ? "Dépôt archivé" : tier?.label }}
+          {{ display.statusLabel }}
         </span>
       </p>
-      <NewcomerScoreMeter :score="score.score" size="md" class="mt-3" />
-      <p v-if="score.partial" class="mt-3 text-xs leading-relaxed text-muted">
-        Estimation sur {{ Math.round(score.coverage * 100) }} % des signaux : certaines données
-        GitHub manquent.
-      </p>
-      <p v-else-if="score.archived" class="mt-3 text-xs leading-relaxed text-muted">
-        Un dépôt archivé n’accepte plus de contributions.
+      <NewcomerScoreMeter :filled="display.filledSegments" size="md" class="mt-3" />
+      <p v-if="display.note" class="mt-3 text-xs leading-relaxed text-muted">
+        {{ display.note }}
       </p>
 
       <dl class="mt-5 flex flex-col gap-2.5 text-sm">
@@ -55,13 +48,7 @@ const tier = computed(() =>
       </dl>
     </template>
 
-    <p v-else class="text-sm leading-relaxed text-muted">
-      {{
-        score
-          ? "Pas assez de données GitHub pour évaluer ce projet pour l’instant."
-          : "Pas encore évalué : le score sera calculé à la prochaine actualisation du projet."
-      }}
-    </p>
+    <p v-else class="text-sm leading-relaxed text-muted">{{ display.note }}</p>
 
     <UButton
       label="Pourquoi ce score ?"

@@ -21,7 +21,10 @@ const handleLogin = () => {
     </div>
 
     <div class="frame-corners border border-default px-6 py-14 sm:px-12 sm:py-20">
-      <CornerMarks />
+      <span class="corner corner-tl" aria-hidden="true" />
+      <span class="corner corner-tr" aria-hidden="true" />
+      <span class="corner corner-bl" aria-hidden="true" />
+      <span class="corner corner-br" aria-hidden="true" />
       <div class="flex flex-col items-center gap-5 text-center">
         <h2 class="section-title max-w-2xl">Prêt pour ta première pull request ?</h2>
         <p class="max-w-xl text-base leading-relaxed text-muted sm:text-lg">

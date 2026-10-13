@@ -1,8 +1,6 @@
-import { formatLanguageName } from "@shared/preferences";
 const rtf = new Intl.RelativeTimeFormat("fr", { numeric: "auto" });
 
-export const timeAgo = (dateString: string | null) => {
-  if (!dateString) return "";
+const timeAgo = (dateString: string) => {
   const diffInMs = new Date(dateString).getTime() - Date.now();
   const diffInHours = Math.round(diffInMs / (1000 * 60 * 60));
 
@@ -11,29 +9,13 @@ export const timeAgo = (dateString: string | null) => {
   return rtf.format(diffInDays, "day");
 };
 
-export const formatDate = (iso: string | null) => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const day = d.getDate().toString().padStart(2, "0");
-  const month = (d.getMonth() + 1).toString().padStart(2, "0");
-  return `${day}-${month}-${d.getFullYear()}`;
-};
-
 export const formatCompact = (n: number) => {
   return new Intl.NumberFormat("en", { notation: "compact" }).format(n).toLowerCase();
 };
 
-// Languages are stored lowercase; this restores their usual spelling.
-export const formatLanguage = (language: string | null) => {
-  if (!language) return "";
-  return formatLanguageName(language);
-};
-
-/** Public project URL, mirroring GitHub's `owner/name`. */
 export const projectPath = (project: { ownerName: string; name: string }) =>
   `/projects/${encodeURIComponent(project.ownerName)}/${encodeURIComponent(project.name)}`;
 
-/** GitHub avatars accept a size hint; keep URLs that already carry a query string intact. */
 export const avatarUrl = (url: string, size = 80) =>
   url.includes("avatars.githubusercontent.com")
     ? `${url}${url.includes("?") ? "&" : "?"}s=${size}`
@@ -49,7 +31,6 @@ export const formatSize = (kb: number) => {
   return `${(mb / 1024).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} Go`;
 };
 
-/** Relative time with month and year granularity for older dates. */
 export const timeSince = (iso: string | null) => {
   if (!iso) return "";
   const days = Math.round((new Date(iso).getTime() - Date.now()) / 86_400_000);

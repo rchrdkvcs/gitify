@@ -2,7 +2,6 @@ import router from "@adonisjs/core/services/router";
 import { controllers } from "#generated/controllers";
 import { middleware } from "#start/kernel";
 
-// Public catalogue: browsing never requires an account.
 router.get("/", [controllers.Pages, "home"]);
 router.get("/explore", [controllers.Pages, "explore"]);
 router.get("/issues", [controllers.Pages, "issues"]);
@@ -21,7 +20,6 @@ router
     router.delete("/auth/logout", [controllers.Auth, "logout"]);
     router.put("/auth/preferences", [controllers.Preferences, "update"]);
 
-    // JSON endpoints for client interactions.
     router.post("/api/projects/:id/favorite", [controllers.Project, "addFavorite"]);
     router.delete("/api/projects/:id/favorite", [controllers.Project, "removeFavorite"]);
     router.patch("/api/onboarding", [controllers.Onboarding, "progress"]);

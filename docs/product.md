@@ -70,7 +70,7 @@ Catalogue public paginé (24 projets par page, défilement infini). Filtres en q
 - `sort` — `stars` (défaut), `recent` (dernier push), `issues` ou `welcome` (score d’accueil)
 - `score` — score d’accueil minimal (1 à 100)
 
-Sans paramètre, les préférences du lecteur connecté s’appliquent. Les dépôts archivés sont exclus. La première page rafraîchit les recherches GitHub expirées pour les langages sélectionnés.
+Pour le lecteur connecté, chaque filtre absent de la query string reprend ses préférences : langages, niveau, et tri `welcome` pour une première contribution (`stars` sinon). Un paramètre présent ne remplace que son propre filtre : `?sort=recent` garde les langages préférés. Un paramètre vide le vide explicitement : `language=` affiche tous les langages. Les dépôts archivés sont exclus. La première page rafraîchit les recherches GitHub expirées pour les langages sélectionnés.
 
 ### Issues pour moi (`GET /issues`)
 
@@ -84,7 +84,7 @@ Filtres en query string :
 - `unassigned` — actif par défaut ; `unassigned=0` affiche aussi les issues déjà assignées
 - `sort` — `recent` (défaut, plus récentes), `comments` (moins commentées d’abord) ou `stars` (dépôts les plus étoilés)
 
-Sans paramètre, les préférences du lecteur connecté s’appliquent : ses langages, et `good-first-issue` pour le niveau débutant ou `help-wanted` pour le niveau confirmé. Les mêmes règles d’accès que le catalogue s’appliquent (token serveur pour les visiteurs, quota personnel pour les utilisateurs connectés).
+Comme pour le catalogue, chaque filtre absent reprend les préférences du lecteur connecté (`language=` vide affiche tous les langages). Le type d’issue par défaut reste unique : si le lecteur a choisi la contribution « Documentation » sans « Code », c’est `documentation` ; sinon le niveau décide, `good-first-issue` pour un débutant ou `help-wanted` pour un contributeur aguerri. Les autres types de contribution n’ont pas encore de label dédié et suivent le niveau. Les mêmes règles d’accès que le catalogue s’appliquent (token serveur pour les visiteurs, quota personnel pour les utilisateurs connectés).
 
 Les issues proviennent de la recherche GraphQL GitHub (`is:issue is:open is:public archived:false -linked:pr language:X label:"…"`), une recherche par couple langage × type. Les issues des dépôts archivés ou privés et celles déjà liées à une pull request ouverte sont écartées. Chaque recherche est mise en cache 6 heures ; un échec GitHub conserve l’instantané précédent. Les dépôts découverts ainsi sont enregistrés comme projets, pour que leur page Gitify soit accessible, sans entrer dans le catalogue `/explore`.
 

@@ -1,15 +1,8 @@
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from "vue";
 import { createIllustrationReveal, type IllustrationState } from "~/lib/illustration-reveal";
 
-const THRESHOLD = 0.35;
+const VISIBLE_SHARE_TO_PLAY = 0.35;
 
-/**
- * Plays a landing illustration once, when about a third of it is visible.
- *
- * Server and first client render both use `"idle"`, so hydration matches; the
- * browser is only read in `onMounted`. Put `ref="illustration"` on the `<svg>`
- * and bind `state` to its `data-state`; the `.ill-motion` styles do the rest.
- */
 export function useIllustrationReveal() {
   const root = useTemplateRef<Element>("illustration");
   const state = ref<IllustrationState>("idle");
@@ -31,8 +24,10 @@ export function useIllustrationReveal() {
 
     observer = new IntersectionObserver(
       ([entry]) =>
-        reveal?.setVisible(Boolean(entry?.isIntersecting && entry.intersectionRatio >= THRESHOLD)),
-      { threshold: THRESHOLD },
+        reveal?.setVisible(
+          Boolean(entry?.isIntersecting && entry.intersectionRatio >= VISIBLE_SHARE_TO_PLAY),
+        ),
+      { threshold: VISIBLE_SHARE_TO_PLAY },
     );
     observer.observe(root.value);
   });

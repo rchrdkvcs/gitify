@@ -1,20 +1,19 @@
+import type { issueKindCatalog } from "../issues.js";
 import type { RepositoryLabel } from "./project.js";
+import type { PreferenceLanguage } from "./user.js";
 
-/** GitHub label families the issue feed searches for. */
-export type IssueKind = "good-first-issue" | "help-wanted" | "documentation";
+export type IssueKind = (typeof issueKindCatalog)[number]["id"];
 
 export type IssueSort = "recent" | "comments" | "stars";
 
 export type IssueFilters = {
   q: string;
-  languages: string[];
+  languages: PreferenceLanguage[];
   kind: IssueKind | "all";
-  /** Hide issues someone is already assigned to. */
   unassigned: boolean;
   sort: IssueSort;
 };
 
-/** Repository summary displayed next to an issue. */
 export type IssueProject = {
   id: string;
   name: string;

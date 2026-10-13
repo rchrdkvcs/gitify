@@ -1,5 +1,9 @@
 import type { PreferenceLanguage } from "#shared/preferences";
 
+const NEWCOMER_SCORE_RECENT_ITEMS_PER_KIND = 25;
+const REPOSITORY_SEARCH_TTL_HOURS = 24;
+const FAST_TAKEN_ISSUES_TTL_HOURS = REPOSITORY_SEARCH_TTL_HOURS / 4;
+
 const gitifyConfig = {
   github: {
     baseUrl: "https://api.github.com/search/repositories",
@@ -21,8 +25,7 @@ const gitifyConfig = {
       issuesLimit: 20,
       pullRequestsLimit: 20,
       languagesLimit: 12,
-      // Recent issues and PRs inspected for the newcomer score (per kind).
-      activitySampleSize: 25,
+      activitySampleSize: NEWCOMER_SCORE_RECENT_ITEMS_PER_KIND,
       contributingPaths: ["CONTRIBUTING.md", ".github/CONTRIBUTING.md", "docs/CONTRIBUTING.md"],
     },
     issues: {
@@ -32,12 +35,11 @@ const gitifyConfig = {
     },
   },
   cache: {
-    fetchTtlHours: 24,
+    fetchTtlHours: REPOSITORY_SEARCH_TTL_HOURS,
     searchRetrySeconds: 60,
     maxConcurrentSearches: 2,
     detailsCacheHours: 12,
-    // Issues are taken quickly; their snapshot expires sooner than repository searches.
-    issueFetchTtlHours: 6,
+    issueFetchTtlHours: FAST_TAKEN_ISSUES_TTL_HOURS,
   },
   feed: {
     pageSize: 24,

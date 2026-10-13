@@ -1,6 +1,4 @@
 <script setup lang="ts">
-// A full-width band separated by hairlines, with the page rails (vertical
-// borders) running through it. Stacking these builds the page grid.
 withDefaults(
   defineProps<{
     as?: string;

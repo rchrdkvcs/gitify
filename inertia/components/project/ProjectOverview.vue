@@ -1,24 +1,17 @@
 <script setup lang="ts">
 import type { ProjectDetail } from "@shared/types/index";
-import type { ProjectTab } from "~/types/project";
+import { issueKindLabel } from "@shared/issues";
+import type { ProjectFacts } from "~/lib/project-facts";
+import type { ProjectTab } from "~/lib/project-tabs";
 
-const props = defineProps<{ project: ProjectDetail }>();
+const props = defineProps<{
+  project: Pick<ProjectDetail, "contributors" | "totalContributorsCount" | "insights">;
+  facts: Pick<ProjectFacts, "counts" | "resolvedRate" | "commits" | "recentCommits">;
+}>();
 const emit = defineEmits<{ navigate: [tab: ProjectTab] }>();
 
 const insights = computed(() => props.project.insights);
-
-// Half a year is enough to read the trend at preview size.
-const recentWeeks = computed(() => (insights.value?.weeklyCommits ?? []).slice(-26));
-const peak = computed(() => Math.max(1, ...recentWeeks.value));
-const yearCommits = computed(() =>
-  (insights.value?.weeklyCommits ?? []).reduce((sum, count) => sum + count, 0),
-);
-const resolvedRate = computed(() => {
-  const i = insights.value;
-  if (!i) return null;
-  const total = i.closedIssues + i.openIssues;
-  return total ? Math.floor((i.closedIssues / total) * 100) : null;
-});
+const recent = computed(() => props.facts.recentCommits);
 
 const topContributors = computed(() => props.project.contributors.slice(0, 5));
 const topContributions = computed(() =>
@@ -43,15 +36,15 @@ const starterIssues = computed(() =>
     >
       <dl class="mb-4 grid max-w-md grid-cols-2 gap-3">
         <div>
-          <dt class="text-xs text-muted">good first issue</dt>
+          <dt class="text-xs text-muted">{{ issueKindLabel("good-first-issue") }}</dt>
           <dd class="font-mono text-lg text-highlighted tabular-nums">
-            {{ formatNumber(insights?.goodFirstIssues ?? 0) }}
+            {{ formatNumber(facts.counts.goodFirstIssues ?? 0) }}
           </dd>
         </div>
         <div>
-          <dt class="text-xs text-muted">help wanted</dt>
+          <dt class="text-xs text-muted">{{ issueKindLabel("help-wanted") }}</dt>
           <dd class="font-mono text-lg text-highlighted tabular-nums">
-            {{ formatNumber(insights?.helpWantedIssues ?? 0) }}
+            {{ formatNumber(facts.counts.helpWantedIssues ?? 0) }}
           </dd>
         </div>
       </dl>
@@ -88,31 +81,31 @@ const starterIssues = computed(() =>
         <div>
           <dt class="text-xs text-muted">Commits sur 12 mois</dt>
           <dd class="font-mono text-lg text-highlighted tabular-nums">
-            {{ insights?.weeklyCommits ? formatNumber(yearCommits) : "—" }}
+            {{ facts.commits ? formatNumber(facts.commits.total) : "—" }}
           </dd>
         </div>
         <div>
           <dt class="text-xs text-muted">Issues résolues</dt>
           <dd class="font-mono text-lg text-highlighted tabular-nums">
-            {{ resolvedRate != null ? `${resolvedRate} %` : "—" }}
+            {{ facts.resolvedRate != null ? `${facts.resolvedRate} %` : "—" }}
           </dd>
         </div>
       </dl>
       <div
-        v-if="recentWeeks.length"
+        v-if="recent?.weeks.length"
         class="flex h-20 items-end gap-0.5 border-b border-accented"
         role="img"
-        :aria-label="`Commits par semaine sur les 6 derniers mois, pic à ${peak}`"
+        :aria-label="`Commits par semaine sur les 6 derniers mois, pic à ${recent.peak}`"
       >
         <div
-          v-for="(count, index) in recentWeeks"
+          v-for="(count, index) in recent.weeks"
           :key="index"
           class="flex-1"
           :class="count ? 'bg-primary/60' : 'bg-accented'"
-          :style="{ height: count ? `${Math.max(4, (count / peak) * 100)}%` : '1px' }"
+          :style="{ height: count ? `${Math.max(4, (count / recent.peak) * 100)}%` : '1px' }"
         />
       </div>
-      <p v-if="recentWeeks.length" class="mt-1.5 font-mono text-[11px] text-dimmed">
+      <p v-if="recent?.weeks.length" class="mt-1.5 font-mono text-[11px] text-dimmed">
         6 derniers mois
       </p>
     </ProjectPreviewPanel>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ShowcaseProject } from "@shared/types/index";
 import type { ShowcaseLanguageResult } from "@shared/types/index";
+import { formatLanguageName } from "@shared/preferences";
 
 const props = defineProps<{ languages: ShowcaseLanguageResult[] }>();
 
@@ -16,7 +17,6 @@ const shuffle = <T>(items: T[]) => {
   return result;
 };
 
-// Picked once per page view so the "Tous" tab doesn't reshuffle on every click.
 const mixedSelection = computed<ShowcaseProject[]>(() =>
   shuffle((props.languages ?? []).flatMap((group) => group.projects)).slice(0, 6),
 );
@@ -30,7 +30,7 @@ const tabs = computed(() => [
   { value: ALL, label: "Tous" },
   ...(props.languages ?? []).map((group) => ({
     value: group.language,
-    label: formatLanguage(group.language),
+    label: formatLanguageName(group.language),
   })),
 ]);
 </script>

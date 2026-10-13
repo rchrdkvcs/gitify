@@ -1,17 +1,20 @@
+import app from "@adonisjs/core/services/app";
 import gitifyConfig from "#config/gitify";
+import { listedProjects } from "#services/feeds/visible_projects";
+import GitHubCredentials from "#services/github/github_credentials";
 import GitHubSyncService from "#services/github/github_sync_service";
-import { projectsForSearch } from "#services/project_feed_service";
-import env from "#start/env";
 
 export default class ShowcaseSeeder {
   async run() {
-    const serverToken = env.get("GITHUB_SERVER_TOKEN");
+    const credentials = await app.container.make(GitHubCredentials);
+    const serverToken = credentials.server().token;
 
     if (!serverToken) {
       console.log("GITHUB_SERVER_TOKEN not set — skipping showcase seeder");
       return;
     }
 
+    const sync = await app.container.make(GitHubSyncService);
     const { languages, pool, seederDifficulty } = gitifyConfig.showcase;
     console.log(
       `Seeding ${languages.length} languages, ${gitifyConfig.github.search.defaultPerPage} search results each...`,
@@ -23,14 +26,10 @@ export default class ShowcaseSeeder {
       );
 
       try {
-        const count = await GitHubSyncService.fetchAndStore(
-          language,
-          seederDifficulty,
-          serverToken,
-        );
+        const count = await sync.fetchAndStore(language, seederDifficulty, serverToken);
         console.log(`[${language}] Stored ${count} projects`);
 
-        const projects = await projectsForSearch([language], seederDifficulty)
+        const projects = await listedProjects({ languages: [language], level: seederDifficulty })
           .orderBy("stars", "desc")
           .limit(pool);
 
@@ -38,7 +37,7 @@ export default class ShowcaseSeeder {
 
         for (const project of projects) {
           try {
-            await GitHubSyncService.fetchProjectDetails(project, serverToken);
+            await sync.fetchProjectDetails(project, serverToken);
           } catch (error) {
             console.warn(`[${language}] Failed details for ${project.name}:`, error);
           }
