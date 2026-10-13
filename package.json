@@ -10,6 +10,7 @@
     "#models/*": "./app/models/*.js",
     "#exceptions/*": "./app/exceptions/*.js",
     "#validators/*": "./app/validators/*.js",
+    "#feed_criteria/*": "./app/feed_criteria/*.js",
     "#database/*": "./database/*.js",
     "#start/*": "./start/*.js",
     "#tests/*": "./tests/*.js",
