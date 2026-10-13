@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ShowcaseProject } from "@shared/types/index";
 import type { ShowcaseLanguageResult } from "@shared/types/index";
-import { formatLanguageName } from "@shared/preferences";
+import { formatLanguageName, languageCatalog } from "@shared/preferences";
 
 const props = defineProps<{ languages: ShowcaseLanguageResult[] }>();
 
@@ -26,11 +26,14 @@ const visibleProjects = computed<ShowcaseProject[]>(() => {
   return props.languages.find((group) => group.language === selectedLanguage.value)?.projects ?? [];
 });
 
-const tabs = computed(() => [
+const languageIcons = new Map<string, string>(languageCatalog.map(({ id, icon }) => [id, icon]));
+
+const tabs = computed<{ value: string; label: string; icon?: string }[]>(() => [
   { value: ALL, label: "Tous" },
   ...(props.languages ?? []).map((group) => ({
     value: group.language,
     label: formatLanguageName(group.language),
+    icon: languageIcons.get(group.language.trim().toLowerCase()),
   })),
 ]);
 </script>
@@ -74,7 +77,16 @@ const tabs = computed(() => [
         "
         @click="selectedLanguage = tab.value"
       >
-        {{ tab.label }}
+        <span class="inline-flex items-center gap-2">
+          <UIcon
+            v-if="tab.icon"
+            :name="tab.icon"
+            class="size-4 transition-opacity"
+            :class="selectedLanguage === tab.value ? 'opacity-100' : 'opacity-60'"
+            aria-hidden="true"
+          />
+          {{ tab.label }}
+        </span>
         <span
           v-if="selectedLanguage === tab.value"
           class="absolute inset-x-0 bottom-0 h-px bg-primary"
