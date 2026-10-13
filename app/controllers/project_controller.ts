@@ -1,12 +1,12 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import ProjectNotFoundException from "#exceptions/project_not_found_exception";
-import ProjectFeedService from "#services/project_feed_service";
+import { addFavorite, removeFavorite } from "#services/feeds/project_favorites";
 import { projectIdValidator } from "#validators/project_id_validator";
 
 export default class ProjectController {
   async addFavorite({ auth, request, response }: HttpContext) {
     const { params } = await request.validateUsing(projectIdValidator);
-    const found = await ProjectFeedService.addFavorite(auth.getUserOrFail().id, params.id);
+    const found = await addFavorite(auth.getUserOrFail().id, params.id);
     if (!found) {
       throw new ProjectNotFoundException();
     }
@@ -15,7 +15,7 @@ export default class ProjectController {
 
   async removeFavorite({ auth, request, response }: HttpContext) {
     const { params } = await request.validateUsing(projectIdValidator);
-    const found = await ProjectFeedService.removeFavorite(auth.getUserOrFail().id, params.id);
+    const found = await removeFavorite(auth.getUserOrFail().id, params.id);
     if (!found) {
       throw new ProjectNotFoundException();
     }

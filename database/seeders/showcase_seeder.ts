@@ -1,6 +1,6 @@
 import gitifyConfig from "#config/gitify";
+import { listedProjects } from "#services/feeds/visible_projects";
 import GitHubSyncService from "#services/github/github_sync_service";
-import { projectsForSearch } from "#services/project_feed_service";
 import env from "#start/env";
 
 export default class ShowcaseSeeder {
@@ -30,7 +30,7 @@ export default class ShowcaseSeeder {
         );
         console.log(`[${language}] Stored ${count} projects`);
 
-        const projects = await projectsForSearch([language], seederDifficulty)
+        const projects = await listedProjects({ languages: [language], level: seederDifficulty })
           .orderBy("stars", "desc")
           .limit(pool);
 

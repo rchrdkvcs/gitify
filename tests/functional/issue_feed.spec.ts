@@ -4,8 +4,8 @@ import IssueSearchMembership from "#models/issue_search_membership";
 import Project from "#models/project";
 import ProjectIssue from "#models/project_issue";
 import ProjectSearchMembership from "#models/project_search_membership";
+import { IssueFeed } from "#services/feeds/issue_feed";
 import { GitHubIssueSyncService } from "#services/github/github_issue_sync_service";
-import { IssueFeedService } from "#services/issue_feed_service";
 import { FakeGitHubAdapter, githubIssue } from "#tests/helpers/fake_github_adapter";
 import {
   issueFeedSetup as setup,
@@ -148,7 +148,7 @@ test.group("Issue feed", (group) => {
     assert.notInclude(JSON.stringify(degraded), token);
 
     const other = new FakeGitHubAdapter();
-    const deferred = await new IssueFeedService(
+    const deferred = await new IssueFeed(
       new GitHubIssueSyncService(other, () => clock.now),
     ).explore(filters(), 1, { token });
     assert.equal(deferred.refreshState, "degraded");

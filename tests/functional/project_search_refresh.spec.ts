@@ -3,9 +3,10 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import gitifyConfig from "#config/gitify";
 import GithubFetchCache from "#models/github_fetch_cache";
+import { ProjectCatalogue } from "#services/feeds/project_catalogue";
+import { ProjectShowcase } from "#services/feeds/project_showcase";
 import { GitHubRateLimitError, GitHubUnavailableError } from "#services/github/github_errors";
 import { GitHubSyncService } from "#services/github/github_sync_service";
-import { ProjectFeedService } from "#services/project_feed_service";
 import { FakeGitHubAdapter, githubRepository } from "#tests/helpers/fake_github_adapter";
 import { feedFor } from "#tests/helpers/feed";
 
@@ -26,7 +27,7 @@ test.group("Project search refresh", (group) => {
     clock = now.plus({ hours: 24 });
     github.repos = [githubRepository({ id: 8100, name: "new-snapshot" })];
     const feed = await feedFor(
-      new ProjectFeedService(sync),
+      new ProjectCatalogue(sync),
       "no-user",
       {
         difficulty: "expert",
@@ -66,10 +67,9 @@ test.group("Project search refresh", (group) => {
         fetchedAt: now,
       });
     }
-    const feed = new ProjectFeedService(sync);
-    await feed.getShowcase(token);
+    await new ProjectShowcase(sync).languages(token);
     const result = await feedFor(
-      feed,
+      new ProjectCatalogue(sync),
       "no-user",
       { languages: ["typescript"], difficulty: "expert" },
       token,
@@ -89,7 +89,7 @@ test.group("Project search refresh", (group) => {
     const github = new FakeGitHubAdapter();
     github.repos = [githubRepository({ id: 9500, name: "previous-search" })];
     const sync = new GitHubSyncService(github, () => clock);
-    const feed = new ProjectFeedService(sync);
+    const feed = new ProjectCatalogue(sync);
     const preferences = { languages: ["typescript"], difficulty: "expert" as const };
     await sync.ensureSearchFresh({ language: "typescript", difficulty: "expert", token });
     github.searchCalls = [];
@@ -132,10 +132,10 @@ test.group("Project search refresh", (group) => {
       await sync.fetchAndStore(language, "expert", token);
     }
     github.searchCalls = [];
-    const feed = new ProjectFeedService(sync);
-    const first = await feed.getShowcase(token);
+    const showcase = new ProjectShowcase(sync);
+    const first = await showcase.languages(token);
     assert.lengthOf(github.snapshotCalls, 2);
-    const second = await feed.getShowcase(token);
+    const second = await showcase.languages(token);
     assert.lengthOf(github.searchCalls, 0);
     assert.lengthOf(first[0].projects, 3);
     assert.lengthOf(second[0].projects, 3);
@@ -154,7 +154,7 @@ test.group("Project search refresh", (group) => {
     clock = now.plus({ hours: 24 });
     github.searchError = new GitHubUnavailableError(null, "search unavailable");
     github.snapshotError = new GitHubUnavailableError(503);
-    const showcase = await new ProjectFeedService(sync).getShowcase(token);
+    const showcase = await new ProjectShowcase(sync).languages(token);
     assert.equal(
       showcase.find((entry) => entry.language === "typescript")?.projects[0].name,
       "cached-showcase",

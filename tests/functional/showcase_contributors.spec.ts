@@ -4,7 +4,7 @@ import { test } from "@japa/runner";
 import Contributor from "#models/contributor";
 import Project from "#models/project";
 import ProjectSearchMembership from "#models/project_search_membership";
-import ProjectFeedService from "#services/project_feed_service";
+import projectShowcase from "#services/feeds/project_showcase";
 
 test.group("Showcase contributors", (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction());
@@ -42,7 +42,7 @@ test.group("Showcase contributors", (group) => {
       }),
     );
 
-    const showcase = await ProjectFeedService.getShowcase();
+    const showcase = await projectShowcase.languages();
     const displayed = showcase.find((entry) => entry.language === "typescript")?.projects;
     assert.lengthOf(displayed!, 2);
     for (const project of projects) {
@@ -84,7 +84,7 @@ test.group("Showcase contributors", (group) => {
       })),
     );
 
-    const showcase = await ProjectFeedService.getShowcase();
+    const showcase = await projectShowcase.languages();
     const displayed = showcase.find((entry) => entry.language === "typescript")?.projects;
     assert.deepEqual(
       displayed?.[0]?.contributors.map((entry) => entry.login),
