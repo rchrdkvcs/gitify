@@ -98,14 +98,19 @@ export default class PagesController {
 
   async project({ auth, request, inertia }: HttpContext) {
     const { params } = await request.validateUsing(projectSlugValidator);
-    const project = await this.projectDetail.read(
+    const page = await this.projectDetail.read(
       params.owner,
       params.name,
       this.credentials.readerFor(auth.user),
     );
-    if (!project) {
+    if (!page) {
       throw new ProjectNotFoundException();
     }
-    return inertia.render("projects/show", { project });
+    const deferDetails = page.detailsPending || inertia.requestInfo().isPartialRequest;
+    return inertia.render("projects/show", {
+      project: page.project,
+      detailsPending: page.detailsPending,
+      ...(deferDetails ? { details: inertia.defer(page.details, { rescue: true }) } : {}),
+    });
   }
 }
