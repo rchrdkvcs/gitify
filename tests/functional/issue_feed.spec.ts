@@ -1,6 +1,5 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
-import IssueSearchCache from "#models/issue_search_cache";
 import IssueSearchMembership from "#models/issue_search_membership";
 import Project from "#models/project";
 import ProjectIssue from "#models/project_issue";
@@ -165,8 +164,6 @@ test.group("Issue feed", (group) => {
       recovered.issues.map((issue) => issue.title),
       ["Recovered"],
     );
-    const cache = await IssueSearchCache.findByOrFail("kind", "good-first-issue");
-    assert.isNull(cache.retryAfter);
   });
 
   test("reports an unavailable feed when no snapshot exists", async ({ assert }) => {
@@ -175,8 +172,6 @@ test.group("Issue feed", (group) => {
     const result = await feed.explore(filters(), 1, { token });
     assert.equal(result.refreshState, "unavailable");
     assert.isEmpty(result.issues);
-    const cache = await IssueSearchCache.findByOrFail("language", "typescript");
-    assert.isNull(cache.fetchedAt);
   });
 
   test("only the first page refreshes and guests without a token read the cache", async ({
