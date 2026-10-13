@@ -8,6 +8,7 @@ import { shieldApiClient } from "@adonisjs/shield/plugins/api_client";
 import { apiClient } from "@japa/api-client";
 import { assert } from "@japa/assert";
 import { pluginAdonisJS } from "@japa/plugin-adonisjs";
+import { PopularTopics } from "#services/feeds/popular_topics";
 import { keepGitHubOffline } from "#tests/helpers/github_container";
 
 export const plugins: Config["plugins"] = [
@@ -21,7 +22,7 @@ export const plugins: Config["plugins"] = [
 ];
 
 export const runnerHooks: Required<Pick<Config, "setup" | "teardown">> = {
-  setup: [keepGitHubOffline],
+  setup: [keepGitHubOffline, () => app.container.bind(PopularTopics, () => new PopularTopics())],
   teardown: [],
 };
 

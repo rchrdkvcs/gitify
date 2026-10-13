@@ -11,7 +11,7 @@ import gitifyConfig from "#config/gitify";
 import { cachedFeedPage, type SearchRefresh } from "#services/feeds/cached_feed_page";
 import { containsPattern } from "#services/feeds/feed_query";
 import { displayedDifficulties, favoriteProjectIds } from "#services/feeds/project_reader_state";
-import { listedProjects } from "#services/feeds/visible_projects";
+import { listedProjectCards } from "#services/feeds/visible_projects";
 import { normalizePage } from "#shared/pagination";
 import ProjectTransformer from "#transformers/project_transformer";
 
@@ -66,7 +66,7 @@ export default class ProjectCatalogue {
   }
 
   private query(filters: ExploreFilters) {
-    const query = listedProjects(filters);
+    const query = listedProjectCards(filters);
     if (filters.topic) {
       query.whereRaw("jsonb_exists(topics, ?)", [filters.topic]);
     }

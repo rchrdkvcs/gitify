@@ -3,7 +3,7 @@ import type Project from "#models/project";
 import type GitHubSyncService from "#services/github/github_sync_service";
 import type { ShowcaseLanguageResult } from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
-import { listedProjects } from "#services/feeds/visible_projects";
+import { listedProjectCards } from "#services/feeds/visible_projects";
 import ShowcaseProjectTransformer from "#transformers/showcase_project_transformer";
 
 type ShowcaseSync = Pick<
@@ -46,7 +46,7 @@ export default class ProjectShowcase {
   }
 
   private pool(language: string): Promise<Project[]> {
-    return listedProjects({ languages: [language], level: "all" })
+    return listedProjectCards({ languages: [language], level: "all" })
       .orderBy("stars", "desc")
       .limit(gitifyConfig.showcase.pool)
       .preload("contributors", (query) =>
