@@ -1,6 +1,7 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
+import gitifyConfig from "#config/gitify";
 import Contributor from "#models/contributor";
 import Project from "#models/project";
 import GitHubApiClient from "#services/github/github_api_client";
@@ -12,7 +13,7 @@ test.group("GitHub details cache failure", (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction());
 
   for (const failure of ["every endpoint", "/graphql", "/contributors?per_page=30"]) {
-    test(`preserves every cached detail and permits retry when ${failure} fails`, async ({
+    test(`preserves every cached detail and schedules a retry when ${failure} fails`, async ({
       assert,
     }) => {
       const fetchedAt = DateTime.utc(2026, 1, 1);
@@ -42,9 +43,8 @@ test.group("GitHub details cache failure", (group) => {
         failure === "every endpoint"
           ? async () => unavailable()
           : restDetailsTransport({ [failure]: unavailable });
-      const sync = new GitHubSyncService(new GitHubApiClient(request), () =>
-        fetchedAt.plus({ days: 10 }),
-      );
+      const failedAt = fetchedAt.plus({ days: 10 });
+      const sync = new GitHubSyncService(new GitHubApiClient(request), () => failedAt);
       const error = await sync.fetchProjectDetails(project, "token").catch((cause) => cause);
       assert.instanceOf(error, GitHubUnavailableError);
       await project.refresh();
@@ -53,7 +53,15 @@ test.group("GitHub details cache failure", (group) => {
       assert.equal(project.latestRelease, "v1");
       assert.equal(project.totalContributorsCount, 1);
       assert.equal(project.detailsFetchedAt!.toMillis(), fetchedAt.toMillis());
-      assert.isTrue(sync.needsDetailsFetch(project));
+      assert.equal(
+        project.detailsRetryAfter!.toMillis(),
+        failedAt.plus({ seconds: gitifyConfig.cache.detailsRetrySeconds }).toMillis(),
+      );
+      assert.isFalse(sync.needsDetailsFetch(project));
+      const later = new GitHubSyncService(new GitHubApiClient(request), () =>
+        project.detailsRetryAfter!.plus({ seconds: 1 }),
+      );
+      assert.isTrue(later.needsDetailsFetch(project));
       const contributors = await Contributor.query().where("projectId", project.id);
       assert.equal(contributors.length, 1);
       assert.equal(contributors[0].login, "cached");

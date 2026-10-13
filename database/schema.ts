@@ -174,6 +174,7 @@ export class ProjectSchema extends BaseModel {
     "createdAt",
     "description",
     "detailsFetchedAt",
+    "detailsRetryAfter",
     "difficulty",
     "forksCount",
     "githubCreatedAt",
@@ -209,6 +210,8 @@ export class ProjectSchema extends BaseModel {
   declare description: string | null;
   @column.dateTime()
   declare detailsFetchedAt: DateTime | null;
+  @column.dateTime()
+  declare detailsRetryAfter: DateTime | null;
   @column()
   declare difficulty: string;
   @column()

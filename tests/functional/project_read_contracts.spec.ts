@@ -108,10 +108,12 @@ test.group("Project public read contracts", (group) => {
     assert.isTrue(result.projects[0].isFavorite);
     const second = await feedFor(feed, other.id, criteria, "secret");
     assert.isFalse(second.projects[0].isFavorite);
-    const detail = await reader.read(project.ownerName, project.name, {
+    const page = await reader.read(project.ownerName, project.name, {
       userId: user.id,
       token: "secret",
     });
+    assert.isFalse(page?.detailsPending);
+    const detail = page?.project;
     assert.equal(detail?.difficulty, "beginner");
     assert.equal(detail?.readme, "# Large detail");
     assert.equal(detail?.contributors[0].login, "contributor");
@@ -156,9 +158,12 @@ test.group("Project public read contracts", (group) => {
       .loginAs(user)
       .withInertia();
     detail.assertStatus(200);
-    assert.deepEqual(
-      detail.inertiaProps.project,
-      await reader.read(project.ownerName, project.name, { userId: user.id, token: "secret" }),
-    );
+    const expectedDetail = await reader.read(project.ownerName, project.name, {
+      userId: user.id,
+      token: "secret",
+    });
+    assert.deepEqual(detail.inertiaProps.project, expectedDetail?.project);
+    assert.isFalse(detail.inertiaProps.detailsPending);
+    assert.notProperty(detail.inertiaProps, "details");
   });
 });

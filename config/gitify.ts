@@ -39,6 +39,7 @@ const gitifyConfig = {
     searchRetrySeconds: 60,
     maxConcurrentSearches: 2,
     detailsCacheHours: 12,
+    detailsRetrySeconds: 900,
     issueFetchTtlHours: FAST_TAKEN_ISSUES_TTL_HOURS,
   },
   feed: {

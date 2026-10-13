@@ -7,14 +7,20 @@ import type { Difficulty } from "#shared/types/index";
 import gitifyConfig from "#config/gitify";
 import GithubFetchCache from "#models/github_fetch_cache";
 import ProjectSearchMembership from "#models/project_search_membership";
-import { storeRepositorySnapshot } from "#services/github/repository_snapshot_store";
+import {
+  postponeRepositorySnapshot,
+  storeRepositorySnapshot,
+} from "#services/github/repository_snapshot_store";
 import { upsertRepositories } from "#services/repository_identity";
+import { retryAfterFailure } from "#services/search_freshness/retry_cooldown";
 import {
   type SearchFreshness,
   SearchFreshnessPolicy,
   type SnapshotRefresh,
   type SnapshotStore,
 } from "#services/search_freshness/search_freshness";
+
+const detailsRefreshes = new Map<Project["id"], Promise<void>>();
 
 export type SearchCriteria = {
   language: string;
@@ -101,6 +107,9 @@ export default class GitHubSyncService {
   }
 
   needsDetailsFetch(project: Project): boolean {
+    if (project.detailsRetryAfter && project.detailsRetryAfter > this.now()) {
+      return false;
+    }
     if (!project.detailsFetchedAt) {
       return true;
     }
@@ -109,13 +118,33 @@ export default class GitHubSyncService {
   }
 
   async fetchProjectDetails(project: Project, token: string): Promise<void> {
-    const snapshot = await this.github.getRepositorySnapshot(
-      project.ownerName,
-      project.name,
-      token,
+    const refresh = detailsRefreshes.get(project.id) ?? this.startDetailsRefresh(project, token);
+    await refresh.finally(() => project.refresh());
+  }
+
+  private startDetailsRefresh(project: Project, token: string): Promise<void> {
+    const refresh = this.storeProjectDetails(project, token).finally(() =>
+      detailsRefreshes.delete(project.id),
     );
-    await storeRepositorySnapshot(project.id, snapshot, this.now());
-    await project.refresh();
+    detailsRefreshes.set(project.id, refresh);
+    return refresh;
+  }
+
+  private async storeProjectDetails(project: Project, token: string): Promise<void> {
+    try {
+      const snapshot = await this.github.getRepositorySnapshot(
+        project.ownerName,
+        project.name,
+        token,
+      );
+      await storeRepositorySnapshot(project.id, snapshot, this.now());
+    } catch (error) {
+      await postponeRepositorySnapshot(
+        project.id,
+        retryAfterFailure(error, this.now(), gitifyConfig.cache.detailsRetrySeconds),
+      );
+      throw error;
+    }
   }
 }
 
