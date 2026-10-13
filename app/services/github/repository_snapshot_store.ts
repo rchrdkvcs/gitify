@@ -11,7 +11,7 @@ export async function storeRepositorySnapshot(
   fetchedAt: DateTime,
 ): Promise<void> {
   const { insights, repository, contributors } = snapshot;
-  const newcomerScore = computeNewcomerScore(
+  const { score, ...scoreBreakdown } = computeNewcomerScore(
     newcomerScoreInputFromInsights(insights, repository.pushedAt),
     fetchedAt.toJSDate(),
   );
@@ -27,8 +27,9 @@ export async function storeRepositorySnapshot(
       latestRelease: snapshot.latestRelease,
       totalContributorsCount: snapshot.totalContributorsCount,
       insights,
-      newcomerScore: newcomerScore.score,
-      newcomerScoreDetails: newcomerScore,
+      isArchived: insights.isArchived,
+      newcomerScore: score,
+      newcomerScoreDetails: scoreBreakdown,
       contributing: snapshot.contributing,
       stars: repository.stars,
       forksCount: repository.forksCount,

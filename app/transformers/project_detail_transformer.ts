@@ -14,7 +14,7 @@ export default class ProjectDetailTransformer extends ProjectTransformer {
       githubCreatedAt: project.githubCreatedAt?.toISO() ?? null,
       detailsFetchedAt: project.detailsFetchedAt?.toISO() ?? null,
       insights: project.insights,
-      newcomerScoreDetails: project.newcomerScoreDetails,
+      newcomerScoreDetails: project.newcomerScoreReport,
       contributors: project.contributors.map((contributor) => ({
         id: contributor.id,
         login: contributor.login,

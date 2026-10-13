@@ -32,30 +32,31 @@ PostgreSQL (18 dans Docker Compose). Tous les modèles utilisent des **ULID** co
 
 ### `projects`
 
-| Colonne                    | Type                | Description                                                                             |
-| -------------------------- | ------------------- | --------------------------------------------------------------------------------------- |
-| `id`                       | `string` (ULID, PK) |                                                                                         |
-| `github_repo_id`           | `bigint`            | ID GitHub — **clé d'upsert** pour éviter les doublons                                   |
-| `name`                     | `string`            | Nom du dépôt                                                                            |
-| `owner_name`               | `string`            | Login du propriétaire GitHub                                                            |
-| `description`              | `string \| null`    |                                                                                         |
-| `repository_url`           | `string`            | URL GitHub du dépôt                                                                     |
-| `stars`                    | `integer`           | Nombre d'étoiles                                                                        |
-| `forks_count`              | `integer`           |                                                                                         |
-| `open_issues_count`        | `integer`           | Compteur GitHub brut ; aucun décompte séparé des pull requests                          |
-| `language`                 | `string \| null`    | Langage principal, normalisé en minuscules                                              |
-| `topics`                   | `jsonb \| null`     | Tableau de sujets GitHub `["framework", "typescript"]`                                  |
-| `difficulty`               | `string`            | Niveau historique, conservé pour compatibilité ; la sélection utilise les appartenances |
-| `readme`                   | `text \| null`      | README décodé en UTF-8 (chargé à la demande)                                            |
-| `languages`                | `jsonb \| null`     | Répartition en octets `{ TypeScript: 145000, ... }`                                     |
-| `latest_release`           | `string \| null`    | Tag de la dernière release GitHub (`v1.2.3`)                                            |
-| `total_contributors_count` | `integer \| null`   | Total inféré via le header `Link` de l'API GitHub                                       |
-| `details_fetched_at`       | `timestamp \| null` | Horodatage du dernier enrichissement — null = jamais chargé                             |
-| `insights`                 | `jsonb \| null`     | Instantané GitHub de la fiche, dont `contributorActivity` pour le score d'accueil       |
-| `newcomer_score`           | `smallint \| null`  | Score d'accueil des débutants (0–100), indexé pour le tri ; null = non évalué           |
-| `newcomer_score_details`   | `jsonb \| null`     | Détail du score : signaux, poids, couverture, `partial`, `archived`, date de calcul     |
-| `created_at`               | `timestamp`         |                                                                                         |
-| `updated_at`               | `timestamp`         |                                                                                         |
+| Colonne                    | Type                | Description                                                                                                                                                 |
+| -------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                       | `string` (ULID, PK) |                                                                                                                                                             |
+| `github_repo_id`           | `bigint`            | ID GitHub — **clé d'upsert** pour éviter les doublons                                                                                                       |
+| `name`                     | `string`            | Nom du dépôt                                                                                                                                                |
+| `owner_name`               | `string`            | Login du propriétaire GitHub                                                                                                                                |
+| `description`              | `string \| null`    |                                                                                                                                                             |
+| `repository_url`           | `string`            | URL GitHub du dépôt                                                                                                                                         |
+| `stars`                    | `integer`           | Nombre d'étoiles                                                                                                                                            |
+| `forks_count`              | `integer`           |                                                                                                                                                             |
+| `open_issues_count`        | `integer`           | Compteur GitHub brut ; aucun décompte séparé des pull requests                                                                                              |
+| `language`                 | `string \| null`    | Langage principal, normalisé en minuscules                                                                                                                  |
+| `topics`                   | `jsonb \| null`     | Tableau de sujets GitHub `["framework", "typescript"]`                                                                                                      |
+| `difficulty`               | `string`            | Niveau affiché quand le dépôt n'a aucune appartenance (importé par une recherche d'issues ou sorti des recherches) ; la sélection utilise les appartenances |
+| `readme`                   | `text \| null`      | README décodé en UTF-8 (chargé à la demande)                                                                                                                |
+| `languages`                | `jsonb \| null`     | Répartition en octets `{ TypeScript: 145000, ... }`                                                                                                         |
+| `latest_release`           | `string \| null`    | Tag de la dernière release GitHub (`v1.2.3`)                                                                                                                |
+| `total_contributors_count` | `integer \| null`   | Total inféré via le header `Link` de l'API GitHub                                                                                                           |
+| `details_fetched_at`       | `timestamp \| null` | Horodatage du dernier enrichissement — null = jamais chargé                                                                                                 |
+| `insights`                 | `jsonb \| null`     | Instantané GitHub de la fiche, dont `contributorActivity` pour le score d'accueil                                                                           |
+| `is_archived`              | `boolean`           | Dépôt archivé sur GitHub, écrit avec l'instantané `insights` ; exclu des listes                                                                             |
+| `newcomer_score`           | `smallint \| null`  | Score d'accueil des débutants (0–100), seule source du score, indexé pour le tri ; null = non évalué                                                        |
+| `newcomer_score_details`   | `jsonb \| null`     | Détail du score sans le score lui-même : signaux, couverture, `partial`, `archived`, date de calcul                                                         |
+| `created_at`               | `timestamp`         |                                                                                                                                                             |
+| `updated_at`               | `timestamp`         |                                                                                                                                                             |
 
 ---
 
