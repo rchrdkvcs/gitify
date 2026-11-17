@@ -14,7 +14,7 @@ cp .env.example .env
 node ace generate:key
 ```
 
-Configurer `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` et `DB_DATABASE` pour PostgreSQL. `APP_KEY` est générée localement et doit rester stable en production. `SESSION_DRIVER=cookie` utilise un cookie signé et chiffré ; `memory` est également disponible pour les tests.
+Configurer `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` et `DB_DATABASE` pour PostgreSQL. `DB_SSL` et `DB_SSL_REJECT_UNAUTHORIZED` sont facultatives : sans `DB_SSL`, ou avec `DB_SSL=false`, la connexion reste en clair, comme avec Docker Compose. Pour Laravel Cloud, définir `DB_SSL=true`. `DB_SSL_REJECT_UNAUTHORIZED=true` vérifie le certificat du serveur ; `false` l'accepte sans vérification. `APP_KEY` est générée localement et doit rester stable en production. `SESSION_DRIVER=cookie` utilise un cookie signé et chiffré ; `memory` est également disponible pour les tests.
 
 Dans GitHub, créer une OAuth App avec la page d'accueil `http://localhost:3333` et le callback `http://localhost:3333/auth/github/callback`. Copier ses identifiants dans `GITHUB_CLIENT_ID` et `GITHUB_CLIENT_SECRET`. `GITHUB_CALLBACK_URL` doit correspondre à l'origine utilisée dans le navigateur.
 
@@ -65,6 +65,6 @@ pnpm install --prod --frozen-lockfile
 node bin/server.js
 ```
 
-Fournir les variables d'environnement au serveur, avec `NODE_ENV=production`, `HOST=0.0.0.0` et un callback GitHub HTTPS. Le serveur sert aussi les ressources compilées. `Dockerfile` construit la même application sur Node.js 24. Exécuter les migrations avant de démarrer une nouvelle version.
+Fournir les variables d'environnement au serveur, avec `NODE_ENV=production`, `HOST=0.0.0.0`, `DB_SSL=true` pour PostgreSQL Laravel Cloud, et un callback GitHub HTTPS. Le serveur sert aussi les ressources compilées. `Dockerfile` construit la même application sur Node.js 24. Exécuter les migrations avant de démarrer une nouvelle version.
 
 L'ancien déploiement API/front et les workflows Release Please ont été retirés. Configurer un seul service de déploiement sur le `Dockerfile` racine.
